@@ -11,6 +11,15 @@ export const generalLimiter = rateLimit({
 	},
 	standardHeaders: true,
 	legacyHeaders: false,
+	// Configure for Render's proxy setup
+	trustProxy: true,
+	skip: (req) => {
+		// Skip rate limiting for health checks and in development
+		if (req.url === '/api/health' || process.env.NODE_ENV === 'development') {
+			return true;
+		}
+		return false;
+	}
 });
 
 // Strict rate limiting for auth endpoints
@@ -24,6 +33,7 @@ export const authLimiter = rateLimit({
 	standardHeaders: true,
 	legacyHeaders: false,
 	skipSuccessfulRequests: true, // Don't count successful requests
+	trustProxy: true, // Configure for Render's proxy setup
 });
 
 // Very strict rate limiting for password reset
@@ -36,6 +46,7 @@ export const passwordResetLimiter = rateLimit({
 	},
 	standardHeaders: true,
 	legacyHeaders: false,
+	trustProxy: true, // Configure for Render's proxy setup
 });
 
 // Email verification rate limiting
@@ -48,6 +59,7 @@ export const emailVerificationLimiter = rateLimit({
 	},
 	standardHeaders: true,
 	legacyHeaders: false,
+	trustProxy: true, // Configure for Render's proxy setup
 });
 
 // Helmet configuration for security headers

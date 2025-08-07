@@ -25,6 +25,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmetConfig);
 app.use(requestLogger);
@@ -67,6 +70,22 @@ app.get("/api/health", (req, res) => {
 		message: "Server is running",
 		timestamp: new Date().toISOString(),
 		env: process.env.NODE_ENV
+	});
+});
+
+// Root endpoint
+app.get("/", (req, res) => {
+	res.json({
+		success: true,
+		message: "VNR Keys API Server",
+		version: "1.0.0",
+		endpoints: {
+			health: "/api/health",
+			auth: "/api/auth",
+			dashboard: "/api/dashboard",
+			keys: "/api/keys",
+			apiKeys: "/api/api-keys"
+		}
 	});
 });
 
