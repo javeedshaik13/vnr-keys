@@ -37,24 +37,40 @@ app.use(sanitizeRequest);
 // CORS configuration
 const corsOptions = {
 	origin: function (origin, callback) {
+		console.log('CORS check - Origin:', origin);
+		console.log('NODE_ENV:', process.env.NODE_ENV);
+		console.log('CLIENT_URL:', process.env.CLIENT_URL);
+
 		// Allow requests with no origin (like mobile apps or curl requests)
 		if (!origin) return callback(null, true);
 
-		const allowedOrigins = process.env.NODE_ENV === "production"
-			? [process.env.CLIENT_URL, 'https://vnr-keys.vercel.app']
-			: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
+		// Define allowed origins based on environment
+		const allowedOrigins = [
+			'https://vnr-keys.vercel.app',
+			'http://localhost:5173',
+			'http://localhost:3000',
+			'http://127.0.0.1:5173'
+		];
+
+		// Add CLIENT_URL from environment if it exists
+		if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+			allowedOrigins.push(process.env.CLIENT_URL);
+		}
+
+		console.log('Allowed origins:', allowedOrigins);
 
 		if (allowedOrigins.includes(origin)) {
+			console.log('CORS: ALLOWED for', origin);
 			callback(null, true);
 		} else {
-			console.log('CORS blocked origin:', origin);
+			console.log('CORS: BLOCKED for', origin);
 			callback(new Error('Not allowed by CORS'));
 		}
 	},
 	credentials: true,
 	optionsSuccessStatus: 200,
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+	allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 };
 app.use(cors(corsOptions));
 

@@ -11,6 +11,4 @@ services:
         value: production
       - key: CLIENT_URL
         value: https://vnr-keys.vercel.app
-      - key: PORT
-        value: 10000
     healthCheckPath: /api/health
