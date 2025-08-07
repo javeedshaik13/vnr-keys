@@ -67,10 +67,19 @@ const corsOptions = {
 			callback(new Error('Not allowed by CORS'));
 		}
 	},
-	credentials: true,
+	credentials: true, // This is crucial for cookies to work cross-origin
 	optionsSuccessStatus: 200,
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-	allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+	allowedHeaders: [
+		'Content-Type',
+		'Authorization',
+		'X-Requested-With',
+		'Accept',
+		'Origin',
+		'Access-Control-Request-Method',
+		'Access-Control-Request-Headers'
+	],
+	exposedHeaders: ['Set-Cookie'], // Expose Set-Cookie header
 };
 app.use(cors(corsOptions));
 
@@ -85,7 +94,16 @@ app.get("/api/health", (req, res) => {
 		success: true,
 		message: "Server is running",
 		timestamp: new Date().toISOString(),
-		env: process.env.NODE_ENV
+		env: process.env.NODE_ENV,
+		cors: {
+			origin: req.headers.origin,
+			allowedOrigins: [
+				'https://vnr-keys.vercel.app',
+				'http://localhost:5173',
+				'http://localhost:3000',
+				'http://127.0.0.1:5173'
+			]
+		}
 	});
 });
 

@@ -9,6 +9,12 @@ const API_URL = import.meta.env.VITE_API_URL
 		? "http://localhost:8000/api/auth"
 		: "/api/auth";
 
+console.log('=== FRONTEND AUTH CONFIG ===');
+console.log('Environment mode:', import.meta.env.MODE);
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('Final API_URL:', API_URL);
+console.log('============================');
+
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 axios.defaults.timeout = 10000; // 10 second timeout
@@ -144,10 +150,18 @@ export const useAuthStore = create((set, get) => ({
 				throw new Error("Password is required");
 			}
 
+			console.log('=== FRONTEND LOGIN ===');
+			console.log('Making login request to:', `${API_URL}/login`);
+			console.log('With credentials:', axios.defaults.withCredentials);
+
 			const response = await axios.post(`${API_URL}/login`, {
 				email: email.trim().toLowerCase(),
 				password
 			});
+
+			console.log('Login response:', response.data);
+			console.log('Response headers:', response.headers);
+			console.log('======================');
 
 			set({
 				isAuthenticated: true,
@@ -159,6 +173,11 @@ export const useAuthStore = create((set, get) => ({
 			handleSuccess(response.data.message || "Logged in successfully!");
 			return response.data;
 		} catch (error) {
+			console.log('=== LOGIN FAILED ===');
+			console.log('Error:', error.response?.data || error.message);
+			console.log('Status:', error.response?.status);
+			console.log('====================');
+
 			const errorMessage = handleError(error);
 			set({ error: errorMessage, isLoading: false });
 			throw error;
@@ -224,7 +243,15 @@ export const useAuthStore = create((set, get) => ({
 		set({ isCheckingAuth: true, error: null });
 
 		try {
+			console.log('=== FRONTEND CHECK AUTH ===');
+			console.log('Making request to:', `${API_URL}/check-auth`);
+			console.log('Axios withCredentials:', axios.defaults.withCredentials);
+
 			const response = await axios.get(`${API_URL}/check-auth`);
+
+			console.log('Check auth successful:', response.data);
+			console.log('===========================');
+
 			set({
 				user: response.data.user,
 				isAuthenticated: true,
@@ -232,6 +259,11 @@ export const useAuthStore = create((set, get) => ({
 				error: null
 			});
 		} catch (error) {
+			console.log('=== CHECK AUTH FAILED ===');
+			console.log('Error:', error.response?.data || error.message);
+			console.log('Status:', error.response?.status);
+			console.log('=========================');
+
 			// Don't show error toast for auth check failures
 			set({
 				user: null,
@@ -377,10 +409,25 @@ export const useAuthStore = create((set, get) => ({
 					throw new Error("Invalid user role");
 			}
 
+			console.log('=== FETCH DASHBOARD DATA ===');
+			console.log('User role:', user.role);
+			console.log('Dashboard API:', dashboardAPI);
+			console.log('Endpoint:', endpoint);
+			console.log('With credentials:', axios.defaults.withCredentials);
+
 			const response = await axios.get(endpoint);
+
+			console.log('Dashboard data fetched successfully');
+			console.log('============================');
+
 			set({ isLoading: false, error: null });
 			return response.data;
 		} catch (error) {
+			console.log('=== DASHBOARD FETCH FAILED ===');
+			console.log('Error:', error.response?.data || error.message);
+			console.log('Status:', error.response?.status);
+			console.log('==============================');
+
 			const errorMessage = handleError(error);
 			set({ error: errorMessage, isLoading: false });
 			throw error;

@@ -213,7 +213,8 @@ export const login = asyncHandler(async (req, res) => {
 	}
 
 	// Generate JWT and set cookie
-	generateTokenAndSetCookie(res, user._id, user.role);
+	console.log(`🔐 Login successful for user: ${user._id} (${user.role}) in ${process.env.NODE_ENV} mode`);
+	const token = generateTokenAndSetCookie(res, user._id, user.role);
 
 	// Update last login
 	user.lastLogin = new Date();
@@ -235,11 +236,14 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-	res.clearCookie("token", {
+	// Use the same cookie configuration as when setting the cookie
+	const cookieOptions = {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
-	});
+		sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+	};
+
+	res.clearCookie("token", cookieOptions);
 
 	res.status(200).json({
 		success: true,
