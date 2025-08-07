@@ -19,7 +19,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: User, label: "Profile", path: "/dashboard/profile" },
-    { icon: Mail, label: "Contact Us", path: "/dashboard/contact" },
     { icon: Info, label: "About Us", path: "/dashboard/about" },
   ];
 

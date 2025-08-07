@@ -57,18 +57,18 @@ export const rolePermissions = {
 	// Admin only
 	adminOnly: requireRole('admin'),
 	
-	// Admin and Operator
-	adminOrOperator: requireRole('admin', 'operator'),
+	// Admin and Security
+	adminOrSecurity: requireRole('admin', 'security'),
 	
-	// Admin and Responder
-	adminOrResponder: requireRole('admin', 'responder'),
+	// Admin and Faculty
+	adminOrFaculty: requireRole('admin', 'faculty'),
 	
 	// All roles (authenticated users)
-	anyRole: requireRole('admin', 'operator', 'responder'),
+	anyRole: requireRole('admin', 'faculty', 'security'),
 	
-	// Operator only
-	operatorOnly: requireRole('operator'),
+	// Faculty only
+	facultyOnly: requireRole('faculty'),
 	
-	// Responder only
-	responderOnly: requireRole('responder')
+	// Security only
+	securityOnly: requireRole('security')
 };

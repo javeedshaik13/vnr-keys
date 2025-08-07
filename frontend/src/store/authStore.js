@@ -6,7 +6,7 @@ import { validateEmail, validatePassword, validateName, validateVerificationCode
 const API_URL = import.meta.env.VITE_API_URL
 	? `${import.meta.env.VITE_API_URL}/auth`
 	: import.meta.env.MODE === "development"
-		? "http://localhost:5000/api/auth"
+		? "http://localhost:8000/api/auth"
 		: "/api/auth";
 
 // Configure axios defaults
@@ -49,10 +49,10 @@ export const useAuthStore = create((set, get) => ({
 		switch (user.role) {
 			case 'admin':
 				return '/dashboard/admin';
-			case 'operator':
-				return '/dashboard/operator';
-			case 'responder':
-				return '/dashboard/responder';
+			case 'faculty':
+				return '/dashboard/faculty';
+			case 'security':
+				return '/dashboard/security';
 			default:
 				return '/dashboard';
 		}
@@ -82,7 +82,7 @@ export const useAuthStore = create((set, get) => ({
 		return requiredRoles.includes(user.role);
 	},
 
-	signup: async (email, password, name, role = 'operator') => {
+	signup: async (email, password, name, role = 'faculty') => {
 		set({ isLoading: true, error: null });
 
 		try {
@@ -103,7 +103,7 @@ export const useAuthStore = create((set, get) => ({
 			}
 
 			// Validate role
-			const validRoles = ['admin', 'operator', 'responder'];
+			const validRoles = ['admin', 'faculty', 'security'];
 			if (!validRoles.includes(role)) {
 				throw new Error('Invalid role selected');
 			}
@@ -367,11 +367,11 @@ export const useAuthStore = create((set, get) => ({
 				case 'admin':
 					endpoint = `${dashboardAPI}/admin`;
 					break;
-				case 'operator':
-					endpoint = `${dashboardAPI}/operator`;
+				case 'faculty':
+					endpoint = `${dashboardAPI}/faculty`;
 					break;
-				case 'responder':
-					endpoint = `${dashboardAPI}/responder`;
+				case 'security':
+					endpoint = `${dashboardAPI}/security`;
 					break;
 				default:
 					throw new Error("Invalid user role");

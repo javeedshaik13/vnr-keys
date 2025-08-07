@@ -44,19 +44,29 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 });
 
 /**
- * Operator Dashboard - Accessible to operator and admin users
+ * Faculty Dashboard - Accessible to faculty and admin users
  */
-export const getOperatorDashboard = asyncHandler(async (req, res) => {
-	// Get operator-specific data
+export const getFacultyDashboard = asyncHandler(async (req, res) => {
+	// Get faculty-specific data
 	const currentUser = await User.findById(req.userId).select('-password');
 	
-	// Mock operator-specific metrics (replace with actual business logic)
-	const operatorStats = {
-		activeTickets: 15,
-		resolvedTickets: 42,
-		pendingTasks: 8,
-		completedTasks: 23
+	// Mock faculty-specific metrics (replace with actual business logic)
+	const facultyStats = {
+		activeRequests: 15,
+		completedRequests: 42,
+		pendingApprovals: 8,
+		totalRequests: 65
 	};
+
+	res.status(200).json({
+		success: true,
+		message: "Faculty dashboard data retrieved successfully",
+		data: {
+			user: currentUser,
+			stats: facultyStats,
+			userRole: req.userRole
+		}
+	});
 
 	// Recent activity (mock data - replace with actual activity tracking)
 	const recentActivity = [
@@ -78,19 +88,29 @@ export const getOperatorDashboard = asyncHandler(async (req, res) => {
 });
 
 /**
- * Responder Dashboard - Accessible to responder and admin users
+ * Security Dashboard - Accessible to security and admin users
  */
-export const getResponderDashboard = asyncHandler(async (req, res) => {
-	// Get responder-specific data
+export const getSecurityDashboard = asyncHandler(async (req, res) => {
+	// Get security-specific data
 	const currentUser = await User.findById(req.userId).select('-password');
 	
-	// Mock responder-specific metrics (replace with actual business logic)
-	const responderStats = {
-		emergencyAlerts: 3,
-		responseTime: "4.2 min",
-		completedResponses: 18,
-		activeIncidents: 2
+	// Mock security-specific metrics (replace with actual business logic)
+	const securityStats = {
+		activeKeys: 25,
+		keysInUse: 12,
+		pendingReturns: 5,
+		totalTransactions: 42
 	};
+
+	res.status(200).json({
+		success: true,
+		message: "Security dashboard data retrieved successfully",
+		data: {
+			user: currentUser,
+			stats: securityStats,
+			userRole: req.userRole
+		}
+	});
 
 	// Recent incidents (mock data - replace with actual incident tracking)
 	const recentIncidents = [

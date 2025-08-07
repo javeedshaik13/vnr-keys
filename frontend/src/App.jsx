@@ -14,7 +14,6 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import OperatorDashboard from "./pages/dashboard/OperatorDashboard";
 import ResponderDashboard from "./pages/dashboard/ResponderDashboard";
 import ProfilePage from "./pages/dashboard/ProfilePage";
-import ContactPage from "./pages/dashboard/ContactPage";
 import AboutPage from "./pages/dashboard/AboutPage";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -117,7 +116,6 @@ function App() {
 
 					{/* Common dashboard routes accessible to all authenticated users */}
 					<Route path='profile' element={<ProfilePage />} />
-					<Route path='contact' element={<ContactPage />} />
 					<Route path='about' element={<AboutPage />} />
 				</Route>
 

@@ -26,7 +26,7 @@ import {
 } from "../utils/errorHandler.js";
 
 export const signup = asyncHandler(async (req, res) => {
-	const { email, password, name, role = 'operator' } = req.body;
+	const { email, password, name, role = 'faculty' } = req.body;
 
 	// Validate input
 	const emailValidation = validateEmail(email);
@@ -45,7 +45,7 @@ export const signup = asyncHandler(async (req, res) => {
 	}
 
 	// Validate role
-	const validRoles = ['admin', 'operator', 'responder'];
+	const validRoles = ['admin', 'faculty', 'security'];
 	if (!validRoles.includes(role)) {
 		throw new ValidationError('Invalid role selected');
 	}
@@ -54,7 +54,7 @@ export const signup = asyncHandler(async (req, res) => {
 	const sanitizedEmail = sanitizeEmail(email);
 	const sanitizedName = nameValidation.sanitizedValue;
 
-	// Check if user already exists
+	// Check if user already exists with the same email
 	const existingUser = await User.findOne({ email: sanitizedEmail });
 
 	// Hash password
@@ -68,14 +68,22 @@ export const signup = asyncHandler(async (req, res) => {
 
 	if (existingUser) {
 		if (existingUser.isVerified) {
-			// User exists and is verified - don't allow re-registration
-			throw new ConflictError("User already exists and is verified. Please try logging in instead.");
+			// User exists and is verified - return a more specific message
+			throw new ConflictError("An account with this email already exists. If this is your email, please login or use the forgot password option.");
 		} else {
-			// User exists but is not verified - allow re-registration
+			// User exists but is not verified - allow re-registration with same role or upgrade to admin
 			isReRegistration = true;
-			existingUser.password = hashedPassword;
-			existingUser.name = sanitizedName;
-			existingUser.role = role;
+			if (role === 'admin' || existingUser.role === role) {
+				existingUser.password = hashedPassword;
+				existingUser.name = sanitizedName;
+				existingUser.role = role;
+				existingUser.verificationToken = verificationToken;
+				existingUser.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+				user = existingUser;
+				await user.save();
+			} else {
+				throw new ConflictError("An account with this email already exists with a different role. Please use a different email or contact admin.");
+			}
 			existingUser.verificationToken = verificationToken;
 			existingUser.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 			existingUser.createdAt = new Date(); // Update creation time for re-registration

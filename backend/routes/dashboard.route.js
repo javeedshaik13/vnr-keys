@@ -1,8 +1,8 @@
 import express from "express";
 import {
 	getAdminDashboard,
-	getOperatorDashboard,
-	getResponderDashboard,
+	getFacultyDashboard,
+	getSecurityDashboard,
 	getUserProfile
 } from "../controllers/dashboard.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
@@ -15,8 +15,8 @@ router.use(verifyToken);
 
 // Role-specific dashboard endpoints
 router.get("/admin", rolePermissions.adminOnly, getAdminDashboard);
-router.get("/operator", rolePermissions.adminOrOperator, getOperatorDashboard);
-router.get("/responder", rolePermissions.adminOrResponder, getResponderDashboard);
+router.get("/faculty", rolePermissions.adminOrFaculty, getFacultyDashboard);
+router.get("/security", rolePermissions.adminOrSecurity, getSecurityDashboard);
 
 // General user profile endpoint (accessible to all authenticated users)
 router.get("/profile", getUserProfile);

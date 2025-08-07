@@ -51,7 +51,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               />
           </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text hidden sm:block">
-              AI Event Monitor
+              Vnr Keys
             </h1>
           </div>
         </div>

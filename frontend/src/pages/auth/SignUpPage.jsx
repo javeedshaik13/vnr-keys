@@ -11,7 +11,7 @@ const SignUpPage = () => {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [role, setRole] = useState("operator");
+	const [role, setRole] = useState("faculty");
 	const [fieldErrors, setFieldErrors] = useState({});
 	const navigate = useNavigate();
 
@@ -42,10 +42,8 @@ const SignUpPage = () => {
 
 	const handleSignUp = async (e) => {
 		e.preventDefault();
-
 		// Clear previous errors
 		setFieldErrors({});
-
 		// Validate all fields
 		const emailValidation = validateEmail(email);
 		const passwordValidation = validatePassword(password);
@@ -69,6 +67,8 @@ const SignUpPage = () => {
 			console.error("Signup failed:", error);
 		}
 	};
+
+	///
 	return (
 		<div className='min-h-screen flex items-center justify-center relative z-50 px-4'>
 			<motion.div
@@ -129,8 +129,8 @@ const SignUpPage = () => {
 							onChange={(e) => setRole(e.target.value)}
 							className='w-full px-3 py-2 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 transition duration-200'
 						>
-							<option value="operator">Operator</option>
-							<option value="responder">Responder</option>
+							<option value="faculty">Faculty</option>
+							<option value="security">Security</option>
 							<option value="admin">Admin</option>
 						</select>
 					</div>
