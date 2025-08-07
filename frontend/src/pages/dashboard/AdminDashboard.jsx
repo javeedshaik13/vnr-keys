@@ -2,12 +2,13 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 import { useSidebar } from "../../components/layout/DashboardLayout";
 import { useState, useEffect } from "react";
-import { 
-	Users, 
-	Shield, 
-	Activity, 
-	TrendingUp, 
-	UserCheck, 
+import { useNavigate } from "react-router-dom";
+import {
+	Users,
+	Shield,
+	Activity,
+	TrendingUp,
+	UserCheck,
 	UserX,
 	Settings,
 	BarChart3,
@@ -17,9 +18,9 @@ import {
 const AdminDashboard = () => {
 	const { user, fetchDashboardData } = useAuthStore();
 	const { sidebarOpen } = useSidebar();
+	const navigate = useNavigate();
 	const [dashboardData, setDashboardData] = useState(null);
 	const [loading, setLoading] = useState(true);
-	const [activeModal, setActiveModal] = useState(null);
 
 	useEffect(() => {
 		const loadDashboardData = async () => {
@@ -38,18 +39,15 @@ const AdminDashboard = () => {
 
 	// Admin action handlers
 	const handleManageUsers = () => {
-		setActiveModal('users');
-		console.log('Opening user management modal...');
+		navigate('/dashboard/admin/users');
 	};
 
 	const handleSecuritySettings = () => {
-		setActiveModal('security');
-		console.log('Opening security settings modal...');
+		navigate('/dashboard/admin/security');
 	};
 
 	const handleViewReports = () => {
-		setActiveModal('reports');
-		console.log('Opening reports modal...');
+		navigate('/dashboard/admin/reports');
 	};
 
 	const adminStats = dashboardData?.stats || {
@@ -247,57 +245,7 @@ const AdminDashboard = () => {
 				</div>
 			</motion.div>
 
-			{/* Modals */}
-			{activeModal === 'users' && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-						<h3 className="text-xl font-semibold text-white mb-4">Manage Users</h3>
-						<p className="text-gray-300 mb-4">User management functionality will be implemented here.</p>
-						<div className="flex justify-end">
-							<button
-								onClick={() => setActiveModal(null)}
-								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-							>
-								Close
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
 
-			{activeModal === 'security' && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-						<h3 className="text-xl font-semibold text-white mb-4">Security Settings</h3>
-						<p className="text-gray-300 mb-4">Security configuration options will be available here.</p>
-						<div className="flex justify-end">
-							<button
-								onClick={() => setActiveModal(null)}
-								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-							>
-								Close
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{activeModal === 'reports' && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-						<h3 className="text-xl font-semibold text-white mb-4">View Reports</h3>
-						<p className="text-gray-300 mb-4">Detailed reports and analytics will be displayed here.</p>
-						<div className="flex justify-end">
-							<button
-								onClick={() => setActiveModal(null)}
-								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-							>
-								Close
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
 		</div>
 	);
 };

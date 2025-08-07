@@ -17,6 +17,9 @@ import SecurityDashboard from "./pages/dashboard/SecurityDashboard";
 import FacultyDashboard from "./pages/dashboard/FacultyDashboard";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
+import ManageUsersPage from "./pages/admin/ManageUsersPage";
+import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
+import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
@@ -96,6 +99,32 @@ function App() {
 						element={
 							<RoleProtectedRoute allowedRoles={['admin']}>
 								<AdminDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+
+					{/* Admin-only feature pages */}
+					<Route
+						path='admin/users'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<ManageUsersPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='admin/security'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<SecuritySettingsPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='admin/reports'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<ViewReportsPage />
 							</RoleProtectedRoute>
 						}
 					/>

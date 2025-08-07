@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, User, Mail, Info, X } from "lucide-react";
+import { Home, User, Mail, Info, X, Users, Shield, BarChart3, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useAuthStore } from "../../store/authStore";
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -16,11 +18,24 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const menuItems = [
+  // Base menu items for all users
+  const baseMenuItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: User, label: "Profile", path: "/dashboard/profile" },
     { icon: Info, label: "About Us", path: "/dashboard/about" },
   ];
+
+  // Admin-specific menu items
+  const adminMenuItems = [
+    { icon: Users, label: "Manage Users", path: "/dashboard/admin/users" },
+    { icon: Shield, label: "Security Settings", path: "/dashboard/admin/security" },
+    { icon: BarChart3, label: "View Reports", path: "/dashboard/admin/reports" },
+  ];
+
+  // Combine menu items based on user role
+  const menuItems = user?.role === 'admin'
+    ? [...baseMenuItems, ...adminMenuItems]
+    : baseMenuItems;
 
   const sidebarVariants = {
     open: {
@@ -80,25 +95,28 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className={`flex items-center justify-between p-4 border-b border-gray-800 ${isMobile ? 'block' : 'hidden'}`}>
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+            <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">H</span>
+                <span className="text-white font-bold text-sm">V</span>
               </div>
-              <h2 className="text-lg font-bold text-white">Dashboard</h2>
+              <h2 className="text-xl font-bold text-green-400">Vnr Keys</h2>
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200"
-            >
-              <X size={20} />
-            </button>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4">
             <ul className="space-y-2">
-              {menuItems.map((item, index) => (
+              {/* Base menu items */}
+              {baseMenuItems.map((item, index) => (
                 <motion.li
                   key={item.path}
                   initial={{ opacity: 0, x: -20 }}
@@ -121,6 +139,35 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   </NavLink>
                 </motion.li>
               ))}
+
+              {/* Admin menu items */}
+              {user && user.role === 'admin' && (
+                <>
+                  {adminMenuItems.map((item, index) => (
+                    <motion.li
+                      key={item.path}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: (baseMenuItems.length + index) * 0.1 }}
+                    >
+                      <NavLink
+                        to={item.path}
+                        onClick={() => isMobile && setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                              : "text-gray-300 hover:text-white hover:bg-gray-800"
+                          }`
+                        }
+                      >
+                        <item.icon size={20} />
+                        <span className="font-medium">{item.label}</span>
+                      </NavLink>
+                    </motion.li>
+                  ))}
+                </>
+              )}
             </ul>
           </nav>
 

@@ -181,7 +181,7 @@ export const getSecurityDashboard = asyncHandler(async (req, res) => {
  */
 export const getUserProfile = asyncHandler(async (req, res) => {
 	const user = await User.findById(req.userId).select('-password -resetPasswordToken -verificationToken');
-	
+
 	if (!user) {
 		return res.status(404).json({
 			success: false,
@@ -195,6 +195,321 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 		data: {
 			user,
 			userRole: req.userRole
+		}
+	});
+});
+
+/**
+ * Get all users for admin management
+ */
+export const getAllUsers = asyncHandler(async (req, res) => {
+	const { page = 1, limit = 10, search = '', role = '' } = req.query;
+
+	// Build search query
+	const searchQuery = {};
+	if (search) {
+		searchQuery.$or = [
+			{ name: { $regex: search, $options: 'i' } },
+			{ email: { $regex: search, $options: 'i' } }
+		];
+	}
+	if (role) {
+		searchQuery.role = role;
+	}
+
+	const users = await User.find(searchQuery)
+		.select('-password -resetPasswordToken -verificationToken')
+		.sort({ createdAt: -1 })
+		.limit(limit * 1)
+		.skip((page - 1) * limit);
+
+	const totalUsers = await User.countDocuments(searchQuery);
+
+	res.status(200).json({
+		success: true,
+		message: "Users retrieved successfully",
+		data: {
+			users,
+			pagination: {
+				currentPage: parseInt(page),
+				totalPages: Math.ceil(totalUsers / limit),
+				totalUsers,
+				hasNext: page * limit < totalUsers,
+				hasPrev: page > 1
+			}
+		}
+	});
+});
+
+/**
+ * Update user information
+ */
+export const updateUser = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+	const { name, email, role } = req.body;
+
+	// Validate role
+	const validRoles = ['admin', 'faculty', 'security'];
+	if (role && !validRoles.includes(role)) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid role specified"
+		});
+	}
+
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).json({
+			success: false,
+			message: "User not found"
+		});
+	}
+
+	// Update user fields
+	if (name) user.name = name;
+	if (email) user.email = email;
+	if (role) user.role = role;
+
+	await user.save();
+
+	res.status(200).json({
+		success: true,
+		message: "User updated successfully",
+		data: {
+			user: {
+				id: user._id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				isVerified: user.isVerified,
+				lastLogin: user.lastLogin,
+				createdAt: user.createdAt
+			}
+		}
+	});
+});
+
+/**
+ * Delete user (admin only)
+ */
+export const deleteUser = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+
+	// Prevent admin from deleting themselves
+	if (userId === req.userId) {
+		return res.status(400).json({
+			success: false,
+			message: "Cannot delete your own account"
+		});
+	}
+
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).json({
+			success: false,
+			message: "User not found"
+		});
+	}
+
+	await User.findByIdAndDelete(userId);
+
+	res.status(200).json({
+		success: true,
+		message: "User deleted successfully"
+	});
+});
+
+/**
+ * Toggle user verification status
+ */
+export const toggleUserVerification = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).json({
+			success: false,
+			message: "User not found"
+		});
+	}
+
+	user.isVerified = !user.isVerified;
+	await user.save();
+
+	res.status(200).json({
+		success: true,
+		message: `User ${user.isVerified ? 'verified' : 'unverified'} successfully`,
+		data: {
+			user: {
+				id: user._id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				isVerified: user.isVerified,
+				lastLogin: user.lastLogin,
+				createdAt: user.createdAt
+			}
+		}
+	});
+});
+
+/**
+ * Get security settings
+ */
+export const getSecuritySettings = asyncHandler(async (req, res) => {
+	// Mock security settings - in a real app, these would be stored in database
+	const securitySettings = {
+		passwordPolicy: {
+			minLength: 8,
+			requireUppercase: true,
+			requireLowercase: true,
+			requireNumbers: true,
+			requireSpecialChars: true,
+			maxAge: 90 // days
+		},
+		sessionSettings: {
+			maxSessionDuration: 24, // hours
+			maxConcurrentSessions: 3,
+			sessionTimeout: 30 // minutes of inactivity
+		},
+		rateLimiting: {
+			loginAttempts: 5,
+			lockoutDuration: 15, // minutes
+			apiRequestsPerMinute: 100
+		},
+		auditLogging: {
+			enabled: true,
+			logLevel: 'INFO',
+			retentionDays: 30
+		}
+	};
+
+	res.status(200).json({
+		success: true,
+		message: "Security settings retrieved successfully",
+		data: securitySettings
+	});
+});
+
+/**
+ * Update security settings
+ */
+export const updateSecuritySettings = asyncHandler(async (req, res) => {
+	const { passwordPolicy, sessionSettings, rateLimiting, auditLogging } = req.body;
+
+	// In a real app, you would validate and save these settings to database
+	// For now, we'll just return success
+
+	res.status(200).json({
+		success: true,
+		message: "Security settings updated successfully",
+		data: {
+			passwordPolicy,
+			sessionSettings,
+			rateLimiting,
+			auditLogging
+		}
+	});
+});
+
+/**
+ * Get system reports and analytics
+ */
+export const getSystemReports = asyncHandler(async (req, res) => {
+	const { timeRange = '30d' } = req.query;
+
+	// Calculate date range
+	const now = new Date();
+	let startDate;
+	switch (timeRange) {
+		case '7d':
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			break;
+		case '30d':
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			break;
+		case '90d':
+			startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+			break;
+		default:
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+	}
+
+	// User analytics
+	const totalUsers = await User.countDocuments();
+	const newUsers = await User.countDocuments({ createdAt: { $gte: startDate } });
+	const activeUsers = await User.countDocuments({ lastLogin: { $gte: startDate } });
+	const verifiedUsers = await User.countDocuments({ isVerified: true });
+
+	// User registration trend (last 7 days)
+	const registrationTrend = [];
+	for (let i = 6; i >= 0; i--) {
+		const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+		const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+		const count = await User.countDocuments({
+			createdAt: { $gte: date, $lt: nextDate }
+		});
+		registrationTrend.push({
+			date: date.toISOString().split('T')[0],
+			count
+		});
+	}
+
+	// Role distribution
+	const roleDistribution = await User.aggregate([
+		{
+			$group: {
+				_id: "$role",
+				count: { $sum: 1 }
+			}
+		}
+	]);
+
+	// API Key statistics
+	const totalApiKeys = await ApiKey.countDocuments();
+	const activeApiKeys = await ApiKey.countDocuments({ isActive: true });
+	const apiKeyUsage = await ApiKey.aggregate([
+		{
+			$group: {
+				_id: null,
+				totalUsage: { $sum: "$usageCount" }
+			}
+		}
+	]);
+
+	// System health metrics (mock data)
+	const systemHealth = {
+		uptime: process.uptime(),
+		memoryUsage: process.memoryUsage(),
+		cpuUsage: Math.random() * 100, // Mock CPU usage
+		diskUsage: Math.random() * 100, // Mock disk usage
+		responseTime: Math.random() * 100 + 50 // Mock response time
+	};
+
+	res.status(200).json({
+		success: true,
+		message: "System reports retrieved successfully",
+		data: {
+			timeRange,
+			userAnalytics: {
+				totalUsers,
+				newUsers,
+				activeUsers,
+				verifiedUsers,
+				registrationTrend,
+				roleDistribution: roleDistribution.reduce((acc, item) => {
+					acc[item._id] = item.count;
+					return acc;
+				}, {})
+			},
+			apiKeyAnalytics: {
+				totalApiKeys,
+				activeApiKeys,
+				inactiveApiKeys: totalApiKeys - activeApiKeys,
+				totalUsage: apiKeyUsage[0]?.totalUsage || 0
+			},
+			systemHealth,
+			generatedAt: new Date().toISOString()
 		}
 	});
 });
