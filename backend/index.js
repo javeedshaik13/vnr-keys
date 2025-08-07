@@ -16,6 +16,8 @@ import {
 
 import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
+import keyRoutes from "./routes/key.route.js";
+import apiKeyRoutes from "./routes/apiKey.route.js";
 
 dotenv.config();
 
@@ -46,6 +48,8 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/keys", keyRoutes);
+app.use("/api/api-keys", apiKeyRoutes);
 
 // Global error handler (must be after all routes)
 app.use(globalErrorHandler);

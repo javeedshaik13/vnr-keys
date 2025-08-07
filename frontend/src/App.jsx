@@ -13,6 +13,8 @@ import HomePage from "./pages/dashboard/HomePage";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import OperatorDashboard from "./pages/dashboard/OperatorDashboard";
 import ResponderDashboard from "./pages/dashboard/ResponderDashboard";
+import SecurityDashboard from "./pages/dashboard/SecurityDashboard";
+import FacultyDashboard from "./pages/dashboard/FacultyDashboard";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
 import { Toaster } from "react-hot-toast";
@@ -110,6 +112,22 @@ function App() {
 						element={
 							<RoleProtectedRoute allowedRoles={['admin', 'responder']}>
 								<ResponderDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='security'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'security']}>
+								<SecurityDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='faculty'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'faculty']}>
+								<FacultyDashboard />
 							</RoleProtectedRoute>
 						}
 					/>

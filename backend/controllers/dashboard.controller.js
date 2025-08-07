@@ -1,4 +1,5 @@
 import { User } from "../models/user.model.js";
+import { ApiKey } from "../models/apiKey.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
 
 /**
@@ -24,6 +25,29 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 	const verifiedUsers = await User.countDocuments({ isVerified: true });
 	const unverifiedUsers = await User.countDocuments({ isVerified: false });
 
+	// Get API key statistics (admin has access to all)
+	const totalApiKeys = await ApiKey.countDocuments();
+	const activeApiKeys = await ApiKey.countDocuments({ isActive: true });
+	const apiKeysByDepartment = await ApiKey.aggregate([
+		{
+			$group: {
+				_id: "$department",
+				count: { $sum: 1 },
+				activeCount: { $sum: { $cond: ["$isActive", 1, 0] } },
+				totalUsage: { $sum: "$usageCount" }
+			}
+		},
+		{
+			$sort: { _id: 1 }
+		}
+	]);
+
+	const recentApiKeys = await ApiKey.find()
+		.populate('createdBy', 'name email')
+		.sort({ createdAt: -1 })
+		.limit(5)
+		.select('keyId keyName department isActive usageCount createdAt');
+
 	res.status(200).json({
 		success: true,
 		message: "Admin dashboard data retrieved successfully",
@@ -35,10 +59,20 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 				usersByRole: usersByRole.reduce((acc, item) => {
 					acc[item._id] = item.count;
 					return acc;
-				}, {})
+				}, {}),
+				// API Key statistics
+				totalApiKeys,
+				activeApiKeys,
+				inactiveApiKeys: totalApiKeys - activeApiKeys,
 			},
 			recentUsers,
-			userRole: req.userRole
+			apiKeyStats: {
+				byDepartment: apiKeysByDepartment,
+				recentKeys: recentApiKeys,
+			},
+			userRole: req.userRole,
+			// Admin has access to all departments
+			accessibleDepartments: ["CSE", "EEE", "AIML", "IoT", "ECE", "MECH", "CIVIL", "IT", "ADMIN", "RESEARCH"]
 		}
 	});
 });

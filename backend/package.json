@@ -6,7 +6,10 @@
 	"scripts": {
 		"dev": "NODE_ENV=development nodemon index.js",
 		"start": "NODE_ENV=production node index.js",
-		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
+		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+		"seed:keys": "node scripts/seedKeys.js",
+		"import:keys": "node scripts/importApiKeys.js",
+		"test:db": "node scripts/testConnection.js"
 	},
 	"keywords": [],
 	"author": "",
