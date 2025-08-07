@@ -232,6 +232,7 @@ export const login = asyncHandler(async (req, res) => {
 			lastLogin: user.lastLogin,
 			createdAt: user.createdAt,
 		},
+		token: token, // Send token in response for localStorage backup
 	});
 });
 

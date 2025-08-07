@@ -19,6 +19,12 @@ console.log('============================');
 axios.defaults.withCredentials = true;
 axios.defaults.timeout = 10000; // 10 second timeout
 
+// Add token to Authorization header if available
+const token = localStorage.getItem('auth-token');
+if (token) {
+	axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
 // Request interceptor for logging (development only)
 if (import.meta.env.DEV) {
 	axios.interceptors.request.use((config) => {
@@ -163,6 +169,13 @@ export const useAuthStore = create((set, get) => ({
 			console.log('Response headers:', response.headers);
 			console.log('======================');
 
+			// Store token in localStorage as backup
+			if (response.data.token) {
+				localStorage.setItem('auth-token', response.data.token);
+				axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+				console.log('🔑 Token stored in localStorage and Authorization header set');
+			}
+
 			set({
 				isAuthenticated: true,
 				user: response.data.user,
@@ -189,26 +202,24 @@ export const useAuthStore = create((set, get) => ({
 
 		try {
 			await axios.post(`${API_URL}/logout`);
-			set({
-				user: null,
-				isAuthenticated: false,
-				error: null,
-				isLoading: false,
-				message: null
-			});
-			handleSuccess("Logged out successfully!");
 		} catch (error) {
-			// Even if logout fails on server, clear local state
-			set({
-				user: null,
-				isAuthenticated: false,
-				error: null,
-				isLoading: false,
-				message: null
-			});
 			console.error("Logout error:", error);
-			// Don't show error toast for logout failures
+			// Continue with cleanup even if server logout fails
 		}
+
+		// Clear local storage and axios headers
+		localStorage.removeItem('auth-token');
+		delete axios.defaults.headers.common['Authorization'];
+
+		set({
+			user: null,
+			isAuthenticated: false,
+			error: null,
+			isLoading: false,
+			message: null
+		});
+
+		handleSuccess("Logged out successfully!");
 	},
 	verifyEmail: async (code) => {
 		set({ isLoading: true, error: null });
@@ -246,6 +257,15 @@ export const useAuthStore = create((set, get) => ({
 			console.log('=== FRONTEND CHECK AUTH ===');
 			console.log('Making request to:', `${API_URL}/check-auth`);
 			console.log('Axios withCredentials:', axios.defaults.withCredentials);
+			console.log('Authorization header:', axios.defaults.headers.common['Authorization'] ? 'Set' : 'Not set');
+			console.log('LocalStorage token:', localStorage.getItem('auth-token') ? 'Present' : 'Missing');
+
+			// Ensure Authorization header is set if we have a token
+			const token = localStorage.getItem('auth-token');
+			if (token && !axios.defaults.headers.common['Authorization']) {
+				axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+				console.log('🔑 Authorization header set from localStorage');
+			}
 
 			const response = await axios.get(`${API_URL}/check-auth`);
 
@@ -263,6 +283,10 @@ export const useAuthStore = create((set, get) => ({
 			console.log('Error:', error.response?.data || error.message);
 			console.log('Status:', error.response?.status);
 			console.log('=========================');
+
+			// Clear invalid token
+			localStorage.removeItem('auth-token');
+			delete axios.defaults.headers.common['Authorization'];
 
 			// Don't show error toast for auth check failures
 			set({

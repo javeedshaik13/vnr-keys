@@ -1,13 +1,24 @@
 import jwt from "jsonwebtoken";
 
 export const verifyToken = (req, res, next) => {
-	const token = req.cookies.token;
+	// Try to get token from cookies first, then from Authorization header
+	let token = req.cookies.token;
+
+	// If no cookie token, check Authorization header
+	if (!token) {
+		const authHeader = req.headers.authorization;
+		if (authHeader && authHeader.startsWith('Bearer ')) {
+			token = authHeader.substring(7);
+		}
+	}
 
 	// Log token verification attempts for debugging
 	console.log(`[${req.method}] ${req.url} - Token: ${token ? 'Present' : 'Missing'}`);
+	console.log('Cookies:', Object.keys(req.cookies));
+	console.log('Auth header:', req.headers.authorization ? 'Present' : 'Missing');
 
 	if (!token) {
-		console.log('❌ No token found in cookies');
+		console.log('❌ No token found in cookies or Authorization header');
 		return res.status(401).json({ success: false, message: "Unauthorized - no token provided" });
 	}
 

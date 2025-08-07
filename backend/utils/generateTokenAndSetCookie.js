@@ -9,19 +9,25 @@ export const generateTokenAndSetCookie = (res, userId, role) => {
 	const cookieOptions = {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Changed to "none" for cross-origin in production
+		sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 	};
 
-	// Add domain for production if needed
-	if (process.env.NODE_ENV === "production") {
-		// Don't set domain - let it default to the current domain
-		// This allows cookies to work across subdomains if needed
-	}
-
 	console.log('🍪 Setting cookie with options:', cookieOptions);
+	console.log('🌍 Environment:', process.env.NODE_ENV);
+	console.log('🔗 Client URL:', process.env.CLIENT_URL);
 
 	res.cookie("token", token, cookieOptions);
+
+	// Also try setting a test cookie to debug
+	if (process.env.NODE_ENV === "production") {
+		res.cookie("test-cookie", "test-value", {
+			httpOnly: false, // Make it accessible to JS for debugging
+			secure: true,
+			sameSite: "none",
+			maxAge: 60000, // 1 minute
+		});
+	}
 
 	return token;
 };

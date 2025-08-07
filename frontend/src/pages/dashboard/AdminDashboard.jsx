@@ -19,6 +19,7 @@ const AdminDashboard = () => {
 	const { sidebarOpen } = useSidebar();
 	const [dashboardData, setDashboardData] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [activeModal, setActiveModal] = useState(null);
 
 	useEffect(() => {
 		const loadDashboardData = async () => {
@@ -34,6 +35,22 @@ const AdminDashboard = () => {
 
 		loadDashboardData();
 	}, [fetchDashboardData]);
+
+	// Admin action handlers
+	const handleManageUsers = () => {
+		setActiveModal('users');
+		console.log('Opening user management modal...');
+	};
+
+	const handleSecuritySettings = () => {
+		setActiveModal('security');
+		console.log('Opening security settings modal...');
+	};
+
+	const handleViewReports = () => {
+		setActiveModal('reports');
+		console.log('Opening reports modal...');
+	};
 
 	const adminStats = dashboardData?.stats || {
 		totalUsers: 0,
@@ -206,20 +223,81 @@ const AdminDashboard = () => {
 					Admin Actions
 				</h3>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<button className="flex items-center justify-center p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+					<button
+						onClick={handleManageUsers}
+						className="flex items-center justify-center p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+					>
 						<Users className="h-5 w-5 mr-2" />
 						<span className="text-white font-medium">Manage Users</span>
 					</button>
-					<button className="flex items-center justify-center p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+					<button
+						onClick={handleSecuritySettings}
+						className="flex items-center justify-center p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+					>
 						<Shield className="h-5 w-5 mr-2" />
 						<span className="text-white font-medium">Security Settings</span>
 					</button>
-					<button className="flex items-center justify-center p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+					<button
+						onClick={handleViewReports}
+						className="flex items-center justify-center p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+					>
 						<BarChart3 className="h-5 w-5 mr-2" />
 						<span className="text-white font-medium">View Reports</span>
 					</button>
 				</div>
 			</motion.div>
+
+			{/* Modals */}
+			{activeModal === 'users' && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+						<h3 className="text-xl font-semibold text-white mb-4">Manage Users</h3>
+						<p className="text-gray-300 mb-4">User management functionality will be implemented here.</p>
+						<div className="flex justify-end">
+							<button
+								onClick={() => setActiveModal(null)}
+								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+							>
+								Close
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{activeModal === 'security' && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+						<h3 className="text-xl font-semibold text-white mb-4">Security Settings</h3>
+						<p className="text-gray-300 mb-4">Security configuration options will be available here.</p>
+						<div className="flex justify-end">
+							<button
+								onClick={() => setActiveModal(null)}
+								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+							>
+								Close
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{activeModal === 'reports' && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+						<h3 className="text-xl font-semibold text-white mb-4">View Reports</h3>
+						<p className="text-gray-300 mb-4">Detailed reports and analytics will be displayed here.</p>
+						<div className="flex justify-end">
+							<button
+								onClick={() => setActiveModal(null)}
+								className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+							>
+								Close
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };
