@@ -33,11 +33,25 @@ app.use(sanitizeRequest);
 
 // CORS configuration
 const corsOptions = {
-	origin: process.env.NODE_ENV === "production"
-		? process.env.CLIENT_URL
-		: "http://localhost:5173",
+	origin: function (origin, callback) {
+		// Allow requests with no origin (like mobile apps or curl requests)
+		if (!origin) return callback(null, true);
+
+		const allowedOrigins = process.env.NODE_ENV === "production"
+			? [process.env.CLIENT_URL, 'https://vnr-keys.vercel.app']
+			: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
+
+		if (allowedOrigins.includes(origin)) {
+			callback(null, true);
+		} else {
+			console.log('CORS blocked origin:', origin);
+			callback(new Error('Not allowed by CORS'));
+		}
+	},
 	credentials: true,
 	optionsSuccessStatus: 200,
+	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 app.use(cors(corsOptions));
 
@@ -45,6 +59,16 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Limit request size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+	res.json({
+		success: true,
+		message: "Server is running",
+		timestamp: new Date().toISOString(),
+		env: process.env.NODE_ENV
+	});
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
