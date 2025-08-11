@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, Search, Star, QrCode, X } from "lucide-react";
+import { Key, KeyRound, List, Search, Star, QrCode, X, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -22,17 +22,36 @@ const FacultyDashboard = () => {
     generateKeyRequestQR,
     generateKeyReturnQR,
     toggleFrequentlyUsedAPI,
-    fetchKeys
+    fetchKeys,
+    fetchTakenKeys,
+    isLoadingTakenKeys,
+    error
   } = useKeyStore();
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === "taken" && user) {
+      console.log('🔄 Switching to taken tab, refreshing taken keys');
+      fetchTakenKeys(user.id).catch(console.error);
+    }
+  };
 
   // Fetch keys on component mount
   useEffect(() => {
     if (user) {
+      console.log('🔑 FacultyDashboard: User authenticated:', user);
+      console.log('🔑 FacultyDashboard: User ID:', user.id);
       fetchKeys().catch(console.error);
+      fetchTakenKeys(user.id).catch(console.error);
+    } else {
+      console.log('❌ FacultyDashboard: No user found');
     }
-  }, [user, fetchKeys]);
+  }, [user, fetchKeys, fetchTakenKeys]);
 
   const takenKeys = getTakenKeys(user?.id);
+  console.log('🔑 FacultyDashboard: Taken keys count:', takenKeys.length);
+  console.log('🔑 FacultyDashboard: All keys count:', keys.length);
+  console.log('🔑 FacultyDashboard: User ID being used:', user?.id);
   const frequentlyUsedKeys = getFrequentlyUsedKeys();
   const searchResults = searchKeys(searchQuery);
 
@@ -130,12 +149,26 @@ const FacultyDashboard = () => {
           <div className="flex-1 p-4 pb-20">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">My Keys</h2>
-              <div className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30">
-                {takenKeys.length} Taken
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30">
+                  {takenKeys.length} Taken
+                </div>
+                <button
+                  onClick={() => fetchTakenKeys(user?.id)}
+                  disabled={isLoadingTakenKeys}
+                  className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg border border-blue-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh taken keys"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingTakenKeys ? 'animate-spin' : ''}`} />
+                </button>
               </div>
             </div>
 
-            {takenKeys.length === 0 ? (
+            {isLoadingTakenKeys ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">Loading taken keys...</p>
+              </div>
+            ) : takenKeys.length === 0 ? (
               <div className="text-center py-12">
                 <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-400 text-lg">No keys taken</p>
@@ -256,7 +289,7 @@ const FacultyDashboard = () => {
       <BottomNavigation
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
 
       {/* QR Request Modal */}

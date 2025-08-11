@@ -36,7 +36,9 @@ const transformKeyData = (backendKey) => {
 
 export const useKeyStore = create((set, get) => ({
   keys: [],
+  takenKeys: [], // Separate state for taken keys
   isLoading: false,
+  isLoadingTakenKeys: false, // Separate loading state for taken keys
   error: null,
   searchQuery: "",
   activeQRRequest: null,
@@ -56,8 +58,123 @@ export const useKeyStore = create((set, get) => ({
 
   // Get keys taken by current user
   getTakenKeys: (userId) => {
-    const { keys } = get();
-    return keys.filter(key => key.status === "unavailable" && key.takenBy?.id === userId);
+    const { takenKeys, keys } = get();
+    console.log('🔍 getTakenKeys called with userId:', userId);
+    console.log('🔍 Taken keys from separate state:', takenKeys.length);
+    console.log('🔍 Total keys in main array:', keys.length);
+    
+    if (!userId) {
+      console.log('❌ getTakenKeys: No userId provided');
+      return [];
+    }
+    
+    // If we have taken keys in the separate state, return them
+    if (takenKeys.length > 0) {
+      console.log('✅ getTakenKeys: Returning taken keys from separate state');
+      return takenKeys;
+    }
+    
+    // Fallback to filtering from main keys array (for backward compatibility)
+    console.log('🔄 getTakenKeys: Falling back to filtering from main keys array');
+    console.log('🔍 Keys status breakdown:', keys.reduce((acc, key) => {
+      acc[key.status] = (acc[key.status] || 0) + 1;
+      return acc;
+    }, {}));
+    
+    const userIdStr = String(userId);
+    console.log('🔍 Looking for userId:', userIdStr);
+    
+    const filteredTakenKeys = keys.filter(key => {
+      if (key.status !== "unavailable" || !key.takenBy?.id) {
+        console.log(`🔍 Key ${key.keyNumber}: status=${key.status}, takenBy.id=${key.takenBy?.id}`);
+        return false;
+      }
+      
+      const keyUserId = key.takenBy.id;
+      console.log(`🔍 Key ${key.keyNumber}: takenBy.id=${keyUserId}, type=${typeof keyUserId}`);
+      
+      // Try exact string match first
+      if (String(keyUserId) === userIdStr) {
+        console.log(`✅ Key ${key.keyNumber}: Exact string match found for user ${userIdStr}`);
+        return true;
+      }
+      
+      // Try ObjectId comparison if the keyUserId is an ObjectId-like object
+      if (keyUserId && typeof keyUserId === 'object' && keyUserId.toString) {
+        const keyUserIdStr = keyUserId.toString();
+        const match = keyUserIdStr === userIdStr;
+        console.log(`🔍 Key ${key.keyNumber}: ObjectId comparison: ${keyUserIdStr} === ${userIdStr} = ${match}`);
+        return match;
+      }
+      
+      // Try to extract the actual ID if it's nested
+      if (keyUserId && typeof keyUserId === 'object' && keyUserId.userId) {
+        const nestedUserId = keyUserId.userId;
+        const nestedUserIdStr = String(nestedUserId);
+        const match = nestedUserIdStr === userIdStr;
+        console.log(`🔍 Key ${key.keyNumber}: Nested userId comparison: ${nestedUserIdStr} === ${userIdStr} = ${match}`);
+        return match;
+      }
+      
+      console.log(`❌ Key ${key.keyNumber}: No match found for user ${userIdStr}`);
+      return false;
+    });
+    
+    console.log('🔍 getTakenKeys fallback result:', filteredTakenKeys.length, 'keys found');
+    return filteredTakenKeys;
+  },
+
+  // Fetch keys taken by current user from API
+  fetchTakenKeys: async (userId) => {
+    console.log('🚀 fetchTakenKeys called with userId:', userId);
+    if (!userId) {
+      console.log('❌ fetchTakenKeys: No userId provided');
+      return [];
+    }
+    
+    set({ isLoadingTakenKeys: true, error: null });
+
+    try {
+      console.log('🌐 fetchTakenKeys: Making API request to:', `${API_URL}/my-taken`);
+      const response = await axios.get(`${API_URL}/my-taken`, {
+        withCredentials: true,
+      });
+
+      console.log('✅ fetchTakenKeys: API response received:', response.data);
+      const backendKeys = response.data.data.keys || [];
+      console.log('🔑 fetchTakenKeys: Backend keys count:', backendKeys.length);
+      
+      const takenKeys = backendKeys.map(transformKeyData);
+      console.log('🔑 fetchTakenKeys: Transformed keys count:', takenKeys.length);
+
+      // Store taken keys in separate state
+      set({ takenKeys, isLoadingTakenKeys: false });
+      console.log('✅ fetchTakenKeys: Taken keys stored in separate state');
+
+      // Also update the main keys array with the taken keys
+      const { keys } = get();
+      const updatedKeys = [...keys];
+      
+      takenKeys.forEach(takenKey => {
+        const existingIndex = updatedKeys.findIndex(k => k.id === takenKey.id);
+        if (existingIndex !== -1) {
+          updatedKeys[existingIndex] = takenKey;
+        } else {
+          updatedKeys.push(takenKey);
+        }
+      });
+
+      set({ keys: updatedKeys });
+      console.log('✅ fetchTakenKeys: Main keys array also updated');
+      return takenKeys;
+    } catch (error) {
+      console.error("❌ fetchTakenKeys: API error:", error);
+      console.error("❌ fetchTakenKeys: Error response:", error.response?.data);
+      console.error("❌ fetchTakenKeys: Error status:", error.response?.status);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoadingTakenKeys: false });
+      return [];
+    }
   },
 
   // Get frequently used keys
@@ -261,6 +378,11 @@ export const useKeyStore = create((set, get) => ({
   // Clear active QR request
   clearActiveQRRequest: () => {
     set({ activeQRRequest: null });
+  },
+
+  // Clear taken keys
+  clearTakenKeys: () => {
+    set({ takenKeys: [] });
   },
 
   // Initialize WebSocket connection

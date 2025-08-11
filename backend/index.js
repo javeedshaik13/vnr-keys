@@ -121,8 +121,7 @@ app.get("/", (req, res) => {
 			health: "/api/health",
 			auth: "/api/auth",
 			dashboard: "/api/dashboard",
-			keys: "/api/keys",
-			apiKeys: "/api/api-keys"
+			keys: "/api/keys"
 		}
 	});
 });
@@ -130,7 +129,6 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
-app.use("/api/api-keys", apiKeyRoutes);
 app.use("/api/about",about);
 
 // Global error handler (must be after all routes)

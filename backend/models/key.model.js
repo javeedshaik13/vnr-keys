@@ -155,22 +155,7 @@ keySchema.statics.findFrequentlyUsed = function() {
 keySchema.statics.findAccessibleToUser = function(user) {
   const query = { isActive: true };
 
-  // Admin and security can see all keys
-  if (user.role === 'admin' || user.role === 'security') {
-    return this.find(query);
-  }
-
-  // Faculty can see keys from their department or common keys
-  if (user.role === 'faculty' && user.department) {
-    query.$or = [
-      { department: user.department },
-      { department: 'COMMON' }
-    ];
-  } else {
-    // If no department specified, show only common keys
-    query.department = 'COMMON';
-  }
-
+  // All authenticated users (admin, security, faculty) can see all keys
   return this.find(query);
 };
 
@@ -178,22 +163,7 @@ keySchema.statics.findAccessibleToUser = function(user) {
 keySchema.statics.findAvailableForUser = function(user) {
   const query = { status: 'available', isActive: true };
 
-  // Admin and security can see all available keys
-  if (user.role === 'admin' || user.role === 'security') {
-    return this.find(query);
-  }
-
-  // Faculty can see available keys from their department or common keys
-  if (user.role === 'faculty' && user.department) {
-    query.$or = [
-      { department: user.department },
-      { department: 'COMMON' }
-    ];
-  } else {
-    // If no department specified, show only common keys
-    query.department = 'COMMON';
-  }
-
+  // All authenticated users (admin, security, faculty) can see all available keys
   return this.find(query);
 };
 
