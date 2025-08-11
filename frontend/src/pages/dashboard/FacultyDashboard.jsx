@@ -21,12 +21,22 @@ const FacultyDashboard = () => {
     searchKeys,
     generateKeyRequestQR,
     generateKeyReturnQR,
-    toggleFrequentlyUsed,
+    toggleFrequentlyUsedAPI,
+    takeKeyAPI,
+    returnKeyAPI,
+    fetchKeys,
     isLoading,
     error
   } = useKeyStore();
 
-  const takenKeys = getTakenKeys(user?.id || "user-1"); // Mock user ID for demo
+  // Fetch keys on component mount
+  useEffect(() => {
+    if (user) {
+      fetchKeys().catch(console.error);
+    }
+  }, [user, fetchKeys]);
+
+  const takenKeys = getTakenKeys(user?.id);
   const frequentlyUsedKeys = getFrequentlyUsedKeys();
   const searchResults = searchKeys(searchQuery);
 
@@ -46,9 +56,8 @@ const FacultyDashboard = () => {
 
   const handleRequestKey = async (keyId) => {
     try {
-      const qrData = await generateKeyRequestQR(keyId, user?.id || "user-1");
-      setQrData(qrData);
-      setShowQRModal(true);
+      // For faculty, we'll take the key directly via API
+      await takeKeyAPI(keyId);
     } catch (error) {
       console.error("Request key error:", error);
     }
@@ -56,7 +65,9 @@ const FacultyDashboard = () => {
 
   const handleReturnKey = async (keyId) => {
     try {
-      const qrData = await generateKeyReturnQR(keyId, user?.id || "user-1");
+      const qrData = await generateKeyReturnQR(keyId, user?.id);
+      setQrData(qrData);
+      setShowQRModal(true);
       return qrData;
     } catch (error) {
       console.error("Return key error:", error);
@@ -66,7 +77,7 @@ const FacultyDashboard = () => {
 
   const handleToggleFrequent = async (keyId) => {
     try {
-      await toggleFrequentlyUsed(keyId);
+      await toggleFrequentlyUsedAPI(keyId);
     } catch (error) {
       console.error("Toggle frequent error:", error);
     }

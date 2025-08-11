@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
+import socketService from "../services/socketService.js";
+import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/qrService.js";
 
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/keys`
@@ -8,71 +10,37 @@ const API_URL = import.meta.env.VITE_API_URL
     ? "http://localhost:8000/api/keys"
     : "/api/keys";
 
-// Mock data for development - replace with real API calls
-const mockKeys = [
-  {
-    id: "key-001",
-    keyNumber: "101",
-    keyName: "Computer Lab 1",
-    location: "Block A - Floor 1",
-    status: "available",
-    takenBy: null,
-    takenAt: null,
-    returnedAt: null,
-    frequentlyUsed: true
-  },
-  {
-    id: "key-002",
-    keyNumber: "102",
-    keyName: "Computer Lab 2",
-    location: "Block A - Floor 1",
-    status: "unavailable",
-    takenBy: { id: "user-1", name: "Dr. Smith", email: "smith@college.edu" },
-    takenAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    returnedAt: null,
-    frequentlyUsed: true
-  },
-  {
-    id: "key-003",
-    keyNumber: "201",
-    keyName: "Physics Lab",
-    location: "Block B - Floor 2",
-    status: "available",
-    takenBy: null,
-    takenAt: null,
-    returnedAt: null,
-    frequentlyUsed: false
-  },
-  {
-    id: "key-004",
-    keyNumber: "301",
-    keyName: "Chemistry Lab",
-    location: "Block C - Floor 3",
-    status: "unavailable",
-    takenBy: { id: "user-2", name: "Prof. Johnson", email: "johnson@college.edu" },
-    takenAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    returnedAt: null,
-    frequentlyUsed: true
-  },
-  {
-    id: "key-005",
-    keyNumber: "401",
-    keyName: "Library Study Room 1",
-    location: "Library - Floor 4",
-    status: "available",
-    takenBy: null,
-    takenAt: null,
-    returnedAt: null,
-    frequentlyUsed: false
-  }
-];
+// Helper function to transform backend key data to frontend format
+const transformKeyData = (backendKey) => {
+  return {
+    id: backendKey._id,
+    keyNumber: backendKey.keyNumber,
+    keyName: backendKey.keyName,
+    location: backendKey.location,
+    status: backendKey.status,
+    description: backendKey.description || "",
+    category: backendKey.category,
+    frequentlyUsed: backendKey.frequentlyUsed,
+    takenBy: backendKey.takenBy?.userId ? {
+      id: backendKey.takenBy.userId,
+      name: backendKey.takenBy.name,
+      email: backendKey.takenBy.email
+    } : null,
+    takenAt: backendKey.takenAt,
+    returnedAt: backendKey.returnedAt,
+    isActive: backendKey.isActive,
+    createdAt: backendKey.createdAt,
+    updatedAt: backendKey.updatedAt
+  };
+};
 
 export const useKeyStore = create((set, get) => ({
-  keys: mockKeys,
+  keys: [],
   isLoading: false,
   error: null,
   searchQuery: "",
   activeQRRequest: null,
+  isSocketConnected: false,
 
   // Get available keys
   getAvailableKeys: () => {
@@ -121,13 +89,7 @@ export const useKeyStore = create((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const qrData = {
-        type: "KEY_REQUEST",
-        keyId,
-        userId,
-        timestamp: new Date().toISOString(),
-        requestId: `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      };
+      const qrData = generateKeyRequestQRData(keyId, userId);
 
       set({
         activeQRRequest: qrData,
@@ -147,13 +109,7 @@ export const useKeyStore = create((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const qrData = {
-        type: "KEY_RETURN",
-        keyId,
-        userId,
-        timestamp: new Date().toISOString(),
-        returnId: `ret-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      };
+      const qrData = generateKeyReturnQRData(keyId, userId);
 
       return qrData;
     } catch (error) {
@@ -307,6 +263,109 @@ export const useKeyStore = create((set, get) => ({
     set({ activeQRRequest: null });
   },
 
+  // Initialize WebSocket connection
+  initializeSocket: () => {
+    try {
+      socketService.connect();
+
+      // Set up event listeners for real-time updates
+      socketService.on('keyUpdated', (data) => {
+        const { keys } = get();
+        let updatedKeys = [...keys];
+        const existingKeyIndex = keys.findIndex(key => key.id === data.key._id);
+
+        if (data.action === 'delete' && existingKeyIndex !== -1) {
+          // Remove deleted key
+          updatedKeys.splice(existingKeyIndex, 1);
+        } else if (existingKeyIndex !== -1) {
+          // Update existing key
+          updatedKeys[existingKeyIndex] = transformKeyData(data.key);
+        } else {
+          // Add new key
+          updatedKeys.push(transformKeyData(data.key));
+        }
+
+        set({ keys: updatedKeys });
+
+        // Show notification based on action
+        switch (data.action) {
+          case 'take':
+            handleSuccess(`Key ${data.key.keyNumber} has been taken by ${data.key.takenBy?.name || 'someone'}`);
+            break;
+          case 'return':
+            handleSuccess(`Key ${data.key.keyNumber} has been returned`);
+            break;
+          case 'qr-return':
+            handleSuccess(`Key ${data.key.keyNumber} was returned via QR scan`);
+            break;
+          case 'create':
+            handleSuccess(`New key ${data.key.keyNumber} has been added`);
+            break;
+          case 'update':
+            handleSuccess(`Key ${data.key.keyNumber} has been updated`);
+            break;
+          case 'delete':
+            handleSuccess(`Key ${data.key.keyNumber} has been removed`);
+            break;
+          case 'toggle-frequent':
+            const status = data.key.frequentlyUsed ? 'added to' : 'removed from';
+            handleSuccess(`Key ${data.key.keyNumber} ${status} frequently used`);
+            break;
+          default:
+            break;
+        }
+      });
+
+      socketService.on('userKeyUpdated', (data) => {
+        // Handle user-specific key updates (e.g., keys taken/returned by current user)
+        console.log('User key update:', data);
+
+        // You could add specific logic here for user-specific notifications
+        if (data.action === 'qr-return') {
+          handleSuccess(`Your key ${data.key.keyNumber} was successfully returned via QR scan`);
+        }
+      });
+
+      set({ isSocketConnected: true });
+      console.log('✅ Socket service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize socket:', error);
+      set({ isSocketConnected: false });
+    }
+  },
+
+  // Refresh keys data
+  refreshKeys: async () => {
+    try {
+      await get().fetchKeys();
+    } catch (error) {
+      console.error('Failed to refresh keys:', error);
+    }
+  },
+
+  // Handle real-time key update
+  handleRealTimeUpdate: (data) => {
+    const { keys } = get();
+    let updatedKeys = [...keys];
+    const existingKeyIndex = keys.findIndex(key => key.id === data.key._id);
+
+    if (data.action === 'delete' && existingKeyIndex !== -1) {
+      updatedKeys.splice(existingKeyIndex, 1);
+    } else if (existingKeyIndex !== -1) {
+      updatedKeys[existingKeyIndex] = transformKeyData(data.key);
+    } else {
+      updatedKeys.push(transformKeyData(data.key));
+    }
+
+    set({ keys: updatedKeys });
+  },
+
+  // Disconnect WebSocket
+  disconnectSocket: () => {
+    socketService.disconnect();
+    set({ isSocketConnected: false });
+  },
+
   // Fetch keys from API
   fetchKeys: async () => {
     set({ isLoading: true, error: null });
@@ -316,15 +375,92 @@ export const useKeyStore = create((set, get) => ({
         withCredentials: true,
       });
 
-      const keys = response.data.data.keys || [];
+      const backendKeys = response.data.data.keys || [];
+      const keys = backendKeys.map(transformKeyData);
+
       set({ keys, isLoading: false });
       return keys;
     } catch (error) {
       console.error("Error fetching keys:", error);
-      // Fallback to mock data if API fails
       const errorMessage = handleError(error);
-      set({ keys: mockKeys, error: errorMessage, isLoading: false });
-      return mockKeys;
+      set({ keys: [], error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Take a key via API
+  takeKeyAPI: async (keyId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.post(`${API_URL}/${keyId}/take`, {}, {
+        withCredentials: true,
+      });
+
+      const updatedKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = keys.map(key =>
+        key.id === keyId ? updatedKey : key
+      );
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return updatedKey;
+    } catch (error) {
+      console.error("Error taking key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Return a key via API
+  returnKeyAPI: async (keyId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.post(`${API_URL}/${keyId}/return`, {}, {
+        withCredentials: true,
+      });
+
+      const updatedKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = keys.map(key =>
+        key.id === keyId ? updatedKey : key
+      );
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return updatedKey;
+    } catch (error) {
+      console.error("Error returning key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Toggle frequently used status via API
+  toggleFrequentlyUsedAPI: async (keyId) => {
+    try {
+      const response = await axios.post(`${API_URL}/${keyId}/toggle-frequent`, {}, {
+        withCredentials: true,
+      });
+
+      const updatedKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = keys.map(key =>
+        key.id === keyId ? updatedKey : key
+      );
+
+      set({ keys: updatedKeys });
+      handleSuccess(response.data.message);
+      return updatedKey;
+    } catch (error) {
+      console.error("Error toggling frequently used:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage });
+      throw error;
     }
   }
 }));

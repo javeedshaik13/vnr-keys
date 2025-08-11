@@ -60,6 +60,23 @@ const keySchema = new mongoose.Schema(
       enum: ["classroom", "lab", "office", "storage", "other"],
       default: "other",
     },
+    department: {
+      type: String,
+      enum: [
+        "CSE", // Computer Science Engineering
+        "EEE", // Electrical and Electronics Engineering
+        "AIML", // Artificial Intelligence and Machine Learning
+        "IoT", // Internet of Things
+        "ECE", // Electronics and Communication Engineering
+        "MECH", // Mechanical Engineering
+        "CIVIL", // Civil Engineering
+        "IT", // Information Technology
+        "ADMIN", // Administration
+        "RESEARCH", // Research Department
+        "COMMON" // Common keys accessible to all departments
+      ],
+      default: "COMMON", // Default to common access
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -77,6 +94,7 @@ keySchema.index({ status: 1 });
 keySchema.index({ "takenBy.userId": 1 });
 keySchema.index({ frequentlyUsed: 1 });
 keySchema.index({ category: 1 });
+keySchema.index({ department: 1 });
 keySchema.index({ isActive: 1 });
 
 // Virtual for checking if key is currently taken
@@ -131,6 +149,52 @@ keySchema.statics.findTakenByUser = function(userId) {
 // Static method to find frequently used keys
 keySchema.statics.findFrequentlyUsed = function() {
   return this.find({ frequentlyUsed: true, isActive: true });
+};
+
+// Static method to find keys accessible to a user based on their department
+keySchema.statics.findAccessibleToUser = function(user) {
+  const query = { isActive: true };
+
+  // Admin and security can see all keys
+  if (user.role === 'admin' || user.role === 'security') {
+    return this.find(query);
+  }
+
+  // Faculty can see keys from their department or common keys
+  if (user.role === 'faculty' && user.department) {
+    query.$or = [
+      { department: user.department },
+      { department: 'COMMON' }
+    ];
+  } else {
+    // If no department specified, show only common keys
+    query.department = 'COMMON';
+  }
+
+  return this.find(query);
+};
+
+// Static method to find available keys accessible to a user
+keySchema.statics.findAvailableForUser = function(user) {
+  const query = { status: 'available', isActive: true };
+
+  // Admin and security can see all available keys
+  if (user.role === 'admin' || user.role === 'security') {
+    return this.find(query);
+  }
+
+  // Faculty can see available keys from their department or common keys
+  if (user.role === 'faculty' && user.department) {
+    query.$or = [
+      { department: user.department },
+      { department: 'COMMON' }
+    ];
+  } else {
+    // If no department specified, show only common keys
+    query.department = 'COMMON';
+  }
+
+  return this.find(query);
 };
 
 export const Key = mongoose.model("Key", keySchema);
