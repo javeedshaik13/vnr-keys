@@ -22,6 +22,7 @@ import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
 import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
+import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
 
@@ -60,11 +61,26 @@ const RoleBasedRedirect = () => {
 };
 
 function App() {
-	const { isCheckingAuth, checkAuth } = useAuthStore();
+	const { isCheckingAuth, checkAuth, isAuthenticated } = useAuthStore();
+	const { initializeSocket, disconnectSocket } = useKeyStore();
 
 	useEffect(() => {
 		checkAuth();
 	}, [checkAuth]);
+
+	// Initialize socket connection when user is authenticated
+	useEffect(() => {
+		if (isAuthenticated) {
+			initializeSocket();
+		} else {
+			disconnectSocket();
+		}
+
+		// Cleanup on unmount
+		return () => {
+			disconnectSocket();
+		};
+	}, [isAuthenticated, initializeSocket, disconnectSocket]);
 
 	if (isCheckingAuth) return <LoadingSpinner />;
 

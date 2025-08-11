@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 import { connectDB } from "./db/connectDB.js";
 import { verifyTransporter } from "./nodemailer/nodemailer.config.js";
@@ -22,6 +24,7 @@ import apiKeyRoutes from "./routes/apiKey.route.js";
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
@@ -139,8 +142,44 @@ if (process.env.NODE_ENV === "production") {
 	});
 }
 
-app.listen(PORT, async () => {
+// Configure Socket.IO with CORS
+const io = new Server(server, {
+	cors: {
+		origin: [
+			'https://vnr-keys.vercel.app',
+			'http://localhost:5173',
+			'http://localhost:3000',
+			'http://127.0.0.1:5173'
+		],
+		methods: ["GET", "POST"],
+		credentials: true
+	}
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+	console.log(`🔌 User connected: ${socket.id}`);
+
+	// Join user to their own room for personalized updates
+	socket.on('join-user-room', (userId) => {
+		socket.join(`user-${userId}`);
+		console.log(`👤 User ${userId} joined their room`);
+	});
+
+	// Join all users to a general keys room for global updates
+	socket.join('keys-updates');
+
+	socket.on('disconnect', () => {
+		console.log(`🔌 User disconnected: ${socket.id}`);
+	});
+});
+
+// Make io available globally for other modules
+global.io = io;
+
+server.listen(PORT, async () => {
 	await connectDB();
 	await verifyTransporter();
 	console.log("Server is running on port: ", PORT);
+	console.log("🔌 Socket.IO server is ready for real-time updates");
 });

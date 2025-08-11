@@ -11,6 +11,7 @@ const sampleKeys = [
     location: "Block A - Floor 1",
     description: "Main computer laboratory with 30 workstations",
     category: "lab",
+    department: "CSE",
     frequentlyUsed: true,
   },
   {
@@ -19,6 +20,7 @@ const sampleKeys = [
     location: "Block A - Floor 1",
     description: "Secondary computer laboratory with 25 workstations",
     category: "lab",
+    department: "CSE",
     frequentlyUsed: true,
   },
   {
@@ -27,6 +29,7 @@ const sampleKeys = [
     location: "Block B - Floor 2",
     description: "Physics laboratory with experimental equipment",
     category: "lab",
+    department: "EEE",
     frequentlyUsed: false,
   },
   {
@@ -35,6 +38,7 @@ const sampleKeys = [
     location: "Block B - Floor 2",
     description: "Chemistry laboratory with fume hoods and safety equipment",
     category: "lab",
+    department: "CIVIL",
     frequentlyUsed: true,
   },
   {
@@ -43,6 +47,7 @@ const sampleKeys = [
     location: "Block C - Floor 3",
     description: "Biology laboratory with microscopes and specimens",
     category: "lab",
+    department: "RESEARCH",
     frequentlyUsed: false,
   },
   {
@@ -51,6 +56,7 @@ const sampleKeys = [
     location: "Library - Floor 4",
     description: "Private study room for group discussions",
     category: "classroom",
+    department: "COMMON",
     frequentlyUsed: true,
   },
   {
@@ -59,6 +65,7 @@ const sampleKeys = [
     location: "Library - Floor 4",
     description: "Private study room with presentation equipment",
     category: "classroom",
+    department: "COMMON",
     frequentlyUsed: false,
   },
   {
@@ -67,6 +74,7 @@ const sampleKeys = [
     location: "Administration Block - Floor 5",
     description: "Large conference room with video conferencing setup",
     category: "office",
+    department: "ADMIN",
     frequentlyUsed: true,
   },
   {
@@ -75,6 +83,7 @@ const sampleKeys = [
     location: "Administration Block - Floor 5",
     description: "Medium conference room for departmental meetings",
     category: "office",
+    department: "ADMIN",
     frequentlyUsed: false,
   },
   {
@@ -83,6 +92,7 @@ const sampleKeys = [
     location: "Basement - Block A",
     description: "General storage for office supplies",
     category: "storage",
+    department: "ADMIN",
     frequentlyUsed: false,
   },
   {
@@ -91,6 +101,7 @@ const sampleKeys = [
     location: "Basement - Block B",
     description: "Secure storage for IT equipment and servers",
     category: "storage",
+    department: "IT",
     frequentlyUsed: false,
   },
   {
@@ -99,6 +110,7 @@ const sampleKeys = [
     location: "Main Building - Ground Floor",
     description: "Main auditorium with 200 seating capacity",
     category: "classroom",
+    department: "COMMON",
     frequentlyUsed: true,
   },
   {
@@ -107,6 +119,7 @@ const sampleKeys = [
     location: "Main Building - Floor 1",
     description: "Seminar hall with 50 seating capacity",
     category: "classroom",
+    department: "COMMON",
     frequentlyUsed: true,
   },
   {
@@ -115,6 +128,7 @@ const sampleKeys = [
     location: "Main Building - Floor 1",
     description: "Seminar hall with 30 seating capacity",
     category: "classroom",
+    department: "COMMON",
     frequentlyUsed: false,
   },
   {
@@ -123,6 +137,7 @@ const sampleKeys = [
     location: "Faculty Block - Floor 2",
     description: "Common area for faculty members",
     category: "office",
+    department: "COMMON",
     frequentlyUsed: false,
   },
 ];

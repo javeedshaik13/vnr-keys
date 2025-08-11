@@ -6,6 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRScanner from "../../components/keys/QRScanner";
+import { processQRScanReturn, validateQRData, parseQRString } from "../../services/qrService";
 
 const SecurityDashboard = () => {
   const [activeTab, setActiveTab] = useState("scanner");
@@ -17,11 +18,18 @@ const SecurityDashboard = () => {
   const {
     getAvailableKeys,
     getUnavailableKeys,
-    processQRScan,
-    manuallyCollectKey,
+    fetchKeys,
+    returnKeyAPI,
     isLoading,
     error
   } = useKeyStore();
+
+  // Fetch keys on component mount
+  useEffect(() => {
+    if (user) {
+      fetchKeys().catch(console.error);
+    }
+  }, [user, fetchKeys]);
 
   const availableKeys = getAvailableKeys();
   const unavailableKeys = getUnavailableKeys();
@@ -48,12 +56,44 @@ const SecurityDashboard = () => {
 
   const handleQRScan = async (qrData) => {
     try {
-      const result = await processQRScan(qrData);
-      setScanResult(result);
+      console.log('QR scan received:', qrData);
+
+      // Parse QR data if it's a string
+      let parsedData = qrData;
+      if (typeof qrData === 'string') {
+        parsedData = parseQRString(qrData);
+      }
+
+      // Validate QR data
+      const validation = validateQRData(parsedData);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
+      }
+
+      // Handle different QR code types
+      let result;
+      if (validation.type === 'key-return') {
+        result = await processQRScanReturn(parsedData);
+        setScanResult({
+          success: true,
+          message: result.message,
+          keyData: result.data.key,
+          type: 'return'
+        });
+      } else {
+        throw new Error('Unsupported QR code type');
+      }
+
       setShowScanResult(true);
       setShowScanner(false);
     } catch (error) {
       console.error("QR scan error:", error);
+      setScanResult({
+        success: false,
+        message: error.message || 'Failed to process QR code',
+        type: 'error'
+      });
+      setShowScanResult(true);
       setShowScanner(false);
     }
   };
