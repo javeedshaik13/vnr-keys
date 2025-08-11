@@ -18,6 +18,7 @@ import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
 import apiKeyRoutes from "./routes/apiKey.route.js";
+import about from "./routes/about.js"
 
 dotenv.config();
 
@@ -114,6 +115,7 @@ app.get("/", (req, res) => {
 		message: "VNR Keys API Server",
 		version: "1.0.0",
 		endpoints: {
+			about : "/api/about",
 			health: "/api/health",
 			auth: "/api/auth",
 			dashboard: "/api/dashboard",
@@ -127,6 +129,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
 app.use("/api/api-keys", apiKeyRoutes);
+app.use("/api/about",about);
 
 // Global error handler (must be after all routes)
 app.use(globalErrorHandler);
