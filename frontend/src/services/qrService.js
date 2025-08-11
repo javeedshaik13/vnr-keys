@@ -15,7 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL
 export const processQRScanReturn = async (qrData) => {
   try {
     console.log('Processing QR scan return:', qrData);
-    
+
     const response = await axios.post(`${API_URL}/qr-scan/return`, {
       qrData
     }, {
@@ -26,6 +26,30 @@ export const processQRScanReturn = async (qrData) => {
     return response.data;
   } catch (error) {
     console.error('QR scan return error:', error);
+    const errorMessage = handleError(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Process QR code scan for key request
+ * @param {Object|string} qrData - The QR code data (object or JSON string)
+ * @returns {Promise<Object>} The API response
+ */
+export const processQRScanRequest = async (qrData) => {
+  try {
+    console.log('Processing QR scan request:', qrData);
+
+    const response = await axios.post(`${API_URL}/qr-scan/request`, {
+      qrData
+    }, {
+      withCredentials: true,
+    });
+
+    handleSuccess(response.data.message);
+    return response.data;
+  } catch (error) {
+    console.error('QR scan request error:', error);
     const errorMessage = handleError(error);
     throw new Error(errorMessage);
   }

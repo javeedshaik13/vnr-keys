@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, List, Search, Star, QrCode, X } from "lucide-react";
+import { Key, KeyRound, List, Search, Star, QrCode, X } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -8,7 +8,7 @@ import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
 
 const FacultyDashboard = () => {
-  const [activeTab, setActiveTab] = useState("taken");
+  const [activeTab, setActiveTab] = useState("available");
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
@@ -22,11 +22,7 @@ const FacultyDashboard = () => {
     generateKeyRequestQR,
     generateKeyReturnQR,
     toggleFrequentlyUsedAPI,
-    takeKeyAPI,
-    returnKeyAPI,
-    fetchKeys,
-    isLoading,
-    error
+    fetchKeys
   } = useKeyStore();
 
   // Fetch keys on component mount
@@ -40,24 +36,34 @@ const FacultyDashboard = () => {
   const frequentlyUsedKeys = getFrequentlyUsedKeys();
   const searchResults = searchKeys(searchQuery);
 
+  const availableKeys = keys.filter(key => key.status === "available");
+
   const tabs = [
     {
-      id: "taken",
-      label: "Taken Keys",
+      id: "available",
+      label: "Available Keys",
       icon: <Key className="w-6 h-6" />,
+      badge: availableKeys.length > 0 ? availableKeys.length : null,
+    },
+    {
+      id: "taken",
+      label: "My Keys",
+      icon: <KeyRound className="w-6 h-6" />,
       badge: takenKeys.length > 0 ? takenKeys.length : null,
     },
     {
       id: "keylist",
-      label: "Key List",
+      label: "All Keys",
       icon: <List className="w-6 h-6" />,
     },
   ];
 
   const handleRequestKey = async (keyId) => {
     try {
-      // For faculty, we'll take the key directly via API
-      await takeKeyAPI(keyId);
+      // Generate QR code for key request
+      const qrData = await generateKeyRequestQR(keyId, user.id);
+      setQrData(qrData);
+      setShowQRModal(true);
     } catch (error) {
       console.error("Request key error:", error);
     }
@@ -85,6 +91,40 @@ const FacultyDashboard = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "available":
+        return (
+          <div className="flex-1 p-4 pb-20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Available Keys</h2>
+              <div className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-sm font-medium border border-green-600/30">
+                {availableKeys.length} Available
+              </div>
+            </div>
+
+            {availableKeys.length === 0 ? (
+              <div className="text-center py-12">
+                <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">No keys available</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  All keys are currently taken
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {availableKeys.map((key) => (
+                  <KeyCard
+                    key={key.id}
+                    keyData={key}
+                    variant="available"
+                    onRequestKey={handleRequestKey}
+                    onToggleFrequent={handleToggleFrequent}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
       case "taken":
         return (
           <div className="flex-1 p-4 pb-20">
@@ -242,12 +282,17 @@ const FacultyDashboard = () => {
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
               <p className="text-gray-600 mb-4">
-                Show this QR code to security to request the key
+                {qrData.type === 'key-request'
+                  ? 'Show this QR code to security to request the key'
+                  : 'Show this QR code to security to return the key'
+                }
               </p>
               <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <p className="text-sm text-gray-500">Request ID:</p>
+                <p className="text-sm text-gray-500">
+                  {qrData.type === 'key-request' ? 'Request ID:' : 'Return ID:'}
+                </p>
                 <p className="text-xs font-mono text-gray-700 break-all">
-                  {qrData.requestId}
+                  {qrData.requestId || qrData.returnId}
                 </p>
               </div>
               <button

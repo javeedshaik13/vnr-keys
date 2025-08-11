@@ -6,7 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRScanner from "../../components/keys/QRScanner";
-import { processQRScanReturn, validateQRData, parseQRString } from "../../services/qrService";
+import { processQRScanReturn, processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 
 const SecurityDashboard = () => {
   const [activeTab, setActiveTab] = useState("scanner");
@@ -79,6 +79,14 @@ const SecurityDashboard = () => {
           message: result.message,
           keyData: result.data.key,
           type: 'return'
+        });
+      } else if (validation.type === 'key-request') {
+        result = await processQRScanRequest(parsedData);
+        setScanResult({
+          success: true,
+          message: result.message,
+          keyData: result.data.key,
+          type: 'request'
         });
       } else {
         throw new Error('Unsupported QR code type');

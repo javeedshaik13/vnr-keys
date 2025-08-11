@@ -112,6 +112,31 @@ export const emitQRScanReturn = (keyData, scannerId, originalUserId) => {
 };
 
 /**
+ * Emit QR code scan event for key request
+ * @param {Object} keyData - The key being requested via QR scan
+ * @param {string} scannerId - The user (security) who scanned the QR code
+ * @param {string} requestingUserId - The user who requested the key
+ */
+export const emitQRScanRequest = (keyData, scannerId, requestingUserId) => {
+  const updateData = {
+    key: keyData,
+    action: 'qr-request',
+    scannerId,
+    requestingUserId,
+    timestamp: new Date().toISOString()
+  };
+
+  // Emit to all clients
+  global.io.to('keys-updates').emit('key-updated', updateData);
+
+  // Emit to both the scanner and requesting user
+  global.io.to(`user-${scannerId}`).emit('user-key-updated', updateData);
+  global.io.to(`user-${requestingUserId}`).emit('user-key-updated', updateData);
+
+  console.log(`📱 QR scan request emitted: Key ${keyData.keyNumber} scanned by ${scannerId}, requested by ${requestingUserId}`);
+};
+
+/**
  * Get connected clients count
  * @returns {number} Number of connected clients
  */

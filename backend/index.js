@@ -19,7 +19,6 @@ import {
 import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
-import apiKeyRoutes from "./routes/apiKey.route.js";
 import about from "./routes/about.js"
 
 dotenv.config();

@@ -13,7 +13,8 @@ import {
   emitKeyUpdated,
   emitKeyDeleted,
   emitFrequentlyUsedToggled,
-  emitQRScanReturn
+  emitQRScanReturn,
+  emitQRScanRequest
 } from "../services/socketService.js";
 
 /**
@@ -405,6 +406,72 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
         id: originalUser._id,
         name: originalUser.name,
         email: originalUser.email
+      },
+      scannedBy: {
+        id: req.userId,
+        name: req.userName || 'Security',
+        role: req.userRole
+      }
+    },
+  });
+});
+
+/**
+ * Handle QR code scan for key request (security/admin only)
+ */
+export const qrScanRequest = asyncHandler(async (req, res) => {
+  const { qrData } = req.body;
+
+  if (!qrData) {
+    throw new ValidationError("QR data is required");
+  }
+
+  // Parse QR data
+  let parsedData;
+  try {
+    parsedData = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
+  } catch (error) {
+    throw new ValidationError("Invalid QR code format");
+  }
+
+  const { keyId, userId, requestId } = parsedData;
+
+  if (!keyId || !userId || !requestId) {
+    throw new ValidationError("Invalid QR code data - missing required fields");
+  }
+
+  // Find the key
+  const key = await Key.findById(keyId);
+  if (!key) {
+    throw new NotFoundError("Key not found");
+  }
+
+  // Verify the key is available
+  if (key.status === 'unavailable') {
+    throw new ConflictError("Key is already taken");
+  }
+
+  // Get the user who requested the key
+  const requestingUser = await User.findById(userId);
+  if (!requestingUser) {
+    throw new NotFoundError("Requesting user not found");
+  }
+
+  // Take the key for the requesting user
+  await key.takeKey(requestingUser);
+
+  // Emit real-time update for QR scan request
+  emitQRScanRequest(key, req.userId, userId);
+
+  res.status(200).json({
+    success: true,
+    message: `Key ${key.keyNumber} (${key.keyName}) assigned successfully via QR scan`,
+    data: {
+      key,
+      requestingUser: {
+        id: requestingUser._id,
+        name: requestingUser.name,
+        email: requestingUser.email
       },
       scannedBy: {
         id: req.userId,

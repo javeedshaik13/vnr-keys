@@ -298,6 +298,9 @@ export const useKeyStore = create((set, get) => ({
           case 'qr-return':
             handleSuccess(`Key ${data.key.keyNumber} was returned via QR scan`);
             break;
+          case 'qr-request':
+            handleSuccess(`Key ${data.key.keyNumber} was assigned via QR scan`);
+            break;
           case 'create':
             handleSuccess(`New key ${data.key.keyNumber} has been added`);
             break;
@@ -323,6 +326,8 @@ export const useKeyStore = create((set, get) => ({
         // You could add specific logic here for user-specific notifications
         if (data.action === 'qr-return') {
           handleSuccess(`Your key ${data.key.keyNumber} was successfully returned via QR scan`);
+        } else if (data.action === 'qr-request') {
+          handleSuccess(`Your key request for ${data.key.keyNumber} was approved via QR scan`);
         }
       });
 

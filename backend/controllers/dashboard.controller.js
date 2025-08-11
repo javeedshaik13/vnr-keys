@@ -1,5 +1,5 @@
 import { User } from "../models/user.model.js";
-import { ApiKey } from "../models/apiKey.model.js";
+import { Key } from "../models/key.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
 
 /**
@@ -25,16 +25,15 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 	const verifiedUsers = await User.countDocuments({ isVerified: true });
 	const unverifiedUsers = await User.countDocuments({ isVerified: false });
 
-	// Get API key statistics (admin has access to all)
-	const totalApiKeys = await ApiKey.countDocuments();
-	const activeApiKeys = await ApiKey.countDocuments({ isActive: true });
-	const apiKeysByDepartment = await ApiKey.aggregate([
+	// Get key statistics (admin has access to all)
+	const totalKeys = await Key.countDocuments();
+	const activeKeys = await Key.countDocuments({ isActive: true });
+	const keysByDepartment = await Key.aggregate([
 		{
 			$group: {
 				_id: "$department",
 				count: { $sum: 1 },
 				activeCount: { $sum: { $cond: ["$isActive", 1, 0] } },
-				totalUsage: { $sum: "$usageCount" }
 			}
 		},
 		{
@@ -42,11 +41,10 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 		}
 	]);
 
-	const recentApiKeys = await ApiKey.find()
-		.populate('createdBy', 'name email')
+	const recentKeys = await Key.find()
 		.sort({ createdAt: -1 })
 		.limit(5)
-		.select('keyId keyName department isActive usageCount createdAt');
+		.select('keyNumber keyName department isActive createdAt');
 
 	res.status(200).json({
 		success: true,
@@ -60,15 +58,15 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 					acc[item._id] = item.count;
 					return acc;
 				}, {}),
-				// API Key statistics
-				totalApiKeys,
-				activeApiKeys,
-				inactiveApiKeys: totalApiKeys - activeApiKeys,
+				// Key statistics
+				totalKeys,
+				activeKeys,
+				inactiveKeys: totalKeys - activeKeys,
 			},
 			recentUsers,
-			apiKeyStats: {
-				byDepartment: apiKeysByDepartment,
-				recentKeys: recentApiKeys,
+			keyStats: {
+				byDepartment: keysByDepartment,
+				recentKeys: recentKeys,
 			},
 			userRole: req.userRole,
 			// Admin has access to all departments
@@ -465,17 +463,9 @@ export const getSystemReports = asyncHandler(async (req, res) => {
 		}
 	]);
 
-	// API Key statistics
-	const totalApiKeys = await ApiKey.countDocuments();
-	const activeApiKeys = await ApiKey.countDocuments({ isActive: true });
-	const apiKeyUsage = await ApiKey.aggregate([
-		{
-			$group: {
-				_id: null,
-				totalUsage: { $sum: "$usageCount" }
-			}
-		}
-	]);
+	// Key statistics
+	const totalKeys = await Key.countDocuments();
+	const activeKeys = await Key.countDocuments({ isActive: true });
 
 	// System health metrics (mock data)
 	const systemHealth = {
@@ -502,11 +492,10 @@ export const getSystemReports = asyncHandler(async (req, res) => {
 					return acc;
 				}, {})
 			},
-			apiKeyAnalytics: {
-				totalApiKeys,
-				activeApiKeys,
-				inactiveApiKeys: totalApiKeys - activeApiKeys,
-				totalUsage: apiKeyUsage[0]?.totalUsage || 0
+			keyAnalytics: {
+				totalKeys,
+				activeKeys,
+				inactiveKeys: totalKeys - activeKeys,
 			},
 			systemHealth,
 			generatedAt: new Date().toISOString()
