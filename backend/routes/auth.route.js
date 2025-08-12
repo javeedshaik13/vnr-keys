@@ -1,14 +1,11 @@
 import express from "express";
 import {
-	login,
 	logout,
-	signup,
-	verifyEmail,
-	resendVerificationEmail,
-	forgotPassword,
-	resetPassword,
 	checkAuth,
 	getUserById,
+	completeRegistration,
+	checkRegistrationStatus,
+	updateProfile,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import {
@@ -25,18 +22,34 @@ const router = express.Router();
 router.get("/check-auth", verifyToken, checkAuth);
 router.get("/user/:userId", verifyToken, getUserById);
 
-// Authentication endpoints with rate limiting
-router.post("/signup", authLimiter, signup);
-router.post("/login", authLimiter, login);
-router.post("/logout", logout); // No rate limiting for logout
+// Registration endpoints
+router.get("/registration-status", verifyToken, checkRegistrationStatus);
+router.post("/complete-registration", verifyToken, authLimiter, completeRegistration);
 
-// Email verification with specific rate limiting
-router.post("/verify-email", emailVerificationLimiter, verifyEmail);
-router.post("/resend-verification", emailVerificationLimiter, resendVerificationEmail);
+// Profile endpoints
+router.put("/update-profile", verifyToken, authLimiter, updateProfile);
 
-// Password reset with strict rate limiting
-router.post("/forgot-password", passwordResetLimiter, forgotPassword);
-router.post("/reset-password/:token", passwordResetLimiter, resetPassword);
+// Logout (no rate limiting for logout)
+router.post("/logout", logout);
+
+// Development only - Clear all users
+if (process.env.NODE_ENV === 'development') {
+	router.delete("/clear-users", async (req, res) => {
+		try {
+			const { User } = await import("../models/user.model.js");
+			const result = await User.deleteMany({});
+			console.log(`🗑️ Cleared ${result.deletedCount} users from database`);
+			res.json({
+				success: true,
+				message: `Cleared ${result.deletedCount} users from database`,
+				deletedCount: result.deletedCount
+			});
+		} catch (error) {
+			console.error("Error clearing users:", error);
+			res.status(500).json({ success: false, message: "Failed to clear users" });
+		}
+	});
+}
 
 // OAuth routes
 router.get("/google",
@@ -50,17 +63,32 @@ router.get("/google/callback",
 			// Generate JWT token for the authenticated user
 			const token = generateTokenAndSetCookie(res, req.user._id, req.user.role);
 
-			// Redirect to frontend with success
-			const redirectURL = process.env.NODE_ENV === "production"
-				? `${process.env.CLIENT_URL}/dashboard?auth=success`
-				: `http://localhost:5173/dashboard?auth=success`;
+			const frontendURL = process.env.NODE_ENV === "production"
+				? "https://vnr-keys.vercel.app"
+				: process.env.CLIENT_URL || "http://localhost:5173";
+
+			// Check if user needs to complete registration
+			const needsRegistration = req.user.role === 'pending' ||
+				(req.user.role === 'faculty' && (!req.user.department || !req.user.facultyId));
+
+			let redirectURL;
+			if (needsRegistration) {
+				redirectURL = `${frontendURL}/complete-registration?auth=success`;
+				console.log("🔗 New user - redirecting to registration:", redirectURL);
+			} else {
+				redirectURL = `${frontendURL}/dashboard?auth=success`;
+				console.log("🔗 Existing user - redirecting to dashboard:", redirectURL);
+			}
 
 			res.redirect(redirectURL);
 		} catch (error) {
 			console.error("OAuth callback error:", error);
-			const redirectURL = process.env.NODE_ENV === "production"
-				? `${process.env.CLIENT_URL}/login?error=oauth_failed`
-				: `http://localhost:5173/login?error=oauth_failed`;
+			const frontendURL = process.env.NODE_ENV === "production"
+				? "https://vnr-keys.vercel.app"
+				: process.env.CLIENT_URL || "http://localhost:5173";
+
+			const redirectURL = `${frontendURL}/login?error=oauth_failed`;
+			console.log("❌ Error redirect to:", redirectURL);
 
 			res.redirect(redirectURL);
 		}

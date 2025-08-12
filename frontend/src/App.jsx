@@ -1,10 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import FloatingShape from "./components/ui/FloatingShape";
-import SignUpPage from "./pages/auth/SignUpPage";
 import LoginPage from "./pages/auth/LoginPage";
-import EmailVerificationPage from "./pages/auth/EmailVerificationPage";
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import CompleteRegistrationPage from "./pages/auth/CompleteRegistrationPage";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 
 // Dashboard Layout and Pages
@@ -33,8 +30,9 @@ const ProtectedRoute = ({ children }) => {
 		return <Navigate to='/login' replace />;
 	}
 
-	if (!user?.isVerified) {
-		return <Navigate to='/verify-email' replace />;
+	// Check if user needs to complete registration
+	if (user && (user.role === 'pending' || (user.role === 'faculty' && (!user.department || !user.facultyId)))) {
+		return <Navigate to='/complete-registration' replace />;
 	}
 
 	return children;
@@ -44,7 +42,12 @@ const ProtectedRoute = ({ children }) => {
 const RedirectAuthenticatedUser = ({ children }) => {
 	const { isAuthenticated, user, getRoleBasedRoute } = useAuthStore();
 
-	if (isAuthenticated && user?.isVerified) {
+	if (isAuthenticated && user) {
+		// Check if user needs to complete registration
+		if (user.role === 'pending' || (user.role === 'faculty' && (!user.department || !user.facultyId))) {
+			return <Navigate to='/complete-registration' replace />;
+		}
+
 		const dashboardRoute = getRoleBasedRoute();
 		return <Navigate to={dashboardRoute} replace />;
 	}
@@ -65,7 +68,8 @@ function App() {
 
 	useEffect(() => {
 		checkAuth();
-	}, [checkAuth]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run once on mount
 
 	// Initialize socket connection when user is authenticated
 	useEffect(() => {
@@ -79,7 +83,8 @@ function App() {
 		return () => {
 			disconnectSocket();
 		};
-	}, [isAuthenticated, initializeSocket, disconnectSocket]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isAuthenticated]); // Only depend on isAuthenticated
 
 	if (isCheckingAuth) return <LoadingSpinner />;
 
@@ -193,14 +198,6 @@ function App() {
 
 				{/* Auth Routes */}
 				<Route
-					path='/signup'
-					element={
-						<RedirectAuthenticatedUser>
-							<SignUpPage />
-						</RedirectAuthenticatedUser>
-					}
-				/>
-				<Route
 					path='/login'
 					element={
 						<RedirectAuthenticatedUser>
@@ -208,22 +205,9 @@ function App() {
 						</RedirectAuthenticatedUser>
 					}
 				/>
-				<Route path='/verify-email' element={<EmailVerificationPage />} />
 				<Route
-					path='/forgot-password'
-					element={
-						<RedirectAuthenticatedUser>
-							<ForgotPasswordPage />
-						</RedirectAuthenticatedUser>
-					}
-				/>
-				<Route
-					path='/reset-password/:token'
-					element={
-						<RedirectAuthenticatedUser>
-							<ResetPasswordPage />
-						</RedirectAuthenticatedUser>
-					}
+					path='/complete-registration'
+					element={<CompleteRegistrationPage />}
 				/>
 
 				{/* catch all routes */}

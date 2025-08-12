@@ -8,12 +8,19 @@ console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌
 console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ Set" : "❌ Missing");
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  // Determine callback URL based on environment
+  const callbackURL = process.env.NODE_ENV === 'production'
+    ? `${process.env.RENDER_EXTERNAL_URL || 'https://vnr-keys.onrender.com'}/api/auth/google/callback`
+    : "/api/auth/google/callback";
+
+  console.log("🔗 OAuth callback URL:", callbackURL);
+
   passport.use(
     new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/api/auth/google/callback",
+        callbackURL: callbackURL,
       },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -27,31 +34,26 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           return done(null, user);
         }
 
-        // Check if user exists with the same email (local account)
+        // Check if user exists with the same email
         user = await User.findOne({ email: profile.emails[0].value });
 
         if (user) {
-          // Link Google account to existing local account
+          // User exists with same email - link Google account to existing user
           console.log("🔗 Linking Google account to existing user:", user.email);
+
+          // Update existing user with Google ID and provider info
           user.googleId = profile.id;
           user.provider = "google";
-          user.avatar = profile.photos[0]?.value;
-          user.isVerified = true;
+          user.avatar = profile.photos[0]?.value || user.avatar;
+          user.lastLogin = new Date();
+
           await user.save();
+          console.log("✅ Google account linked to existing user:", user.email);
           return done(null, user);
         }
 
-        // Create new user with Google account
+        // Create new user with Google account (incomplete registration)
         console.log("➕ Creating new Google user:", profile.emails[0].value);
-        
-        // Determine role based on email domain or default to faculty
-        let role = "faculty";
-        const email = profile.emails[0].value;
-        
-        // You can customize this logic based on your requirements
-        if (email.includes("admin") || email.includes("security")) {
-          role = email.includes("admin") ? "admin" : "security";
-        }
 
         user = new User({
           googleId: profile.id,
@@ -59,12 +61,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           email: profile.emails[0].value,
           provider: "google",
           avatar: profile.photos[0]?.value,
-          role: role,
+          role: "pending", // Pending role - user needs to complete registration
           isVerified: true,
+          lastLogin: new Date(),
         });
 
         await user.save();
-        console.log("✅ New Google user created:", user.email);
+        console.log("✅ New Google user created (needs registration):", user.email);
         return done(null, user);
       } catch (error) {
         console.error("❌ Google OAuth error:", error);
