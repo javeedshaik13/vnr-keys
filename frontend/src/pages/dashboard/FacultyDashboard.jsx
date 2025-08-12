@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, Search, Star, QrCode, X, RefreshCw } from "lucide-react";
+import { Key, KeyRound, List, Search, Star, QrCode, X, RefreshCw, Filter } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -8,10 +8,11 @@ import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
 
 const FacultyDashboard = () => {
-  const [activeTab, setActiveTab] = useState("available");
+  const [activeTab, setActiveTab] = useState("taken");
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
+  const [availabilityFilter, setAvailabilityFilter] = useState("all"); // "all", "available", "unavailable", "favorites"
 
   const { user } = useAuthStore();
   const {
@@ -55,15 +56,25 @@ const FacultyDashboard = () => {
   const frequentlyUsedKeys = getFrequentlyUsedKeys();
   const searchResults = searchKeys(searchQuery);
 
-  const availableKeys = keys.filter(key => key.status === "available");
+  // Filter keys based on availability and favorites
+  const getFilteredKeys = (keyList) => {
+    switch (availabilityFilter) {
+      case "available":
+        return keyList.filter(key => key.status === "available");
+      case "unavailable":
+        return keyList.filter(key => key.status !== "available");
+      case "favorites":
+        return keyList.filter(key => key.frequentlyUsed);
+      default:
+        return keyList;
+    }
+  };
+
+  const filteredKeys = getFilteredKeys(keys);
+  const filteredSearchResults = getFilteredKeys(searchResults);
+  const filteredFrequentlyUsedKeys = getFilteredKeys(frequentlyUsedKeys);
 
   const tabs = [
-    {
-      id: "available",
-      label: "Available Keys",
-      icon: <Key className="w-6 h-6" />,
-      badge: availableKeys.length > 0 ? availableKeys.length : null,
-    },
     {
       id: "taken",
       label: "My Keys",
@@ -108,42 +119,12 @@ const FacultyDashboard = () => {
     }
   };
 
+  const handleFilterChange = (filter) => {
+    setAvailabilityFilter(filter);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
-      case "available":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Available Keys</h2>
-              <div className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-sm font-medium border border-green-600/30">
-                {availableKeys.length} Available
-              </div>
-            </div>
-
-            {availableKeys.length === 0 ? (
-              <div className="text-center py-12">
-                <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">No keys available</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  All keys are currently taken
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {availableKeys.map((key) => (
-                  <KeyCard
-                    key={key.id}
-                    keyData={key}
-                    variant="available"
-                    onRequestKey={handleRequestKey}
-                    onToggleFrequent={handleToggleFrequent}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-
       case "taken":
         return (
           <div className="flex-1 p-4 pb-20">
@@ -209,54 +190,89 @@ const FacultyDashboard = () => {
               </div>
             </div>
 
-            {/* Frequently Used Keys */}
-            {!searchQuery && frequentlyUsedKeys.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <Star className="w-5 h-5 text-yellow-400" />
-                  <h3 className="text-lg font-semibold text-white">Frequently Used</h3>
-                </div>
-                <div className="space-y-3">
-                  {frequentlyUsedKeys.map((key) => (
-                    <KeyCard
-                      key={key.id}
-                      keyData={key}
-                      variant="default"
-                      onRequestKey={handleRequestKey}
-                      onToggleFrequent={handleToggleFrequent}
-                    />
-                  ))}
-                </div>
+            {/* Filter Buttons */}
+            <div className="mb-6">
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                <button
+                  onClick={() => handleFilterChange("all")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    availabilityFilter === "all"
+                      ? "bg-green-500 text-white"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => handleFilterChange("available")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    availabilityFilter === "available"
+                      ? "bg-green-500 text-white"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
+                >
+                  Available
+                </button>
+                <button
+                  onClick={() => handleFilterChange("unavailable")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    availabilityFilter === "unavailable"
+                      ? "bg-green-500 text-white"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
+                >
+                  Unavailable
+                </button>
+                <button
+                  onClick={() => handleFilterChange("favorites")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    availabilityFilter === "favorites"
+                      ? "bg-green-500 text-white"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  }`}
+                >
+                  Favorites
+                </button>
               </div>
-            )}
+            </div>
+
+
 
             {/* All Keys */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
-                {searchQuery ? `Search Results (${searchResults.length})` : "All Keys"}
+                {searchQuery ? `Search Results (${filteredSearchResults.length})` : "All Keys"}
+                {availabilityFilter !== "all" && (
+                  <span className="text-sm text-gray-400 ml-2">
+                    ({availabilityFilter === "available" ? "Available" : availabilityFilter === "unavailable" ? "Unavailable" : "Favorites"} only)
+                  </span>
+                )}
               </h3>
 
-              {(searchQuery ? searchResults : keys).length === 0 ? (
+              {(searchQuery ? filteredSearchResults : filteredKeys).length === 0 ? (
                 <div className="text-center py-12">
                   <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-400 text-lg">
                     {searchQuery ? "No keys found" : "No keys available"}
+                    {availabilityFilter !== "all" && (
+                      <span className="block text-sm text-gray-500 mt-1">
+                        with current filter
+                      </span>
+                    )}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {(searchQuery ? searchResults : keys)
-                    .filter(key => !searchQuery || !frequentlyUsedKeys.some(fk => fk.id === key.id))
-                    .map((key) => (
-                      <KeyCard
-                        key={key.id}
-                        keyData={key}
-                        variant="default"
-                        onRequestKey={handleRequestKey}
-                        onToggleFrequent={handleToggleFrequent}
-                      />
-                    ))}
-                </div>
+                                 <div className="space-y-3">
+                   {(searchQuery ? filteredSearchResults : filteredKeys).map((key) => (
+                     <KeyCard
+                       key={key.id}
+                       keyData={key}
+                       variant="default"
+                       onRequestKey={handleRequestKey}
+                       onToggleFrequent={handleToggleFrequent}
+                     />
+                   ))}
+                 </div>
               )}
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, MapPin, User, Star, StarOff, QrCode, CheckCircle } from "lucide-react";
+import { Clock, MapPin, User, Star, QrCode, CheckCircle } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useState } from "react";
 
@@ -96,27 +96,28 @@ const KeyCard = ({
               <h3 className="text-lg font-bold text-white">
                 Key #{keyData.keyNumber}
               </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor()}`}>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor()}`}>
                 {getStatusIcon()}
-                <span className="ml-1 capitalize">{keyData.status}</span>
+                <span className="capitalize">{keyData.status}</span>
               </span>
             </div>
             <p className="text-emerald-200 font-medium">{keyData.keyName}</p>
           </div>
 
-          {/* Frequent toggle for faculty */}
-          {variant === "default" && onToggleFrequent && (
-            <button
-              onClick={handleToggleFrequent}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {keyData.frequentlyUsed ? (
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-              ) : (
-                <StarOff className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-          )}
+                     {/* Favorite toggle for faculty */}
+           {variant === "default" && onToggleFrequent && (
+             <button
+               onClick={handleToggleFrequent}
+               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+               title={keyData.frequentlyUsed ? "Remove from favorites" : "Add to favorites"}
+             >
+               {keyData.frequentlyUsed ? (
+                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
+               ) : (
+                 <Star className="w-5 h-5 text-gray-400" />
+               )}
+             </button>
+           )}
         </div>
 
         {/* Location */}

@@ -434,7 +434,7 @@ export const useKeyStore = create((set, get) => ({
             break;
           case 'toggle-frequent':
             const status = data.key.frequentlyUsed ? 'added to' : 'removed from';
-            handleSuccess(`Key ${data.key.keyNumber} ${status} frequently used`);
+            handleSuccess(`Key ${data.key.keyNumber} (${data.key.keyName}) ${status} favorites`);
             break;
           default:
             break;
@@ -581,7 +581,7 @@ export const useKeyStore = create((set, get) => ({
       );
 
       set({ keys: updatedKeys });
-      handleSuccess(response.data.message);
+      // Don't show notification here - let the socket handle it with key name
       return updatedKey;
     } catch (error) {
       console.error("Error toggling frequently used:", error);
