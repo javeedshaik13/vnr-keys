@@ -1,15 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
+import GoogleOAuthButton from "../../components/auth/GoogleOAuthButton";
 import { useAuthStore } from "../../store/authStore";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
 
-	const { login, isLoading, error } = useAuthStore();
+	const { login, isLoading, error, checkAuth, getRoleBasedRoute } = useAuthStore();
+
+	// Handle OAuth callback
+	useEffect(() => {
+		const authStatus = searchParams.get('auth');
+		const errorParam = searchParams.get('error');
+
+		if (authStatus === 'success') {
+			toast.success('Successfully logged in with Google!');
+			// Check auth and redirect to appropriate dashboard
+			checkAuth().then(() => {
+				const route = getRoleBasedRoute();
+				navigate(route, { replace: true });
+			});
+		} else if (errorParam === 'oauth_failed') {
+			toast.error('Google authentication failed. Please try again.');
+		}
+	}, [searchParams, navigate, checkAuth, getRoleBasedRoute]);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
@@ -63,6 +84,16 @@ const LoginPage = () => {
 						{isLoading ? <Loader className='w-6 h-6 animate-spin  mx-auto' /> : "Login"}
 					</motion.button>
 				</form>
+
+				{/* Divider */}
+				<div className="flex items-center my-6">
+					<div className="flex-1 border-t border-gray-600"></div>
+					<span className="px-4 text-gray-400 text-sm">or</span>
+					<div className="flex-1 border-t border-gray-600"></div>
+				</div>
+
+				{/* Google OAuth Button */}
+				<GoogleOAuthButton isLoading={isLoading} />
 			</div>
 			<div className='px-8 py-4 bg-gray-900 bg-opacity-50 flex justify-center'>
 				<p className='text-sm text-gray-400'>

@@ -1,10 +1,14 @@
+// Configure environment variables FIRST before any other imports
+import "./config/env.js";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import path from "path";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import passport from "./config/passport.js";
 
 import { connectDB } from "./db/connectDB.js";
 import { verifyTransporter } from "./nodemailer/nodemailer.config.js";
@@ -20,8 +24,6 @@ import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
 import about from "./routes/about.js"
-
-dotenv.config();
 
 const app = express();
 const server = createServer(app);
@@ -91,6 +93,21 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Limit request size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Session middleware for Passport (only needed for OAuth flow)
+app.use(session({
+	secret: process.env.JWT_SECRET || 'your-session-secret',
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 24 * 60 * 60 * 1000 // 24 hours
+	}
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
