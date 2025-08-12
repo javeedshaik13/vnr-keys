@@ -6,6 +6,7 @@ import { User } from "../models/user.model.js";
  * Admin users have access to all API keys across all departments
  * Other users may have restricted access based on future requirements
  */
+
 export const checkApiKeyAccess = async (req, res, next) => {
   try {
     // Ensure user is authenticated (verifyToken should run first)

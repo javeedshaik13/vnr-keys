@@ -245,11 +245,24 @@ const SecurityDashboard = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Key #{scanResult.key?.keyNumber}
               </h3>
-              <h4 className="text-lg font-semibold text-gray-700 mb-4">
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
                 {scanResult.key?.keyName}
               </h4>
+              
+              {/* Added user details section */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="font-medium text-gray-900 mb-1">
+                  {scanResult.key?.status === 'unavailable' ? 'Taken By:' : 'Returned By:'}
+                </p>
+                <p className="text-gray-600">{scanResult.key?.takenBy?.name || 'N/A'}</p>
+                <p className="text-gray-500 text-sm">{scanResult.key?.takenBy?.email || 'N/A'}</p>
+                <p className="text-gray-400 text-xs mt-1">
+                  {new Date().toLocaleString()}
+                </p>
+              </div>
+
               <p className="text-gray-600 mb-6">
-                {scanResult.message}
+                {scanResult.message}    
               </p>
               <button
                 onClick={() => setShowScanResult(false)}
