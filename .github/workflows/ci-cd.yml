@@ -19,6 +19,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -55,6 +57,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -98,6 +102,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -129,12 +135,31 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
       
     - name: Download frontend build artifacts
       uses: actions/download-artifact@v4
       with:
         name: frontend-build
         path: frontend/dist
+        
+    - name: Get commit information
+      id: commit-info
+      run: |
+        echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        echo "commit_message=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+        echo "commit_author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+        echo "commit_date=$(git log -1 --pretty=format:'%cd')" >> $GITHUB_OUTPUT
+        
+        # Extract issue numbers from commit message
+        ISSUE_NUMBERS=$(echo "${{ steps.commit-info.outputs.commit_message }}" | grep -o '#[0-9]*' | tr '\n' ' ' || echo "None")
+        echo "issue_numbers=${ISSUE_NUMBERS}" >> $GITHUB_OUTPUT
+        
+        # Get recent commits for changelog
+        echo "recent_commits<<EOF" >> $GITHUB_OUTPUT
+        git log --oneline -10 >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         
     - name: Deploy to Vercel
       uses: amondnet/vercel-action@v25
@@ -144,6 +169,18 @@ jobs:
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         working-directory: ./frontend
         vercel-args: '--prod'
+        
+    - name: Log deployment info
+      run: |
+        echo "🚀 Frontend Deployment Details:"
+        echo "Commit: ${{ steps.commit-info.outputs.commit_hash }}"
+        echo "Message: ${{ steps.commit-info.outputs.commit_message }}"
+        echo "Author: ${{ steps.commit-info.outputs.commit_author }}"
+        echo "Date: ${{ steps.commit-info.outputs.commit_date }}"
+        echo "Issues: ${{ steps.commit-info.outputs.issue_numbers }}"
+        echo ""
+        echo "Recent Commits:"
+        echo "${{ steps.commit-info.outputs.recent_commits }}"
 
   # Deploy to Render (Backend)
   deploy-backend:
@@ -155,6 +192,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
       
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
@@ -162,11 +201,32 @@ jobs:
         name: backend-build
         path: backend/
         
+    - name: Get commit information
+      id: commit-info
+      run: |
+        echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        echo "commit_message=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+        echo "commit_author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+        echo "commit_date=$(git log -1 --pretty=format:'%cd')" >> $GITHUB_OUTPUT
+        
+        # Extract issue numbers from commit message
+        ISSUE_NUMBERS=$(echo "${{ steps.commit-info.outputs.commit_message }}" | grep -o '#[0-9]*' | tr '\n' ' ' || echo "None")
+        echo "issue_numbers=${ISSUE_NUMBERS}" >> $GITHUB_OUTPUT
+        
     - name: Deploy to Render
       uses: johnbeynon/render-deploy-action@v1.0.0
       with:
         service-id: ${{ secrets.RENDER_SERVICE_ID }}
         api-key: ${{ secrets.RENDER_API_KEY }}
+        
+    - name: Log deployment info
+      run: |
+        echo "🚀 Backend Deployment Details:"
+        echo "Commit: ${{ steps.commit-info.outputs.commit_hash }}"
+        echo "Message: ${{ steps.commit-info.outputs.commit_message }}"
+        echo "Author: ${{ steps.commit-info.outputs.commit_author }}"
+        echo "Date: ${{ steps.commit-info.outputs.commit_date }}"
+        echo "Issues: ${{ steps.commit-info.outputs.issue_numbers }}"
 
   # Notify on completion
   notify:
@@ -176,15 +236,58 @@ jobs:
     if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for commit info
+        
+    - name: Get deployment summary
+      id: deployment-summary
+      run: |
+        COMMIT_HASH=$(git rev-parse HEAD)
+        COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
+        COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+        COMMIT_DATE=$(git log -1 --pretty=format:'%cd')
+        ISSUE_NUMBERS=$(echo "$COMMIT_MESSAGE" | grep -o '#[0-9]*' | tr '\n' ' ' || echo "None")
+        
+        echo "commit_hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+        echo "commit_message=${COMMIT_MESSAGE}" >> $GITHUB_OUTPUT
+        echo "commit_author=${COMMIT_AUTHOR}" >> $GITHUB_OUTPUT
+        echo "commit_date=${COMMIT_DATE}" >> $GITHUB_OUTPUT
+        echo "issue_numbers=${ISSUE_NUMBERS}" >> $GITHUB_OUTPUT
+        
     - name: Notify success
       if: needs.deploy-frontend.result == 'success' && needs.deploy-backend.result == 'success'
       run: |
         echo "✅ Deployment completed successfully!"
+        echo ""
+        echo "📋 Deployment Summary:"
+        echo "====================="
+        echo "Commit: ${{ steps.deployment-summary.outputs.commit_hash }}"
+        echo "Message: ${{ steps.deployment-summary.outputs.commit_message }}"
+        echo "Author: ${{ steps.deployment-summary.outputs.commit_author }}"
+        echo "Date: ${{ steps.deployment-summary.outputs.commit_date }}"
+        echo "Issues: ${{ steps.deployment-summary.outputs.issue_numbers }}"
+        echo ""
+        echo "🌐 Deployed Services:"
         echo "Frontend: https://vnr-keys.vercel.app"
         echo "Backend: Deployed to Render"
+        echo ""
+        echo "📝 Recent Changes:"
+        git log --oneline -5
         
     - name: Notify failure
       if: needs.deploy-frontend.result == 'failure' || needs.deploy-backend.result == 'failure'
       run: |
         echo "❌ Deployment failed!"
-        echo "Check the logs for more details."
+        echo ""
+        echo "📋 Failed Deployment Details:"
+        echo "============================="
+        echo "Commit: ${{ steps.deployment-summary.outputs.commit_hash }}"
+        echo "Message: ${{ steps.deployment-summary.outputs.commit_message }}"
+        echo "Author: ${{ steps.deployment-summary.outputs.commit_author }}"
+        echo "Issues: ${{ steps.deployment-summary.outputs.issue_numbers }}"
+        echo ""
+        echo "🔍 Check the logs for more details."
+        echo "Frontend Status: ${{ needs.deploy-frontend.result }}"
+        echo "Backend Status: ${{ needs.deploy-backend.result }}"

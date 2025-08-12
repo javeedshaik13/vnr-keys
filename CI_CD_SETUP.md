@@ -9,6 +9,7 @@ This repository uses GitHub Actions for continuous integration and deployment (C
 1. **`ci-cd.yml`** - Main CI/CD pipeline for production deployments
 2. **`development.yml`** - Development checks for pull requests and feature branches
 3. **`dependency-updates.yml`** - Automated dependency updates
+4. **`issue-tracking.yml`** - Issue tracking and deployment monitoring
 
 ### Pipeline Stages
 
@@ -85,6 +86,10 @@ Enable branch protection for the `main` branch:
 - **Triggers**: Weekly schedule (Mondays 9 AM UTC), Manual trigger
 - **Purpose**: Automated dependency updates with PR creation
 
+### Issue Tracking (`issue-tracking.yml`)
+- **Triggers**: After CI/CD pipeline completion
+- **Purpose**: Automatic issue creation for failed deployments and success tracking
+
 ## 📋 Pipeline Jobs
 
 ### Frontend CI Job
@@ -112,6 +117,14 @@ Enable branch protection for the `main` branch:
 - Check for security vulnerabilities
 ```
 
+### Issue Tracking Job
+```yaml
+- Monitor deployment success/failure
+- Create issues for failed deployments
+- Comment on related issues for successful deployments
+- Track commit information and issue references
+```
+
 ### Deployment Jobs
 ```yaml
 Frontend Deployment:
@@ -122,6 +135,41 @@ Backend Deployment:
 - Download artifacts
 - Deploy to Render
 ```
+
+## 📝 Commit Message Guidelines
+
+### Issue References in Commits
+
+The CI/CD pipeline automatically tracks issue references in commit messages. Use the following formats:
+
+```
+feat(auth): add email verification system
+
+- Implement email verification flow
+- Add verification token generation
+
+Closes #123
+Fixes #124
+Related to #125
+```
+
+### Commit Message Template
+
+Use the provided template at `.github/ISSUE_TEMPLATE/commit-message-template.md` for consistent commit messages.
+
+### Pull Request Templates
+
+Two PR templates are available:
+- **`.github/pull_request_template.md`** - Comprehensive template with detailed sections
+- **`.github/pull_request_template_simple.md`** - Simplified template with essential fields
+
+Choose the template that best fits your PR scope.
+
+### Automatic Issue Tracking
+
+- **Failed Deployments**: Automatically creates issues with detailed information
+- **Successful Deployments**: Comments on related issues with deployment status
+- **Issue References**: Extracts `#123` format references from commit messages
 
 ## 🛠️ Local Development
 
