@@ -13,6 +13,9 @@ const SecurityDashboard = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [showScanResult, setShowScanResult] = useState(false);
+  const [showReturnConfirmation, setShowReturnConfirmation] = useState(false);
+  const [pendingReturnData, setPendingReturnData] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { user } = useAuthStore();
   const {
@@ -69,29 +72,65 @@ const SecurityDashboard = () => {
       }
 
       // Handle different QR code types
-      let result;
       if (validation.type === 'key-return') {
-        result = await processQRScanReturn(parsedData);
-        setScanResult({
-          success: true,
-          message: result.message,
-          keyData: result.data.key,
-          type: 'return'
-        });
+        // For returns, fetch key and user details first, then show confirmation dialog
+        try {
+          const [keyResponse, userResponse] = await Promise.all([
+            fetch(`/api/keys/${parsedData.keyId}`, {
+              credentials: 'include'
+            }),
+            fetch(`/api/auth/user/${parsedData.userId}`, {
+              credentials: 'include'
+            })
+          ]);
+
+          let keyData = null;
+          let userData = null;
+
+          if (keyResponse.ok) {
+            const keyResult = await keyResponse.json();
+            keyData = keyResult.data || keyResult;
+          }
+
+          if (userResponse.ok) {
+            const userResult = await userResponse.json();
+            userData = userResult.user || userResult;
+          }
+
+          setPendingReturnData({
+            ...parsedData,
+            keyName: keyData?.keyName || `Key #${parsedData.keyId}`,
+            userName: userData?.name || 'Unknown User',
+            userEmail: userData?.email || 'Unknown Email'
+          });
+          setShowReturnConfirmation(true);
+          setShowScanner(false);
+        } catch (error) {
+          console.error("Error fetching key/user details:", error);
+          // Still show confirmation with basic data
+          setPendingReturnData({
+            ...parsedData,
+            keyName: `Key #${parsedData.keyId}`,
+            userName: 'Unknown User',
+            userEmail: 'Unknown Email'
+          });
+          setShowReturnConfirmation(true);
+          setShowScanner(false);
+        }
       } else if (validation.type === 'key-request') {
-        result = await processQRScanRequest(parsedData);
+        // For requests, process immediately as before
+        const result = await processQRScanRequest(parsedData);
         setScanResult({
           success: true,
           message: result.message,
           keyData: result.data.key,
           type: 'request'
         });
+        setShowScanResult(true);
+        setShowScanner(false);
       } else {
         throw new Error('Unsupported QR code type');
       }
-
-      setShowScanResult(true);
-      setShowScanner(false);
     } catch (error) {
       console.error("QR scan error:", error);
       setScanResult({
@@ -102,6 +141,51 @@ const SecurityDashboard = () => {
       setShowScanResult(true);
       setShowScanner(false);
     }
+  };
+
+  const handleCollectReturn = async () => {
+    if (!pendingReturnData) return;
+
+    setIsProcessing(true);
+    try {
+      const result = await processQRScanReturn(pendingReturnData);
+      setScanResult({
+        success: true,
+        message: result.message,
+        keyData: result.data.key,
+        type: 'return'
+      });
+      setShowReturnConfirmation(false);
+      setShowScanResult(true);
+      setPendingReturnData(null);
+    } catch (error) {
+      console.error("Error processing return:", error);
+      setScanResult({
+        success: false,
+        message: error.message || 'Failed to process key return',
+        type: 'error'
+      });
+      setShowReturnConfirmation(false);
+      setShowScanResult(true);
+      setPendingReturnData(null);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRejectReturn = () => {
+    // For now, just close the confirmation dialog
+    // In the future, you could add a rejection reason or notification
+    setShowReturnConfirmation(false);
+    setPendingReturnData(null);
+
+    // Show a rejection message
+    setScanResult({
+      success: false,
+      message: 'Key return was rejected by security',
+      type: 'rejected'
+    });
+    setShowScanResult(true);
   };
 
   const handleCollectKey = async (keyId) => {
@@ -229,6 +313,73 @@ const SecurityDashboard = () => {
         onScan={handleQRScan}
         onClose={() => setShowScanner(false)}
       />
+
+      {/* Return Confirmation Modal */}
+      {showReturnConfirmation && pendingReturnData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 max-w-md w-full"
+          >
+            <div className="text-center">
+              <Key className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Confirm Key Return
+              </h3>
+              <h4 className="text-lg font-semibold text-gray-700 mb-4">
+                {pendingReturnData.keyName}
+              </h4>
+
+              {/* Key and User Details */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <div className="mb-3">
+                  <p className="font-medium text-gray-900 mb-1">Returning Person:</p>
+                  <p className="text-gray-600">{pendingReturnData.userName || 'Loading...'}</p>
+                  <p className="text-gray-500 text-sm">{pendingReturnData.userEmail || 'Loading...'}</p>
+                </div>
+                <div className="mb-3">
+                  <p className="font-medium text-gray-900 mb-1">Key Details:</p>
+                  <p className="text-gray-600">{pendingReturnData.keyName || 'Loading...'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 mb-1">Return Time:</p>
+                  <p className="text-gray-500 text-sm">{new Date().toLocaleString()}</p>
+                </div>
+              </div>
+
+              <p className="text-gray-600 mb-6">
+                Do you want to collect this key return?
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRejectReturn}
+                  disabled={isProcessing}
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={handleCollectReturn}
+                  disabled={isProcessing}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    'Collect'
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Scan Result Modal */}
       {showScanResult && scanResult && (

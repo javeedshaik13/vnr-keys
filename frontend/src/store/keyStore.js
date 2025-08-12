@@ -203,35 +203,29 @@ export const useKeyStore = create((set, get) => ({
 
   // Generate QR code for key request
   generateKeyRequestQR: async (keyId, userId) => {
-    set({ isLoading: true, error: null });
-
     try {
       const qrData = generateKeyRequestQRData(keyId, userId);
 
       set({
-        activeQRRequest: qrData,
-        isLoading: false
+        activeQRRequest: qrData
       });
 
       return qrData;
     } catch (error) {
       const errorMessage = handleError(error);
-      set({ error: errorMessage, isLoading: false });
+      set({ error: errorMessage });
       throw error;
     }
   },
 
   // Generate QR code for key return
   generateKeyReturnQR: async (keyId, userId) => {
-    set({ isLoading: true, error: null });
-
     try {
       const qrData = generateKeyReturnQRData(keyId, userId);
-
       return qrData;
     } catch (error) {
       const errorMessage = handleError(error);
-      set({ error: errorMessage, isLoading: false });
+      set({ error: errorMessage });
       throw error;
     }
   },

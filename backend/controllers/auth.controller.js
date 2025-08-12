@@ -1,5 +1,6 @@
 import bcryptjs from "bcryptjs";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import {
@@ -394,6 +395,38 @@ export const resendVerificationEmail = asyncHandler(async (req, res) => {
 
 export const checkAuth = asyncHandler(async (req, res) => {
 	const user = await User.findById(req.userId).select("-password");
+
+	if (!user) {
+		throw new NotFoundError("User not found");
+	}
+
+	res.status(200).json({
+		success: true,
+		user: {
+			id: user._id,
+			email: user.email,
+			name: user.name,
+			role: user.role,
+			isVerified: user.isVerified,
+			lastLogin: user.lastLogin,
+			createdAt: user.createdAt,
+		}
+	});
+});
+
+export const getUserById = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+
+	if (!userId) {
+		throw new ValidationError("User ID is required");
+	}
+
+	// Validate MongoDB ObjectId format
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		throw new ValidationError("Invalid user ID format");
+	}
+
+	const user = await User.findById(userId).select('-password -verificationToken -verificationTokenExpiresAt -resetPasswordToken -resetPasswordExpiresAt');
 
 	if (!user) {
 		throw new NotFoundError("User not found");
