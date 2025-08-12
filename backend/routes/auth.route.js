@@ -8,6 +8,7 @@ import {
 	forgotPassword,
 	resetPassword,
 	checkAuth,
+	getUserById,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import {
@@ -20,6 +21,7 @@ const router = express.Router();
 
 // Auth check (no rate limiting needed for this)
 router.get("/check-auth", verifyToken, checkAuth);
+router.get("/user/:userId", verifyToken, getUserById);
 
 // Authentication endpoints with rate limiting
 router.post("/signup", authLimiter, signup);

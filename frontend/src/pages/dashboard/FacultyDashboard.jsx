@@ -89,26 +89,47 @@ const FacultyDashboard = () => {
 
   const handleRequestKey = async (keyId) => {
     try {
+      if (!user?.id) {
+        throw new Error('User not authenticated or user ID missing');
+      }
+
+      if (!keyId) {
+        throw new Error('Key ID is required');
+      }
+
       // Generate QR code for key request
       const qrData = await generateKeyRequestQR(keyId, user.id);
       setQrData(qrData);
       setShowQRModal(true);
     } catch (error) {
       console.error("Request key error:", error);
+      // Show error to user
+      alert(`Error generating QR code: ${error.message}`);
     }
   };
 
   const handleReturnKey = async (keyId) => {
     try {
-      const qrData = await generateKeyReturnQR(keyId, user?.id);
-      setQrData(qrData);
-      setShowQRModal(true);
+      if (!user?.id) {
+        throw new Error('User not authenticated or user ID missing');
+      }
+
+      if (!keyId) {
+        throw new Error('Key ID is required');
+      }
+
+      const qrData = await generateKeyReturnQR(keyId, user.id);
+      // Don't set global modal state - let KeyCard handle its own modal
       return qrData;
     } catch (error) {
       console.error("Return key error:", error);
+      // Show error to user
+      alert(`Error generating QR code: ${error.message}`);
       return null;
     }
   };
+
+
 
   const handleToggleFrequent = async (keyId) => {
     try {
@@ -163,8 +184,8 @@ const FacultyDashboard = () => {
                     key={key.id}
                     keyData={key}
                     variant="taken"
-                    qrData={handleReturnKey(key.id)}
-                    showQR={true}
+                    onReturnKey={handleReturnKey}
+                    showQR={false}
                   />
                 ))}
               </div>
@@ -316,7 +337,9 @@ const FacultyDashboard = () => {
             className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Request Key</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                {qrData?.type === 'key-return' ? 'Return Key' : 'Request Key'}
+              </h3>
               <button
                 onClick={() => setShowQRModal(false)}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"

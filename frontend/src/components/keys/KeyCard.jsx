@@ -9,10 +9,13 @@ const KeyCard = ({
   onRequestKey,
   onCollectKey,
   onToggleFrequent,
+  onReturnKey,
   showQR = false,
   qrData = null
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
+  const [localQRData, setLocalQRData] = useState(null);
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   const getStatusColor = () => {
     switch (keyData.status) {
@@ -63,7 +66,20 @@ const KeyCard = ({
     }
   };
 
-  // Return action is handled via QR modal trigger; no separate handler needed
+  const handleReturnKeyClick = async () => {
+    if (onReturnKey) {
+      setIsGeneratingQR(true);
+      try {
+        const qrData = await onReturnKey(keyData.id);
+        setLocalQRData(qrData);
+        setShowQRModal(true);
+      } catch (error) {
+        console.error("Error generating return QR:", error);
+      } finally {
+        setIsGeneratingQR(false);
+      }
+    }
+  };
 
   const handleCollectKey = () => {
     if (onCollectKey) {
@@ -168,11 +184,21 @@ const KeyCard = ({
 
           {variant === "taken" && (
             <button
-              onClick={() => setShowQRModal(true)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              onClick={handleReturnKeyClick}
+              disabled={isGeneratingQR}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
-              <QrCode className="w-4 h-4" />
-              Show Return QR
+              {isGeneratingQR ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4" />
+                  Show Return QR
+                </>
+              )}
             </button>
           )}
 
@@ -188,7 +214,7 @@ const KeyCard = ({
       </motion.div>
 
       {/* QR Modal for return */}
-      {showQRModal && qrData && (
+      {showQRModal && (localQRData || qrData) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -199,13 +225,16 @@ const KeyCard = ({
               Return Key #{keyData.keyNumber}
             </h3>
             <div className="flex justify-center mb-4">
-              <QRCode value={JSON.stringify(qrData)} size={200} />
+              <QRCode value={JSON.stringify(localQRData || qrData)} size={200} />
             </div>
             <p className="text-center text-gray-600 mb-4">
               Show this QR code to security to return the key
             </p>
             <button
-              onClick={() => setShowQRModal(false)}
+              onClick={() => {
+                setShowQRModal(false);
+                setLocalQRData(null);
+              }}
               className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
               Close

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Key } from "../models/key.model.js";
 import { User } from "../models/user.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
@@ -370,6 +371,15 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
     throw new ValidationError("Invalid QR code data - missing required fields");
   }
 
+  // Validate MongoDB ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(keyId)) {
+    throw new ValidationError("Invalid key ID format");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ValidationError("Invalid user ID format");
+  }
+
   // Find the key
   const key = await Key.findById(keyId);
   if (!key) {
@@ -438,6 +448,15 @@ export const qrScanRequest = asyncHandler(async (req, res) => {
 
   if (!keyId || !userId || !requestId) {
     throw new ValidationError("Invalid QR code data - missing required fields");
+  }
+
+  // Validate MongoDB ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(keyId)) {
+    throw new ValidationError("Invalid key ID format");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ValidationError("Invalid user ID format");
   }
 
   // Find the key

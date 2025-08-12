@@ -97,13 +97,28 @@ export const validateQRData = (qrData) => {
  * @returns {Object} QR data object
  */
 export const generateKeyReturnQRData = (keyId, userId) => {
-  return {
+  // Validate input parameters
+  if (!keyId) {
+    throw new Error('Key ID is required for QR generation');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for QR generation');
+  }
+
+  // Ensure IDs are strings (MongoDB ObjectIds should be strings)
+  const keyIdStr = String(keyId);
+  const userIdStr = String(userId);
+
+  const qrData = {
     type: 'key-return',
-    keyId,
-    userId,
+    keyId: keyIdStr,
+    userId: userIdStr,
     timestamp: new Date().toISOString(),
     returnId: `ret-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
   };
+
+  return qrData;
 };
 
 /**
@@ -113,10 +128,23 @@ export const generateKeyReturnQRData = (keyId, userId) => {
  * @returns {Object} QR data object
  */
 export const generateKeyRequestQRData = (keyId, userId) => {
+  // Validate input parameters
+  if (!keyId) {
+    throw new Error('Key ID is required for QR generation');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for QR generation');
+  }
+
+  // Ensure IDs are strings (MongoDB ObjectIds should be strings)
+  const keyIdStr = String(keyId);
+  const userIdStr = String(userId);
+
   return {
     type: 'key-request',
-    keyId,
-    userId,
+    keyId: keyIdStr,
+    userId: userIdStr,
     timestamp: new Date().toISOString(),
     requestId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
   };
