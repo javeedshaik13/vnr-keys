@@ -188,7 +188,7 @@ export const useKeyStore = create((set, get) => ({
             ? {
                 ...k,
                 status: "unavailable",
-                takenBy: { id: qrData.userId, name: "Faculty User" }, // In real app, get user details
+                takenBy: { id: qrData.userId, name: "Faculty User"}, // In real app, get user details
                 takenAt: new Date().toISOString(),
                 returnedAt: null
               }
