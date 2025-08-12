@@ -1,0 +1,76 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        npm-version: '9'
+        
+    - name: Setup Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
+    - name: Check for frontend dependency updates
+      working-directory: ./frontend
+      run: |
+        npm outdated --json > outdated.json || echo "{}" > outdated.json
+        if [ -s outdated.json ] && [ "$(cat outdated.json)" != "{}" ]; then
+          echo "Frontend dependencies need updates"
+          npm update
+          npm audit fix
+        else
+          echo "Frontend dependencies are up to date"
+        fi
+        
+    - name: Check for backend dependency updates
+      working-directory: ./backend
+      run: |
+        npm outdated --json > outdated.json || echo "{}" > outdated.json
+        if [ -s outdated.json ] && [ "$(cat outdated.json)" != "{}" ]; then
+          echo "Backend dependencies need updates"
+          npm update
+          npm audit fix
+        else
+          echo "Backend dependencies are up to date"
+        fi
+        
+    - name: Create Pull Request if updates exist
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: '🤖 Automated Dependency Updates'
+        body: |
+          This PR contains automated dependency updates.
+          
+          ## Changes
+          - Updated frontend dependencies
+          - Updated backend dependencies
+          - Applied security fixes
+          
+          ## Testing
+          - [ ] Frontend builds successfully
+          - [ ] Backend starts without errors
+          - [ ] No breaking changes introduced
+          
+          Please review and merge if everything looks good.
+        branch: chore/dependency-updates
+        delete-branch: true

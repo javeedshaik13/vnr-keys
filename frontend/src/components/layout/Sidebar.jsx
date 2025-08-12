@@ -94,8 +94,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         } bg-gray-900 bg-opacity-95 backdrop-filter backdrop-blur-lg border-r border-gray-800`}
       >
         <div className="flex flex-col h-full">
-
-          {/* Navigation */}
           <nav className="flex-1 p-4">
             <ul className="space-y-2">
               {/* Base menu items */}
@@ -153,14 +151,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               )}
             </ul>
           </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-800">
-            <div className="text-center text-xs text-gray-400">
-              <p>Hackathon Dashboard v1.0</p>
-              <p className="mt-1">© 2024 Your Team</p>
-            </div>
-          </div>
         </div>
       </motion.aside>
     </>
