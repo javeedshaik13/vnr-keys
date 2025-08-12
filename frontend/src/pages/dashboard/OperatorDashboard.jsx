@@ -153,7 +153,7 @@ const OperatorDashboard = () => {
 						Priority Tasks
 					</h3>
 					<div className="space-y-3">
-						{priorityTasks.map((task, index) => (
+                        {priorityTasks.map((task) => (
 							<div key={task.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
 								<div className="flex-1">
 									<p className="text-white font-medium">{task.title}</p>
@@ -187,7 +187,7 @@ const OperatorDashboard = () => {
 						Recent Activity
 					</h3>
 					<div className="space-y-3">
-						{recentActivity.length > 0 ? recentActivity.map((activity, index) => (
+                        {recentActivity.length > 0 ? recentActivity.map((activity) => (
 							<div key={activity.id} className="flex items-start space-x-3 py-2">
 								<div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
 								<div className="flex-1">

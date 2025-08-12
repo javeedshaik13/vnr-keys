@@ -111,8 +111,8 @@ export const getPasswordStrength = (password) => {
 		feedback.push("Add numbers");
 	}
 	
-	// Special character check
-	if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+// Special character check
+  if (/[!@#$%^&*()_+\-[\]{};':"\\|,.<>/?]/.test(password)) {
 		score += 1;
 	} else {
 		feedback.push("Add special characters");

@@ -6,10 +6,6 @@ import {
   Key, 
   Activity, 
   Download, 
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  X,
   RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
@@ -29,6 +25,7 @@ const ViewReportsPage = () => {
 
   useEffect(() => {
     fetchReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const fetchReports = async () => {

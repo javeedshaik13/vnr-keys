@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Camera, X, AlertCircle, CheckCircle } from "lucide-react";
+import { Camera, X, AlertCircle } from "lucide-react";
 import QrScanner from "qr-scanner";
 
 const QRScanner = ({ onScan, onClose, isOpen }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
-  const [hasPermission, setHasPermission] = useState(null);
+  // Camera permission status; reserved for future UI feedback
+  // Camera permission status removed to avoid unused state
   const videoRef = useRef(null);
   const scannerRef = useRef(null);
 
@@ -18,6 +19,8 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
     return () => {
       stopScanner();
     };
+    // We intentionally don't include startScanner to avoid re-creating the scanner instance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const startScanner = async () => {
@@ -51,11 +54,9 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
       );
 
       await scannerRef.current.start();
-      setHasPermission(true);
     } catch (err) {
       console.error("Scanner error:", err);
       setError(err.message || "Failed to start camera");
-      setHasPermission(false);
       setIsScanning(false);
     }
   };

@@ -4,15 +4,13 @@ import { useSidebar } from "../../components/layout/DashboardLayout";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-	Users,
-	Shield,
-	Activity,
-	TrendingUp,
-	UserCheck,
-	UserX,
-	Settings,
-	BarChart3,
-	AlertTriangle
+    Users,
+    Shield,
+    Activity,
+    UserCheck,
+    UserX,
+    Settings,
+    BarChart3
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -157,7 +155,7 @@ const AdminDashboard = () => {
 						User Role Distribution
 					</h3>
 					<div className="space-y-4">
-						{roleDistribution.map((item, index) => (
+                        {roleDistribution.map((item) => (
 							<div key={item.role} className="flex items-center justify-between">
 								<div className="flex items-center">
 									<div className={`w-3 h-3 rounded-full ${item.color} mr-3`}></div>
@@ -181,8 +179,8 @@ const AdminDashboard = () => {
 						Recent Users
 					</h3>
 					<div className="space-y-3">
-						{dashboardData?.recentUsers?.slice(0, 5).map((recentUser, index) => (
-							<div key={recentUser.id} className="flex items-center justify-between py-2">
+                        {dashboardData?.recentUsers?.slice(0, 5).map((recentUser) => (
+                            <div key={recentUser.id} className="flex items-center justify-between py-2">
 								<div className="flex items-center">
 									<div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mr-3">
 										<span className="text-white text-sm font-semibold">
@@ -202,7 +200,7 @@ const AdminDashboard = () => {
 									)}
 								</div>
 							</div>
-						)) || (
+                        )) || (
 							<p className="text-gray-400 text-center py-4">No recent users</p>
 						)}
 					</div>

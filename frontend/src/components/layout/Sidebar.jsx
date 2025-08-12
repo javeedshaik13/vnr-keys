@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, User, Mail, Info, X, Users, Shield, BarChart3, Settings } from "lucide-react";
+import { Home, User, Info, Users, Shield, BarChart3 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
@@ -33,9 +33,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   ];
 
   // Combine menu items based on user role
-  const menuItems = user?.role === 'admin'
-    ? [...baseMenuItems, ...adminMenuItems]
-    : baseMenuItems;
+  // (rendered inline below based on user role)
 
   const sidebarVariants = {
     open: {

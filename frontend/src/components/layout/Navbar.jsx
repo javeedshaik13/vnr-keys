@@ -1,21 +1,9 @@
 import { motion } from "framer-motion";
 import { Menu, X, User, LogOut, Bell } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { useEffect, useState } from "react";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuthStore();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
-    };
-
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   const handleLogout = () => {
     logout();

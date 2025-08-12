@@ -3,14 +3,12 @@ import { motion } from 'framer-motion';
 import { 
   Users, 
   Search, 
-  Plus, 
   Edit, 
   Trash2, 
   Shield, 
   CheckCircle, 
   XCircle,
-  Filter,
-  X
+  Filter
 } from 'lucide-react';
 import axios from 'axios';
 import { handleError, handleSuccess } from '../../utils/errorHandler';
@@ -33,6 +31,7 @@ const ManageUsersPage = () => {
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, roleFilter]);
 
   const fetchUsers = async () => {

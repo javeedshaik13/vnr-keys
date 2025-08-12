@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, createContext, useContext } from "react";
 import { Outlet } from "react-router-dom";
 import { motion } from "framer-motion";

@@ -7,7 +7,6 @@ const KeyCard = ({
   keyData,
   variant = "default", // "default", "available", "unavailable", "taken"
   onRequestKey,
-  onReturnKey,
   onCollectKey,
   onToggleFrequent,
   showQR = false,
@@ -64,11 +63,7 @@ const KeyCard = ({
     }
   };
 
-  const handleReturnKey = () => {
-    if (onReturnKey) {
-      onReturnKey(keyData.id);
-    }
-  };
+  // Return action is handled via QR modal trigger; no separate handler needed
 
   const handleCollectKey = () => {
     if (onCollectKey) {

@@ -56,11 +56,12 @@ const EmailVerificationPage = () => {
 	};
 
 	// Auto submit when all fields are filled
-	useEffect(() => {
-		if (code.every((digit) => digit !== "")) {
-			handleSubmit(new Event("submit"));
-		}
-	}, [code]);
+    useEffect(() => {
+        if (code.every((digit) => digit !== "")) {
+            handleSubmit(new Event("submit"));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [code]);
 
 	return (
 		<div className='min-h-screen flex items-center justify-center relative z-50 px-4'>

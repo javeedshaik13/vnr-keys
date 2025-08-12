@@ -6,10 +6,7 @@ import {
   Clock, 
   AlertTriangle, 
   Settings, 
-  Save,
-  X,
-  Eye,
-  EyeOff
+  Save
 } from 'lucide-react';
 import axios from 'axios';
 import { handleError, handleSuccess } from '../../utils/errorHandler';
@@ -28,6 +25,7 @@ const SecuritySettingsPage = () => {
 
   useEffect(() => {
     fetchSecuritySettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSecuritySettings = async () => {

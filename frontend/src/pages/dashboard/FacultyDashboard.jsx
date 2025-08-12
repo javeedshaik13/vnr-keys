@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, Search, Star, QrCode, X, RefreshCw, Filter } from "lucide-react";
+import { Key, KeyRound, List, Search, X, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -18,15 +18,14 @@ const FacultyDashboard = () => {
   const {
     keys,
     getTakenKeys,
-    getFrequentlyUsedKeys,
+    // getFrequentlyUsedKeys,
     searchKeys,
     generateKeyRequestQR,
     generateKeyReturnQR,
     toggleFrequentlyUsedAPI,
     fetchKeys,
     fetchTakenKeys,
-    isLoadingTakenKeys,
-    error
+    isLoadingTakenKeys
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
@@ -53,7 +52,7 @@ const FacultyDashboard = () => {
   console.log('🔑 FacultyDashboard: Taken keys count:', takenKeys.length);
   console.log('🔑 FacultyDashboard: All keys count:', keys.length);
   console.log('🔑 FacultyDashboard: User ID being used:', user?.id);
-  const frequentlyUsedKeys = getFrequentlyUsedKeys();
+  // Access frequently used keys when needed via getFrequentlyUsedKeys()
   const searchResults = searchKeys(searchQuery);
 
   // Filter keys based on availability and favorites
@@ -72,7 +71,7 @@ const FacultyDashboard = () => {
 
   const filteredKeys = getFilteredKeys(keys);
   const filteredSearchResults = getFilteredKeys(searchResults);
-  const filteredFrequentlyUsedKeys = getFilteredKeys(frequentlyUsedKeys);
+  // frequentlyUsedKeys is available via getFrequentlyUsedKeys(); derive on demand when needed
 
   const tabs = [
     {

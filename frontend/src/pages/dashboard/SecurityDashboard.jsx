@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Key, KeyRound, AlertCircle, CheckCircle } from "lucide-react";
+import { QrCode, Key, KeyRound, CheckCircle } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -19,9 +19,7 @@ const SecurityDashboard = () => {
     getAvailableKeys,
     getUnavailableKeys,
     fetchKeys,
-    returnKeyAPI,
-    isLoading,
-    error
+    returnKeyAPI
   } = useKeyStore();
 
   // Fetch keys on component mount
@@ -108,7 +106,7 @@ const SecurityDashboard = () => {
 
   const handleCollectKey = async (keyId) => {
     try {
-      await manuallyCollectKey(keyId);
+      await returnKeyAPI(keyId);
     } catch (error) {
       console.error("Collect key error:", error);
     }

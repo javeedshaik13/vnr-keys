@@ -15,7 +15,7 @@ const SignUpPage = () => {
 	const [fieldErrors, setFieldErrors] = useState({});
 	const navigate = useNavigate();
 
-	const { signup, error, isLoading } = useAuthStore();
+    const { signup, isLoading } = useAuthStore();
 
 	// Real-time validation
 	const validateField = (fieldName, value) => {

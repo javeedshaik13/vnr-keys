@@ -411,33 +411,42 @@ export const useKeyStore = create((set, get) => ({
 
         // Show notification based on action
         switch (data.action) {
-          case 'take':
+          case 'take': {
             handleSuccess(`Key ${data.key.keyNumber} has been taken by ${data.key.takenBy?.name || 'someone'}`);
             break;
-          case 'return':
+          }
+          case 'return': {
             handleSuccess(`Key ${data.key.keyNumber} has been returned`);
             break;
-          case 'qr-return':
+          }
+          case 'qr-return': {
             handleSuccess(`Key ${data.key.keyNumber} was returned via QR scan`);
             break;
-          case 'qr-request':
+          }
+          case 'qr-request': {
             handleSuccess(`Key ${data.key.keyNumber} was assigned via QR scan`);
             break;
-          case 'create':
+          }
+          case 'create': {
             handleSuccess(`New key ${data.key.keyNumber} has been added`);
             break;
-          case 'update':
+          }
+          case 'update': {
             handleSuccess(`Key ${data.key.keyNumber} has been updated`);
             break;
-          case 'delete':
+          }
+          case 'delete': {
             handleSuccess(`Key ${data.key.keyNumber} has been removed`);
             break;
-          case 'toggle-frequent':
+          }
+          case 'toggle-frequent': {
             const status = data.key.frequentlyUsed ? 'added to' : 'removed from';
             handleSuccess(`Key ${data.key.keyNumber} (${data.key.keyName}) ${status} favorites`);
             break;
-          default:
+          }
+          default: {
             break;
+          }
         }
       });
 

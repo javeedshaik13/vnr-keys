@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
-import { handleError, handleSuccess, withErrorHandling } from "../utils/errorHandler.js";
+import { handleError, handleSuccess } from "../utils/errorHandler.js";
 import { validateEmail, validatePassword, validateName, validateVerificationCode } from "../utils/validation.js";
 
 const API_URL = import.meta.env.VITE_API_URL
