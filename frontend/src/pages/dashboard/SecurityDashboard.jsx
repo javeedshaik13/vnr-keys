@@ -75,43 +75,122 @@ const SecurityDashboard = () => {
       if (validation.type === 'key-return') {
         // For returns, fetch key and user details first, then show confirmation dialog
         try {
+          console.log('🔍 Fetching details for keyId:', parsedData.keyId, 'userId:', parsedData.userId);
+
+          // Create proper API URLs
+          const keyUrl = `/api/keys/${parsedData.keyId}`;
+          const userUrl = `/api/auth/user/${parsedData.userId}`;
+
+          console.log('🔍 Key URL:', keyUrl);
+          console.log('🔍 User URL:', userUrl);
+
           const [keyResponse, userResponse] = await Promise.all([
-            fetch(`/api/keys/${parsedData.keyId}`, {
-              credentials: 'include'
+            fetch(keyUrl, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              }
             }),
-            fetch(`/api/auth/user/${parsedData.userId}`, {
-              credentials: 'include'
+            fetch(userUrl, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              }
             })
           ]);
 
           let keyData = null;
           let userData = null;
 
+          console.log('🔍 Key response status:', keyResponse.status);
+          console.log('🔍 User response status:', userResponse.status);
+
           if (keyResponse.ok) {
             const keyResult = await keyResponse.json();
-            keyData = keyResult.data || keyResult;
+            console.log('🔍 Key result:', keyResult);
+            // Handle nested data structure: keyResult.data.key
+            keyData = keyResult.data?.key || keyResult.data || keyResult;
+            console.log('🔍 Extracted keyData:', keyData);
+          } else {
+            const errorText = await keyResponse.text();
+            console.error('❌ Key fetch failed:', keyResponse.status, errorText);
           }
 
           if (userResponse.ok) {
             const userResult = await userResponse.json();
-            userData = userResult.user || userResult;
+            console.log('🔍 User result:', userResult);
+            // Handle user data structure: userResult.user
+            userData = userResult.user || userResult.data || userResult;
+            console.log('🔍 Extracted userData:', userData);
+          } else {
+            const errorText = await userResponse.text();
+            console.error('❌ User fetch failed:', userResponse.status, errorText);
           }
 
-          setPendingReturnData({
+          // Extract data with multiple fallback strategies
+          const extractedKeyNumber = keyData?.keyNumber || keyData?.number || 'Unknown';
+          const extractedKeyName = keyData?.keyName || keyData?.name || 'Unknown Key';
+          const extractedUserName = userData?.name || userData?.username || userData?.displayName || 'Unknown User';
+          const extractedUserEmail = userData?.email || userData?.emailAddress || 'Unknown Email';
+
+          // Create display data with fallbacks
+          const displayData = {
             ...parsedData,
-            keyName: keyData?.keyName || `Key #${parsedData.keyId}`,
-            userName: userData?.name || 'Unknown User',
-            userEmail: userData?.email || 'Unknown Email'
-          });
+            keyNumber: extractedKeyNumber,
+            keyName: extractedKeyName,
+            keyFullName: (extractedKeyNumber !== 'Unknown' && extractedKeyName !== 'Unknown Key')
+              ? `Key ${extractedKeyNumber} (${extractedKeyName})`
+              : `Key #${parsedData.keyId.substring(0, 8)}...`,
+            userName: extractedUserName,
+            userEmail: extractedUserEmail
+          };
+
+          console.log('🔍 Final display data:', displayData);
+
+          setPendingReturnData(displayData);
           setShowReturnConfirmation(true);
           setShowScanner(false);
         } catch (error) {
           console.error("Error fetching key/user details:", error);
-          // Still show confirmation with basic data
+
+          // TEMPORARY: Try to process the QR scan directly to get data from backend
+          console.log('🔄 Attempting direct QR scan processing to get data from backend...');
+          try {
+            const result = await processQRScanReturn(parsedData);
+            console.log('✅ Got data from backend (direct path):', result);
+            console.log('✅ Original User Data (direct path):', result.data.originalUser);
+
+            setScanResult({
+              success: true,
+              message: result.message,
+              keyData: {
+                ...result.data.key,
+                keyNumber: result.data.key.keyNumber,
+                keyName: result.data.key.keyName,
+                returnedBy: result.data.originalUser,
+                collectedBy: result.data.scannedBy
+              },
+              type: 'return'
+            });
+            setShowScanResult(true);
+            setShowScanner(false);
+            return;
+          } catch (directError) {
+            console.error("Direct processing also failed:", directError);
+          }
+
+          // Show confirmation with basic data and shortened ID
+          const shortKeyId = parsedData.keyId.substring(0, 8);
+          const shortUserId = parsedData.userId.substring(0, 8);
+
           setPendingReturnData({
             ...parsedData,
-            keyName: `Key #${parsedData.keyId}`,
-            userName: 'Unknown User',
+            keyNumber: 'Unknown',
+            keyName: 'Unknown Key',
+            keyFullName: `Key #${shortKeyId}...`,
+            userName: `User #${shortUserId}...`,
             userEmail: 'Unknown Email'
           });
           setShowReturnConfirmation(true);
@@ -123,7 +202,13 @@ const SecurityDashboard = () => {
         setScanResult({
           success: true,
           message: result.message,
-          keyData: result.data.key,
+          keyData: {
+            ...result.data.key,
+            keyNumber: result.data.key.keyNumber,
+            keyName: result.data.key.keyName,
+            takenBy: result.data.originalUser || result.data.requestedBy, // The person who requested the key
+            givenBy: result.data.scannedBy    // The security person who gave it
+          },
           type: 'request'
         });
         setShowScanResult(true);
@@ -149,10 +234,20 @@ const SecurityDashboard = () => {
     setIsProcessing(true);
     try {
       const result = await processQRScanReturn(pendingReturnData);
+      console.log('🔍 QR Scan Return Result:', result);
+      console.log('🔍 Original User Data:', result.data.originalUser);
+      console.log('🔍 Scanned By Data:', result.data.scannedBy);
+
       setScanResult({
         success: true,
         message: result.message,
-        keyData: result.data.key,
+        keyData: {
+          ...result.data.key,
+          keyNumber: result.data.key.keyNumber,
+          keyName: result.data.key.keyName,
+          returnedBy: result.data.originalUser, // The person who returned the key
+          collectedBy: result.data.scannedBy    // The security person who collected it
+        },
         type: 'return'
       });
       setShowReturnConfirmation(false);
@@ -328,19 +423,20 @@ const SecurityDashboard = () => {
                 Confirm Key Return
               </h3>
               <h4 className="text-lg font-semibold text-gray-700 mb-4">
-                {pendingReturnData.keyName}
+                {pendingReturnData.keyFullName}
               </h4>
 
               {/* Key and User Details */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
                 <div className="mb-3">
                   <p className="font-medium text-gray-900 mb-1">Returning Person:</p>
-                  <p className="text-gray-600">{pendingReturnData.userName || 'Loading...'}</p>
-                  <p className="text-gray-500 text-sm">{pendingReturnData.userEmail || 'Loading...'}</p>
+                  <p className="text-gray-600">{pendingReturnData.userName}</p>
+                  <p className="text-gray-500 text-sm">{pendingReturnData.userEmail}</p>
                 </div>
                 <div className="mb-3">
                   <p className="font-medium text-gray-900 mb-1">Key Details:</p>
-                  <p className="text-gray-600">{pendingReturnData.keyName || 'Loading...'}</p>
+                  <p className="text-gray-600">Key {pendingReturnData.keyNumber}</p>
+                  <p className="text-gray-500 text-sm">{pendingReturnData.keyName}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 mb-1">Return Time:</p>
@@ -390,21 +486,38 @@ const SecurityDashboard = () => {
             className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
             <div className="text-center">
+              {console.log('🔍 Scan Result Data:', scanResult)}
+              {console.log('🔍 Key Data:', scanResult.keyData)}
+              {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Key #{scanResult.key?.keyNumber}
+                Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
               </h3>
               <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                {scanResult.key?.keyName}
+                ({scanResult.keyData?.keyName || scanResult.key?.keyName || 'Unknown Key'})
               </h4>
-              
-              {/* Added user details section */}
+
+              {/* User details section with dynamic text */}
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <p className="font-medium text-gray-900 mb-1">
-                  {scanResult.key?.status === 'unavailable' ? 'Taken By:' : 'Returned By:'}
+                  {scanResult.type === 'return' ? 'Returned By:' :
+                   scanResult.type === 'request' ? 'Collected By:' :
+                   'Processed By:'}
                 </p>
-                <p className="text-gray-600">{scanResult.key?.takenBy?.name || 'N/A'}</p>
-                <p className="text-gray-500 text-sm">{scanResult.key?.takenBy?.email || 'N/A'}</p>
+                <p className="text-gray-600">
+                  {scanResult.type === 'return' ?
+                    (scanResult.keyData?.returnedBy?.name || 'Unknown User') :
+                   scanResult.type === 'request' ?
+                    (scanResult.keyData?.takenBy?.name || scanResult.key?.takenBy?.name || 'Unknown User') :
+                   'Security Personnel'}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {scanResult.type === 'return' ?
+                    (scanResult.keyData?.returnedBy?.email || 'N/A') :
+                   scanResult.type === 'request' ?
+                    (scanResult.keyData?.takenBy?.email || scanResult.key?.takenBy?.email || 'N/A') :
+                   'N/A'}
+                </p>
                 <p className="text-gray-400 text-xs mt-1">
                   {new Date().toLocaleString()}
                 </p>

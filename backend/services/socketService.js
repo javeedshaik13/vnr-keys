@@ -29,7 +29,9 @@ export const emitKeyUpdate = (keyData, action, userId = null) => {
     global.io.to(`user-${userId}`).emit('user-key-updated', updateData);
   }
 
-  console.log(`🔄 Key update emitted: ${action} - Key ${keyData.keyNumber} by user ${userId || 'system'}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔄 Key update emitted: ${action} - Key ${keyData.keyNumber} by user ${userId || 'system'}`);
+  }
 };
 
 /**
@@ -108,7 +110,9 @@ export const emitQRScanReturn = (keyData, scannerId, originalUserId) => {
   global.io.to(`user-${scannerId}`).emit('user-key-updated', updateData);
   global.io.to(`user-${originalUserId}`).emit('user-key-updated', updateData);
 
-  console.log(`📱 QR scan return emitted: Key ${keyData.keyNumber} scanned by ${scannerId}, originally taken by ${originalUserId}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📱 QR scan return emitted: Key ${keyData.keyNumber} scanned by ${scannerId}, originally taken by ${originalUserId}`);
+  }
 };
 
 /**
@@ -133,7 +137,9 @@ export const emitQRScanRequest = (keyData, scannerId, requestingUserId) => {
   global.io.to(`user-${scannerId}`).emit('user-key-updated', updateData);
   global.io.to(`user-${requestingUserId}`).emit('user-key-updated', updateData);
 
-  console.log(`📱 QR scan request emitted: Key ${keyData.keyNumber} scanned by ${scannerId}, requested by ${requestingUserId}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📱 QR scan request emitted: Key ${keyData.keyNumber} scanned by ${scannerId}, requested by ${requestingUserId}`);
+  }
 };
 
 /**

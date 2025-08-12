@@ -404,6 +404,7 @@ export const useKeyStore = create((set, get) => ({
         set({ keys: updatedKeys });
 
         // Show notification based on action
+        // Skip notifications for QR scan actions as they are handled by the UI components
         switch (data.action) {
           case 'take': {
             handleSuccess(`Key ${data.key.keyNumber} has been taken by ${data.key.takenBy?.name || 'someone'}`);
@@ -414,11 +415,11 @@ export const useKeyStore = create((set, get) => ({
             break;
           }
           case 'qr-return': {
-            handleSuccess(`Key ${data.key.keyNumber} was returned via QR scan`);
+            // Skip notification - handled by SecurityDashboard scan result modal
             break;
           }
           case 'qr-request': {
-            handleSuccess(`Key ${data.key.keyNumber} was assigned via QR scan`);
+            // Skip notification - handled by SecurityDashboard scan result modal
             break;
           }
           case 'create': {
@@ -448,12 +449,13 @@ export const useKeyStore = create((set, get) => ({
         // Handle user-specific key updates (e.g., keys taken/returned by current user)
         console.log('User key update:', data);
 
+        // Skip QR scan notifications as they are handled by the UI components
         // You could add specific logic here for user-specific notifications
-        if (data.action === 'qr-return') {
-          handleSuccess(`Your key ${data.key.keyNumber} was successfully returned via QR scan`);
-        } else if (data.action === 'qr-request') {
-          handleSuccess(`Your key request for ${data.key.keyNumber} was approved via QR scan`);
-        }
+        // if (data.action === 'qr-return') {
+        //   handleSuccess(`Your key ${data.key.keyNumber} was successfully returned via QR scan`);
+        // } else if (data.action === 'qr-request') {
+        //   handleSuccess(`Your key request for ${data.key.keyNumber} was approved via QR scan`);
+        // }
       });
 
       set({ isSocketConnected: true });

@@ -89,7 +89,7 @@ const keySchema = new mongoose.Schema(
 );
 
 // Indexes for better performance
-keySchema.index({ keyNumber: 1 });
+// Note: keyNumber already has unique index from schema definition
 keySchema.index({ status: 1 });
 keySchema.index({ "takenBy.userId": 1 });
 keySchema.index({ frequentlyUsed: 1 });

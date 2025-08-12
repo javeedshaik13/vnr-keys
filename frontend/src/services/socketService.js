@@ -24,7 +24,9 @@ class SocketService {
         ? "http://localhost:8000"
         : window.location.origin;
 
-    console.log('🔌 Connecting to Socket.IO server:', serverUrl);
+    if (import.meta.env.MODE === 'development') {
+      console.log('🔌 Connecting to Socket.IO server:', serverUrl);
+    }
 
     this.socket = io(serverUrl, {
       withCredentials: true,
@@ -44,18 +46,22 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('✅ Connected to Socket.IO server');
+      if (import.meta.env.MODE === 'development') {
+        console.log('✅ Connected to Socket.IO server');
+      }
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      
+
       // Join the keys updates room
       this.socket.emit('join-user-room', this.getCurrentUserId());
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from Socket.IO server:', reason);
+      if (import.meta.env.MODE === 'development') {
+        console.log('❌ Disconnected from Socket.IO server:', reason);
+      }
       this.isConnected = false;
-      
+
       if (reason === 'io server disconnect') {
         // Server disconnected, try to reconnect
         this.handleReconnect();

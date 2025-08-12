@@ -9,7 +9,10 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function() {
+        // Password is required only for local authentication
+        return !this.googleId;
+      },
     },
     name: {
       type: String,
@@ -36,13 +39,31 @@ const userSchema = new mongoose.Schema(
       ],
       default: null, // null means no department restriction (for admin/security)
     },
+    // OAuth fields
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple null values
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    avatar: {
+      type: String, // URL to profile picture
+      default: null,
+    },
     lastLogin: {
       type: Date,
       default: Date.now,
     },
     isVerified: {
       type: Boolean,
-      default: false,
+      default: function() {
+        // OAuth users are automatically verified
+        return this.provider === "google";
+      },
     },
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,

@@ -32,10 +32,34 @@ router.get("/frequently-used", getFrequentlyUsedKeys); // Get frequently used ke
 
 // POST routes - specific routes MUST come before parameterized routes
 router.post("/", rolePermissions.adminOnly, createKey); // Create new key (admin only)
+
+// Add debugging middleware for QR scan routes
+router.use("/qr-scan/*", (req, res, next) => {
+  console.log('🔍 QR scan route hit:', req.originalUrl, req.method);
+  next();
+});
+
+// Test endpoint to verify routing
+router.post("/qr-scan/test", (req, res) => {
+  console.log('✅ QR scan test endpoint hit successfully');
+  res.json({ success: true, message: "QR scan routing is working correctly" });
+});
+
+// Alternative route patterns to avoid conflicts
+router.post("/qr-scan-return", rolePermissions.adminOrSecurity, qrScanReturn); // QR scan return (security/admin only)
+router.post("/qr-scan-request", rolePermissions.adminOrSecurity, qrScanRequest); // QR scan request (security/admin only)
+
+// Keep original routes for backward compatibility
 router.post("/qr-scan/return", rolePermissions.adminOrSecurity, qrScanReturn); // QR scan return (security/admin only)
 router.post("/qr-scan/request", rolePermissions.adminOrSecurity, qrScanRequest); // QR scan request (security/admin only)
 
 // Parameterized routes - MUST come after all specific routes
+// Add debugging middleware for parameterized routes
+router.use("/:keyId/*", (req, res, next) => {
+  console.log('🔍 Parameterized route hit:', req.originalUrl, req.method, 'keyId:', req.params.keyId);
+  next();
+});
+
 router.post("/:keyId/take", rolePermissions.adminOrFaculty, takeKey); // Take a key (faculty/admin)
 router.post("/:keyId/return", returnKey); // Return a key (any user can return their own key, security/admin can return any)
 router.post("/:keyId/toggle-frequent", toggleFrequentlyUsed); // Toggle frequently used status

@@ -1,10 +1,14 @@
+// Configure environment variables FIRST before any other imports
+import "./config/env.js";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import path from "path";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import passport from "./config/passport.js";
 
 import { connectDB } from "./db/connectDB.js";
 import { verifyTransporter } from "./nodemailer/nodemailer.config.js";
@@ -20,8 +24,6 @@ import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
 import about from "./routes/about.js"
-
-dotenv.config();
 
 const app = express();
 const server = createServer(app);
@@ -40,9 +42,10 @@ app.use(sanitizeRequest);
 // CORS configuration
 const corsOptions = {
 	origin: function (origin, callback) {
-		console.log('CORS check - Origin:', origin);
-		console.log('NODE_ENV:', process.env.NODE_ENV);
-		console.log('CLIENT_URL:', process.env.CLIENT_URL);
+		// Only log CORS details in development mode
+		if (process.env.NODE_ENV === 'development') {
+			console.log('CORS check - Origin:', origin);
+		}
 
 		// Allow requests with no origin (like mobile apps or curl requests)
 		if (!origin) return callback(null, true);
@@ -60,13 +63,13 @@ const corsOptions = {
 			allowedOrigins.push(process.env.CLIENT_URL);
 		}
 
-		console.log('Allowed origins:', allowedOrigins);
-
 		if (allowedOrigins.includes(origin)) {
-			console.log('CORS: ALLOWED for', origin);
+			if (process.env.NODE_ENV === 'development') {
+				console.log('CORS: ALLOWED for', origin);
+			}
 			callback(null, true);
 		} else {
-			console.log('CORS: BLOCKED for', origin);
+			console.warn('CORS: BLOCKED for', origin);
 			callback(new Error('Not allowed by CORS'));
 		}
 	},
@@ -90,6 +93,21 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Limit request size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Session middleware for Passport (only needed for OAuth flow)
+app.use(session({
+	secret: process.env.JWT_SECRET || 'your-session-secret',
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 24 * 60 * 60 * 1000 // 24 hours
+	}
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -158,19 +176,25 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-	console.log(`🔌 User connected: ${socket.id}`);
+	if (process.env.NODE_ENV === 'development') {
+		console.log(`🔌 User connected: ${socket.id}`);
+	}
 
 	// Join user to their own room for personalized updates
 	socket.on('join-user-room', (userId) => {
 		socket.join(`user-${userId}`);
-		console.log(`👤 User ${userId} joined their room`);
+		if (process.env.NODE_ENV === 'development') {
+			console.log(`👤 User ${userId} joined their room`);
+		}
 	});
 
 	// Join all users to a general keys room for global updates
 	socket.join('keys-updates');
 
 	socket.on('disconnect', () => {
-		console.log(`🔌 User disconnected: ${socket.id}`);
+		if (process.env.NODE_ENV === 'development') {
+			console.log(`🔌 User disconnected: ${socket.id}`);
+		}
 	});
 });
 
@@ -180,6 +204,13 @@ global.io = io;
 server.listen(PORT, async () => {
 	await connectDB();
 	await verifyTransporter();
-	console.log("Server is running on port: ", PORT);
-	console.log("🔌 Socket.IO server is ready for real-time updates");
+
+	console.log(`🚀 VNR Keys Server running on port ${PORT}`);
+	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+	console.log("🔌 Socket.IO server ready for real-time updates");
+
+	if (process.env.NODE_ENV === 'development') {
+		console.log(`📱 Frontend URL: http://localhost:5173`);
+		console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+	}
 });
