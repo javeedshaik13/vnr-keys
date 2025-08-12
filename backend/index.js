@@ -40,9 +40,10 @@ app.use(sanitizeRequest);
 // CORS configuration
 const corsOptions = {
 	origin: function (origin, callback) {
-		console.log('CORS check - Origin:', origin);
-		console.log('NODE_ENV:', process.env.NODE_ENV);
-		console.log('CLIENT_URL:', process.env.CLIENT_URL);
+		// Only log CORS details in development mode
+		if (process.env.NODE_ENV === 'development') {
+			console.log('CORS check - Origin:', origin);
+		}
 
 		// Allow requests with no origin (like mobile apps or curl requests)
 		if (!origin) return callback(null, true);
@@ -60,13 +61,13 @@ const corsOptions = {
 			allowedOrigins.push(process.env.CLIENT_URL);
 		}
 
-		console.log('Allowed origins:', allowedOrigins);
-
 		if (allowedOrigins.includes(origin)) {
-			console.log('CORS: ALLOWED for', origin);
+			if (process.env.NODE_ENV === 'development') {
+				console.log('CORS: ALLOWED for', origin);
+			}
 			callback(null, true);
 		} else {
-			console.log('CORS: BLOCKED for', origin);
+			console.warn('CORS: BLOCKED for', origin);
 			callback(new Error('Not allowed by CORS'));
 		}
 	},
@@ -158,19 +159,25 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-	console.log(`🔌 User connected: ${socket.id}`);
+	if (process.env.NODE_ENV === 'development') {
+		console.log(`🔌 User connected: ${socket.id}`);
+	}
 
 	// Join user to their own room for personalized updates
 	socket.on('join-user-room', (userId) => {
 		socket.join(`user-${userId}`);
-		console.log(`👤 User ${userId} joined their room`);
+		if (process.env.NODE_ENV === 'development') {
+			console.log(`👤 User ${userId} joined their room`);
+		}
 	});
 
 	// Join all users to a general keys room for global updates
 	socket.join('keys-updates');
 
 	socket.on('disconnect', () => {
-		console.log(`🔌 User disconnected: ${socket.id}`);
+		if (process.env.NODE_ENV === 'development') {
+			console.log(`🔌 User disconnected: ${socket.id}`);
+		}
 	});
 });
 
@@ -180,6 +187,13 @@ global.io = io;
 server.listen(PORT, async () => {
 	await connectDB();
 	await verifyTransporter();
-	console.log("Server is running on port: ", PORT);
-	console.log("🔌 Socket.IO server is ready for real-time updates");
+
+	console.log(`🚀 VNR Keys Server running on port ${PORT}`);
+	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+	console.log("🔌 Socket.IO server ready for real-time updates");
+
+	if (process.env.NODE_ENV === 'development') {
+		console.log(`📱 Frontend URL: http://localhost:5173`);
+		console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+	}
 });

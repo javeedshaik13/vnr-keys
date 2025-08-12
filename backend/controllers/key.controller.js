@@ -200,6 +200,17 @@ export const takeKey = asyncHandler(async (req, res) => {
  * Return a key
  */
 export const returnKey = asyncHandler(async (req, res) => {
+  console.log('🚨 WARNING: returnKey function called instead of qrScanReturn!');
+  console.log('🔍 Request URL:', req.originalUrl);
+  console.log('🔍 Request method:', req.method);
+  console.log('🔍 Request params:', req.params);
+
+  // TEMPORARY FIX: If this is actually a QR scan return request, redirect to qrScanReturn
+  if (req.params.keyId === 'qr-scan' && req.originalUrl.includes('/qr-scan/return')) {
+    console.log('🔄 Redirecting to qrScanReturn function');
+    return qrScanReturn(req, res);
+  }
+
   const { keyId } = req.params;
 
   const key = await Key.findById(keyId);
@@ -351,9 +362,15 @@ export const toggleFrequentlyUsed = asyncHandler(async (req, res) => {
  * Handle QR code scan for key return (security/admin only)
  */
 export const qrScanReturn = asyncHandler(async (req, res) => {
+  console.log('🔍 qrScanReturn function called');
+  console.log('🔍 Request URL:', req.originalUrl);
+  console.log('🔍 Request method:', req.method);
+  console.log('🔍 Request body:', req.body);
+
   const { qrData } = req.body;
 
   if (!qrData) {
+    console.log('❌ No QR data provided');
     throw new ValidationError("QR data is required");
   }
 
@@ -361,45 +378,66 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
   let parsedData;
   try {
     parsedData = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
+    console.log('✅ Parsed QR data:', parsedData);
   } catch (error) {
+    console.log('❌ QR data parsing error:', error);
     throw new ValidationError("Invalid QR code format");
   }
 
   const { keyId, userId, returnId } = parsedData;
+  console.log('🔍 Extracted IDs:', { keyId, userId, returnId });
 
   if (!keyId || !userId || !returnId) {
+    console.log('❌ Missing required fields');
     throw new ValidationError("Invalid QR code data - missing required fields");
   }
 
   // Validate MongoDB ObjectId format
+  console.log('🔍 Validating ObjectId formats...');
   if (!mongoose.Types.ObjectId.isValid(keyId)) {
+    console.log('❌ Invalid keyId format:', keyId);
     throw new ValidationError("Invalid key ID format");
   }
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
+    console.log('❌ Invalid userId format:', userId);
     throw new ValidationError("Invalid user ID format");
   }
 
+  console.log('✅ ObjectId validation passed');
+
   // Find the key
+  console.log('🔍 Looking up key with ID:', keyId);
   const key = await Key.findById(keyId);
   if (!key) {
+    console.log('❌ Key not found with ID:', keyId);
     throw new NotFoundError("Key not found");
   }
+  console.log('✅ Key found:', key.keyNumber, key.keyName, 'Status:', key.status);
 
   // Verify the key is currently taken by the specified user
   if (key.status === 'available') {
+    console.log('❌ Key is already available');
     throw new ConflictError("Key is already available");
   }
 
+  console.log('🔍 Checking if key is taken by user:', userId);
+  console.log('🔍 Key takenBy:', key.takenBy);
   if (!key.takenBy.userId || key.takenBy.userId.toString() !== userId) {
+    console.log('❌ Key is not taken by the specified user');
+    console.log('🔍 Expected userId:', userId);
+    console.log('🔍 Actual takenBy.userId:', key.takenBy.userId?.toString());
     throw new ValidationError("Key is not currently taken by the specified user");
   }
 
   // Get the original user who took the key
+  console.log('🔍 Looking up user with ID:', userId);
   const originalUser = await User.findById(userId);
   if (!originalUser) {
+    console.log('❌ User not found with ID:', userId);
     throw new NotFoundError("Original user not found");
   }
+  console.log('✅ User found:', originalUser.name, originalUser.email);
 
   // Return the key
   await key.returnKey();

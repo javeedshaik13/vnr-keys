@@ -145,10 +145,13 @@ export const requestLogger = (req, res, next) => {
 		};
 		
 		// Log errors and slow requests
-		if (res.statusCode >= 400 || duration > 1000) {
-			console.warn('Request log:', logData);
-		} else if (process.env.NODE_ENV === 'development') {
-			console.log('Request log:', logData);
+		if (res.statusCode >= 400) {
+			console.warn('⚠️  Request error:', logData);
+		} else if (duration > 2000) {
+			console.warn('🐌 Slow request:', logData);
+		} else if (process.env.NODE_ENV === 'development' && req.url !== '/api/health') {
+			// Only log non-health check requests in development
+			console.log('📝 Request:', `${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`);
 		}
 	});
 	

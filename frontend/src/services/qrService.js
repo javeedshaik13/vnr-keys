@@ -16,13 +16,31 @@ export const processQRScanReturn = async (qrData) => {
   try {
     console.log('Processing QR scan return:', qrData);
 
-    const response = await axios.post(`${API_URL}/qr-scan/return`, {
-      qrData
-    }, {
-      withCredentials: true,
-    });
+    // Try the primary route first
+    let response;
+    try {
+      response = await axios.post(`${API_URL}/qr-scan/return`, {
+        qrData
+      }, {
+        withCredentials: true,
+      });
+    } catch (primaryError) {
+      console.log('Primary route failed, trying alternative route:', primaryError.message);
 
-    handleSuccess(response.data.message);
+      // If primary route fails with routing error, try alternative route
+      if (primaryError.response?.status === 404 || primaryError.message.includes('Invalid ID format')) {
+        response = await axios.post(`${API_URL}/qr-scan-return`, {
+          qrData
+        }, {
+          withCredentials: true,
+        });
+      } else {
+        throw primaryError;
+      }
+    }
+
+    // Don't show automatic success toast here - let the UI handle it
+    // handleSuccess(response.data.message);
     return response.data;
   } catch (error) {
     console.error('QR scan return error:', error);
@@ -46,7 +64,8 @@ export const processQRScanRequest = async (qrData) => {
       withCredentials: true,
     });
 
-    handleSuccess(response.data.message);
+    // Don't show automatic success toast here - let the UI handle it
+    // handleSuccess(response.data.message);
     return response.data;
   } catch (error) {
     console.error('QR scan request error:', error);
