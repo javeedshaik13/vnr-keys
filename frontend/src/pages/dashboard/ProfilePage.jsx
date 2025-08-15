@@ -12,6 +12,8 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
+    department: user?.department || "",
+    facultyId: user?.facultyId || "",
     bio: user?.bio || "",
     location: user?.location || "",
     website: user?.website || "",
@@ -39,6 +41,8 @@ const ProfilePage = () => {
     setFormData({
       name: user?.name || "",
       email: user?.email || "",
+      department: user?.department || "",
+      facultyId: user?.facultyId || "",
       bio: user?.bio || "",
       location: user?.location || "",
       website: user?.website || "",
@@ -83,7 +87,18 @@ const ProfilePage = () => {
               </div>
 
               <h2 className="text-xl font-bold text-white mb-1">{user?.name}</h2>
-              <p className="text-gray-400 mb-4">{user?.email}</p>
+              <p className="text-gray-400 mb-1">{user?.email}</p>
+              {user?.role === 'faculty' && (
+                <>
+                  <p className="text-green-400 text-sm font-medium mb-1">
+                    {user?.department === 'CSE-AIML' ? 'CSE - AI & ML' :
+                     user?.department === 'CSE-DS' ? 'CSE - Data Science' :
+                     user?.department || 'Department'}
+                  </p>
+                  <p className="text-gray-500 text-sm mb-4">Faculty ID: {user?.facultyId}</p>
+                </>
+              )}
+              {user?.role !== 'faculty' && <div className="mb-4"></div>}
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -204,6 +219,46 @@ const ProfilePage = () => {
                   />
                 </div>
               </div>
+
+              {/* Faculty-specific fields */}
+              {user?.role === 'faculty' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium text-gray-300 mb-2">
+                      Department
+                    </label>
+                    <select
+                      id="department"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select Department</option>
+                      <option value="CSE">Computer Science Engineering</option>
+                      <option value="CSE-AIML">CSE - Artificial Intelligence & Machine Learning</option>
+                      <option value="CSE-DS">CSE - Data Science</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="facultyId" className="block text-sm font-medium text-gray-300 mb-2">
+                      Faculty ID
+                    </label>
+                    <input
+                      type="text"
+                      id="facultyId"
+                      name="facultyId"
+                      value={formData.facultyId}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      placeholder="Enter your faculty ID"
+                      className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

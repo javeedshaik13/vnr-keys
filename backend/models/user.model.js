@@ -7,51 +7,50 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    password: {
-      type: String,
-      required: function() {
-        // Password is required only for local authentication
-        return !this.googleId;
-      },
-    },
     name: {
       type: String,
       required: true,
     },
     role: {
       type: String,
-      enum: ["faculty", "security", "admin"],
-      default: "faculty",
+      enum: ["faculty", "security", "admin", "pending"],
+      default: "pending", // Default for new users who need to complete registration
     },
     department: {
       type: String,
       enum: [
         "CSE", // Computer Science Engineering
-        "EEE", // Electrical and Electronics Engineering
-        "AIML", // Artificial Intelligence and Machine Learning
-        "IoT", // Internet of Things
-        "ECE", // Electronics and Communication Engineering
-        "MECH", // Mechanical Engineering
-        "CIVIL", // Civil Engineering
-        "IT", // Information Technology
-        "ADMIN", // Administration
-        "RESEARCH" // Research Department
+        "CSE-AIML", // Computer Science Engineering - Artificial Intelligence and Machine Learning
+        "CSE-DS", // Computer Science Engineering - Data Science
       ],
-      default: null, // null means no department restriction (for admin/security)
+      required: function() {
+        // Department is required only for faculty
+        return this.role === "faculty";
+      },
     },
-    // OAuth fields
+    facultyId: {
+      type: String,
+      required: function() {
+        // Faculty ID is required only for faculty
+        return this.role === "faculty";
+      },
+      unique: true,
+      sparse: true, // Allows multiple null values for non-faculty users
+    },
+    // OAuth fields (required since we only use Google OAuth)
     googleId: {
       type: String,
+      required: true,
       unique: true,
-      sparse: true, // Allows multiple null values
     },
     provider: {
       type: String,
-      enum: ["local", "google"],
-      default: "local",
+      enum: ["google"],
+      default: "google",
+      required: true,
     },
     avatar: {
-      type: String, // URL to profile picture
+      type: String, // URL to profile picture from Google
       default: null,
     },
     lastLogin: {
@@ -60,15 +59,24 @@ const userSchema = new mongoose.Schema(
     },
     isVerified: {
       type: Boolean,
-      default: function() {
-        // OAuth users are automatically verified
-        return this.provider === "google";
-      },
+      default: true, // All Google OAuth users are automatically verified
     },
-    resetPasswordToken: String,
-    resetPasswordExpiresAt: Date,
-    verificationToken: String,
-    verificationTokenExpiresAt: Date,
+    // Optional profile fields
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 500,
+    },
+    location: {
+      type: String,
+      default: "",
+      maxlength: 100,
+    },
+    website: {
+      type: String,
+      default: "",
+      maxlength: 200,
+    },
   },
   { timestamps: true }
 );

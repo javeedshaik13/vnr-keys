@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
-import { validateEmail, validatePassword, validateName, validateVerificationCode } from "../utils/validation.js";
 
 const API_URL = import.meta.env.VITE_API_URL
 	? `${import.meta.env.VITE_API_URL}/auth`
@@ -9,37 +8,31 @@ const API_URL = import.meta.env.VITE_API_URL
 		? "http://localhost:8000/api/auth"
 		: "/api/auth";
 
-console.log('=== FRONTEND AUTH CONFIG ===');
-console.log('Environment mode:', import.meta.env.MODE);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('Final API_URL:', API_URL);
-console.log('============================');
-
 // Configure axios defaults
 axios.defaults.withCredentials = true;
-axios.defaults.timeout = 10000; // 10 second timeout
 
-// Add token to Authorization header if available
-const token = localStorage.getItem('auth-token');
-if (token) {
-	axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
-
-// Request interceptor for logging (development only)
-if (import.meta.env.DEV) {
-	axios.interceptors.request.use((config) => {
-		console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+// Add request interceptor to include auth token
+axios.interceptors.request.use(
+	(config) => {
+		const token = localStorage.getItem('auth-token');
+		if (token) {
+			config.headers.Authorization = `Bearer ${token}`;
+		}
 		return config;
-	});
-}
+	},
+	(error) => {
+		return Promise.reject(error);
+	}
+);
 
-// Response interceptor for error handling
+// Add response interceptor to handle token refresh
 axios.interceptors.response.use(
 	(response) => response,
-	(error) => {
-		// Log error in development
-		if (import.meta.env.DEV) {
-			console.error('API Error:', error);
+	async (error) => {
+		if (error.response?.status === 401) {
+			// Clear invalid token
+			localStorage.removeItem('auth-token');
+			delete axios.defaults.headers.common['Authorization'];
 		}
 		return Promise.reject(error);
 	}
@@ -50,8 +43,9 @@ export const useAuthStore = create((set, get) => ({
 	isAuthenticated: false,
 	error: null,
 	isLoading: false,
-	isCheckingAuth: true,
+	isCheckingAuth: false,
 	message: null,
+	_isCheckingAuthInProgress: false, // Flag to prevent multiple simultaneous checks
 
 	// Role-based routing helper
 	getRoleBasedRoute: () => {
@@ -94,38 +88,12 @@ export const useAuthStore = create((set, get) => ({
 		return requiredRoles.includes(user.role);
 	},
 
-	signup: async (email, password, name, role = 'faculty') => {
+	// Complete user registration after OAuth
+	completeRegistration: async (registrationData) => {
 		set({ isLoading: true, error: null });
 
 		try {
-			// Client-side validation
-			const emailValidation = validateEmail(email);
-			if (!emailValidation.isValid) {
-				throw new Error(emailValidation.message);
-			}
-
-			const passwordValidation = validatePassword(password);
-			if (!passwordValidation.isValid) {
-				throw new Error(passwordValidation.message);
-			}
-
-			const nameValidation = validateName(name);
-			if (!nameValidation.isValid) {
-				throw new Error(nameValidation.message);
-			}
-
-			// Validate role
-			const validRoles = ['admin', 'faculty', 'security'];
-			if (!validRoles.includes(role)) {
-				throw new Error('Invalid role selected');
-			}
-
-			const response = await axios.post(`${API_URL}/signup`, {
-				email: email.trim().toLowerCase(),
-				password,
-				name: nameValidation.sanitizedValue,
-				role
-			});
+			const response = await axios.post(`${API_URL}/complete-registration`, registrationData);
 
 			set({
 				user: response.data.user,
@@ -134,7 +102,7 @@ export const useAuthStore = create((set, get) => ({
 				error: null
 			});
 
-			handleSuccess(response.data.message || "Account created successfully!");
+			handleSuccess(response.data.message || "Registration completed successfully!");
 			return response.data;
 		} catch (error) {
 			const errorMessage = handleError(error);
@@ -142,116 +110,75 @@ export const useAuthStore = create((set, get) => ({
 			throw error;
 		}
 	},
-	login: async (email, password) => {
-		set({ isLoading: true, error: null });
 
+	// Check registration status
+	checkRegistrationStatus: async () => {
 		try {
-			// Client-side validation
-			const emailValidation = validateEmail(email);
-			if (!emailValidation.isValid) {
-				throw new Error(emailValidation.message);
-			}
-
-			if (!password) {
-				throw new Error("Password is required");
-			}
-
-			console.log('=== FRONTEND LOGIN ===');
-			console.log('Making login request to:', `${API_URL}/login`);
-			console.log('With credentials:', axios.defaults.withCredentials);
-
-			const response = await axios.post(`${API_URL}/login`, {
-				email: email.trim().toLowerCase(),
-				password
-			});
-
-			console.log('Login response:', response.data);
-			console.log('Response headers:', response.headers);
-			console.log('======================');
-
-			// Store token in localStorage as backup
-			if (response.data.token) {
-				localStorage.setItem('auth-token', response.data.token);
-				axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-				console.log('🔑 Token stored in localStorage and Authorization header set');
-			}
-
-			set({
-				isAuthenticated: true,
-				user: response.data.user,
-				error: null,
-				isLoading: false,
-			});
-
-			handleSuccess(response.data.message || "Logged in successfully!");
+			const response = await axios.get(`${API_URL}/registration-status`);
 			return response.data;
 		} catch (error) {
-			console.log('=== LOGIN FAILED ===');
-			console.log('Error:', error.response?.data || error.message);
-			console.log('Status:', error.response?.status);
-			console.log('====================');
-
-			const errorMessage = handleError(error);
-			set({ error: errorMessage, isLoading: false });
+			console.error("Check registration status error:", error);
 			throw error;
 		}
 	},
 
 	logout: async () => {
 		set({ isLoading: true, error: null });
-
 		try {
 			await axios.post(`${API_URL}/logout`);
-		} catch (error) {
-			console.error("Logout error:", error);
-			// Continue with cleanup even if server logout fails
-		}
-
-		// Clear local storage and axios headers
-		localStorage.removeItem('auth-token');
-		delete axios.defaults.headers.common['Authorization'];
-
-		set({
-			user: null,
-			isAuthenticated: false,
-			error: null,
-			isLoading: false,
-			message: null
-		});
-
-		handleSuccess("Logged out successfully!");
-	},
-	verifyEmail: async (code) => {
-		set({ isLoading: true, error: null });
-
-		try {
-			// Client-side validation
-			const codeValidation = validateVerificationCode(code);
-			if (!codeValidation.isValid) {
-				throw new Error(codeValidation.message);
-			}
-
-			const response = await axios.post(`${API_URL}/verify-email`, {
-				code: code.toString().trim()
-			});
-
+			
+			// Clear local storage
+			localStorage.removeItem('auth-token');
+			delete axios.defaults.headers.common['Authorization'];
+			
 			set({
-				user: response.data.user,
-				isAuthenticated: true,
+				user: null,
+				isAuthenticated: false,
+				error: null,
 				isLoading: false,
-				error: null
 			});
-
-			handleSuccess(response.data.message || "Email verified successfully!");
-			return response.data;
+			
+			handleSuccess("Logged out successfully");
 		} catch (error) {
-			const errorMessage = handleError(error);
-			set({ error: errorMessage, isLoading: false });
-			throw error;
+			// Even if logout fails on server, clear local state
+			localStorage.removeItem('auth-token');
+			delete axios.defaults.headers.common['Authorization'];
+			
+			set({
+				user: null,
+				isAuthenticated: false,
+				error: null,
+				isLoading: false,
+			});
 		}
 	},
+
+	// Force reset auth state if stuck
+	forceResetAuthState: () => {
+		console.log('🔄 Force resetting auth state...');
+		set({
+			_isCheckingAuthInProgress: false,
+			isCheckingAuth: false
+		});
+	},
+
 	checkAuth: async () => {
-		set({ isCheckingAuth: true, error: null });
+		const { _isCheckingAuthInProgress, isCheckingAuth } = get();
+
+		// Prevent multiple simultaneous auth checks - TEMPORARILY DISABLED FOR DEBUGGING
+		// if (_isCheckingAuthInProgress || isCheckingAuth) {
+		//	console.log('🚫 Auth check already in progress, skipping...');
+		//	return;
+		// }
+
+		console.log('🔄 Starting auth check...');
+		set({ isCheckingAuth: true, error: null, _isCheckingAuthInProgress: true });
+
+		// Safety timeout to reset flag in case something goes wrong
+		const timeoutId = setTimeout(() => {
+			console.log('⏰ Auth check timeout, resetting flag...');
+			set({ _isCheckingAuthInProgress: false, isCheckingAuth: false });
+		}, 5000); // 5 second timeout
 
 		try {
 			console.log('=== FRONTEND CHECK AUTH ===');
@@ -272,11 +199,13 @@ export const useAuthStore = create((set, get) => ({
 			console.log('Check auth successful:', response.data);
 			console.log('===========================');
 
+			clearTimeout(timeoutId);
 			set({
 				user: response.data.user,
 				isAuthenticated: true,
 				isCheckingAuth: false,
-				error: null
+				error: null,
+				_isCheckingAuthInProgress: false
 			});
 		} catch (error) {
 			console.log('=== CHECK AUTH FAILED ===');
@@ -288,170 +217,40 @@ export const useAuthStore = create((set, get) => ({
 			localStorage.removeItem('auth-token');
 			delete axios.defaults.headers.common['Authorization'];
 
+			clearTimeout(timeoutId);
 			// Don't show error toast for auth check failures
 			set({
 				user: null,
 				isAuthenticated: false,
 				isCheckingAuth: false,
-				error: null
+				error: null,
+				_isCheckingAuthInProgress: false
 			});
 		}
 	},
-	forgotPassword: async (email) => {
-		set({ isLoading: true, error: null, message: null });
 
-		try {
-			// Client-side validation
-			const emailValidation = validateEmail(email);
-			if (!emailValidation.isValid) {
-				throw new Error(emailValidation.message);
-			}
+	// Clear error
+	clearError: () => set({ error: null }),
 
-			const response = await axios.post(`${API_URL}/forgot-password`, {
-				email: email.trim().toLowerCase()
-			});
+	// Clear message
+	clearMessage: () => set({ message: null }),
 
-			set({
-				message: response.data.message,
-				isLoading: false,
-				error: null
-			});
-
-			handleSuccess(response.data.message || "Password reset link sent!");
-			return response.data;
-		} catch (error) {
-			const errorMessage = handleError(error);
-			set({ error: errorMessage, isLoading: false, message: null });
-			throw error;
-		}
-	},
-	resetPassword: async (token, password) => {
-		set({ isLoading: true, error: null, message: null });
-
-		try {
-			// Client-side validation
-			if (!token) {
-				throw new Error("Reset token is required");
-			}
-
-			const passwordValidation = validatePassword(password);
-			if (!passwordValidation.isValid) {
-				throw new Error(passwordValidation.message);
-			}
-
-			const response = await axios.post(`${API_URL}/reset-password/${token}`, {
-				password
-			});
-
-			set({
-				message: response.data.message,
-				isLoading: false,
-				error: null
-			});
-
-			handleSuccess(response.data.message || "Password reset successful!");
-			return response.data;
-		} catch (error) {
-			const errorMessage = handleError(error);
-			set({ error: errorMessage, isLoading: false, message: null });
-			throw error;
-		}
-	},
-
+	// Update user profile
 	updateProfile: async (profileData) => {
 		set({ isLoading: true, error: null });
 
 		try {
-			// Client-side validation
-			if (profileData.name) {
-				const nameValidation = validateName(profileData.name);
-				if (!nameValidation.isValid) {
-					throw new Error(nameValidation.message);
-				}
-				profileData.name = nameValidation.sanitizedValue;
-			}
+			const response = await axios.put(`${API_URL}/update-profile`, profileData);
 
-			if (profileData.email) {
-				const emailValidation = validateEmail(profileData.email);
-				if (!emailValidation.isValid) {
-					throw new Error(emailValidation.message);
-				}
-				profileData.email = profileData.email.trim().toLowerCase();
-			}
-
-			// For now, simulate the API call since we don't have a backend endpoint
-			// In a real app, this would be:
-			// const response = await axios.put(`${API_URL}/profile`, profileData);
-
-			// Simulate API delay
-			await new Promise(resolve => setTimeout(resolve, 1000));
-
-			// Update the user in the store with the new profile data
-			set((state) => ({
-				user: { ...state.user, ...profileData },
+			set({
+				user: response.data.user,
 				isLoading: false,
 				error: null
-			}));
+			});
 
-			handleSuccess("Profile updated successfully!");
-			return { user: profileData };
-		} catch (error) {
-			const errorMessage = handleError(error);
-			set({ error: errorMessage, isLoading: false });
-			throw error;
-		}
-	},
-
-	// Fetch dashboard data based on user role
-	fetchDashboardData: async () => {
-		const { user } = get();
-		if (!user || !user.role) {
-			throw new Error("User not authenticated or role not found");
-		}
-
-		set({ isLoading: true, error: null });
-
-		try {
-			const dashboardAPI = import.meta.env.VITE_API_URL
-				? `${import.meta.env.VITE_API_URL}/dashboard`
-				: import.meta.env.MODE === "development"
-					? "http://localhost:8000/api/dashboard"
-					: "/api/dashboard";
-
-			let endpoint;
-			switch (user.role) {
-				case 'admin':
-					endpoint = `${dashboardAPI}/admin`;
-					break;
-				case 'faculty':
-					endpoint = `${dashboardAPI}/faculty`;
-					break;
-				case 'security':
-					endpoint = `${dashboardAPI}/security`;
-					break;
-				default:
-					throw new Error("Invalid user role");
-			}
-
-			console.log('=== FETCH DASHBOARD DATA ===');
-			console.log('User role:', user.role);
-			console.log('Dashboard API:', dashboardAPI);
-			console.log('Endpoint:', endpoint);
-			console.log('With credentials:', axios.defaults.withCredentials);
-
-			const response = await axios.get(endpoint);
-
-			console.log('Dashboard data fetched successfully');
-			console.log('============================');
-
-			set({ isLoading: false, error: null });
+			handleSuccess(response.data.message || "Profile updated successfully!");
 			return response.data;
 		} catch (error) {
-			console.log('=== DASHBOARD FETCH FAILED ===');
-			console.log('Error:', error.response?.data || error.message);
-			console.log('Status:', error.response?.status);
-			console.log('==============================');
-
 			const errorMessage = handleError(error);
 			set({ error: errorMessage, isLoading: false });
 			throw error;
