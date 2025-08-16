@@ -53,6 +53,8 @@ const corsOptions = {
 		// Define allowed origins based on environment
 		const allowedOrigins = [
 			'https://vnr-keys.vercel.app',
+			'https://dev-keys.vjstartup.com',
+			'https://keys.vjstartup.com',
 			'http://localhost:5173',
 			'http://localhost:3000',
 			'http://127.0.0.1:5173'
@@ -120,6 +122,8 @@ app.get("/api/health", (req, res) => {
 			origin: req.headers.origin,
 			allowedOrigins: [
 				'https://vnr-keys.vercel.app',
+				'https://dev-keys.vjstartup.com',
+				'https://keys.vjstartup.com',
 				'http://localhost:5173',
 				'http://localhost:3000',
 				'http://127.0.0.1:5173'
@@ -165,6 +169,8 @@ const io = new Server(server, {
 	cors: {
 		origin: [
 			'https://vnr-keys.vercel.app',
+			'https://dev-keys.vjstartup.com',
+			'https://keys.vjstartup.com',
 			'http://localhost:5173',
 			'http://localhost:3000',
 			'http://127.0.0.1:5173'

@@ -10,7 +10,7 @@ console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ Set
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   // Determine callback URL based on environment
   const callbackURL = process.env.NODE_ENV === 'production'
-    ? `${process.env.RENDER_EXTERNAL_URL || 'https://vnr-keys.onrender.com'}/api/auth/google/callback`
+    ? `${process.env.RENDER_EXTERNAL_URL || 'https://dev-keys.vjstartup.com'}/be/api/auth/google/callback`
     : "/api/auth/google/callback";
 
   console.log("🔗 OAuth callback URL:", callbackURL);

@@ -17,8 +17,8 @@ const corsOptions = {
         console.log("CORS check - Origin:", origin);
         
         const allowedOrigins = process.env.NODE_ENV === "production"
-            ? [process.env.CLIENT_URL, 'https://vnr-keys.vercel.app']
-            : ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
+            ? [process.env.CLIENT_URL, 'https://dev-keys.vjstartup.com']
+            : ["http://localhost:5173", "http://localhost:3000","https://dev-keys.vjstartup.com", "http://127.0.0.1:5173"];
         
         console.log("Allowed origins:", allowedOrigins);
         
@@ -37,7 +37,7 @@ const corsOptions = {
 };
 
 // Test with the actual origin
-corsOptions.origin('https://vnr-keys.vercel.app', (err, allowed) => {
-    console.log("Test CORS for https://vnr-keys.vercel.app:", allowed ? "ALLOWED" : "BLOCKED");
+corsOptions.origin('https://dev-keys.vjstartup.com', (err, allowed) => {
+    console.log("Test CORS for https://dev-keys.vjstartup.com:", allowed ? "ALLOWED" : "BLOCKED");
     if (err) console.log("Error:", err.message);
 });

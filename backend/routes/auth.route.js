@@ -64,8 +64,8 @@ router.get("/google/callback",
 			const token = generateTokenAndSetCookie(res, req.user._id, req.user.role);
 
 			const frontendURL = process.env.NODE_ENV === "production"
-				? "https://vnr-keys.vercel.app"
-				: process.env.CLIENT_URL || "http://localhost:5173";
+				? "https://dev-keys.vjstartup.com"
+				: process.env.CLIENT_URL || "http://dev-keys.vjstartup.com";
 
 			// Check if user needs to complete registration
 			const needsRegistration = req.user.role === 'pending' ||
@@ -84,8 +84,8 @@ router.get("/google/callback",
 		} catch (error) {
 			console.error("OAuth callback error:", error);
 			const frontendURL = process.env.NODE_ENV === "production"
-				? "https://vnr-keys.vercel.app"
-				: process.env.CLIENT_URL || "http://localhost:5173";
+				? "https://dev-keys.vjstartup.com"
+				: process.env.CLIENT_URL || "http://dev-keys.vjstartup.com";
 
 			const redirectURL = `${frontendURL}/login?error=oauth_failed`;
 			console.log("❌ Error redirect to:", redirectURL);
