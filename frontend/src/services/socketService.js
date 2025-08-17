@@ -21,7 +21,7 @@ class SocketService {
     const serverUrl = import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL.replace('/api', '')
       : import.meta.env.MODE === "development"
-        ? "http://localhost:8000"
+        ? "http://localhost:6203"
         : window.location.origin;
 
     if (import.meta.env.MODE === 'development') {

@@ -7,7 +7,7 @@ import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/q
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/keys`
   : import.meta.env.MODE === "development"
-    ? "http://localhost:8000/api/keys"
+    ? "http://localhost:6203/api/keys"
     : "/api/keys";
 
 // Helper function to transform backend key data to frontend format

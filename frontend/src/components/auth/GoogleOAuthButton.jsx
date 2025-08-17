@@ -9,10 +9,6 @@ const GoogleOAuthButton = ({ isLoading = false, disabled = false }) => {
     
     // Get the API URL from environment or use default
     const API_URL = import.meta.env.VITE_API_URL
-      ? `${import.meta.env.VITE_API_URL}/auth`
-      : import.meta.env.MODE === "development"
-        ? "http://localhost:8000/api/auth"
-        : "/api/auth";
 
     // Redirect to Google OAuth
     window.location.href = `${API_URL}/google`;

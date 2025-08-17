@@ -4,7 +4,7 @@ import { handleError, handleSuccess } from '../utils/errorHandler.js';
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/keys`
   : import.meta.env.MODE === "development"
-    ? "http://localhost:8000/api/keys"
+    ? "http://localhost:6203/api/keys"
     : "/api/keys";
 
 /**
