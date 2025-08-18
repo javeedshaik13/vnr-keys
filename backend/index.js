@@ -57,7 +57,11 @@ const corsOptions = {
 			'https://keys.vjstartup.com',
 			'http://localhost:5173',
 			'http://localhost:3000',
-			'http://127.0.0.1:5173'
+			'http://localhost:3203',
+			'http://localhost:3204',
+			'http://127.0.0.1:5173',
+			'http://127.0.0.1:3203',
+			'http://127.0.0.1:3204'
 		];
 
 		// Add CLIENT_URL from environment if it exists

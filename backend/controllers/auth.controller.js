@@ -256,6 +256,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 	console.log(`✅ Profile updated for user: ${user.email}`);
 
 	res.status(200).json({
+// Check authentication status
 		success: true,
 		message: "Profile updated successfully",
 		user: {

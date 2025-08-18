@@ -8,6 +8,12 @@ const API_URL = import.meta.env.VITE_API_URL
 		? "http://localhost:6203/api/auth"
 		: "/api/auth";
 
+// Debug logging
+console.log('🔧 AUTH STORE DEBUG:');
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('MODE:', import.meta.env.MODE);
+console.log('Final API_URL:', API_URL);
+
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 
