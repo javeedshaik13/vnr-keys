@@ -15,7 +15,7 @@ A comprehensive key management system with role-based access control, built with
 
 - **Frontend**: React + Vite + Tailwind CSS
 - **Backend**: Node.js + Express + MongoDB
-- **Deployment**: Vercel (Frontend) + Render (Backend)
+- **Deployment**: Vercel (Frontend) + Custom Backend Deployment
 - **CI/CD**: GitHub Actions with automated testing and deployment
 
 ## 🚀 Quick Start
@@ -77,7 +77,6 @@ This project uses GitHub Actions for automated testing, building, and deployment
 
 2. **Configure GitHub Secrets**
    - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-   - `RENDER_SERVICE_ID`, `RENDER_API_KEY`
 
 3. **Enable Branch Protection**
    - Require status checks before merging
@@ -234,7 +233,7 @@ This project is licensed under the ISC License - see the [LICENSE](backend/LICEN
 ## 🚀 Live Demo
 
 - **Frontend**: [vnr-keys.vercel.app](https://vnr-keys.vercel.app)
-- **Backend**: Deployed on Render
+- **Backend**: Custom deployment with environment-based configuration
 
 ---
 

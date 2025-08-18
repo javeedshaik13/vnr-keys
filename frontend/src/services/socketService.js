@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { config } from '../utils/config.js';
 
 class SocketService {
   constructor() {
@@ -18,11 +19,7 @@ class SocketService {
       return this.socket;
     }
 
-    const serverUrl = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL.replace('/api', '')
-      : import.meta.env.MODE === "development"
-        ? "http://localhost:6203"
-        : window.location.origin;
+    const serverUrl = config.socket.url;
 
     if (import.meta.env.MODE === 'development') {
       console.log('🔌 Connecting to Socket.IO server:', serverUrl);

@@ -3,12 +3,9 @@ import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
 import socketService from "../services/socketService.js";
 import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/qrService.js";
+import { config } from "../utils/config.js";
 
-const API_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/keys`
-  : import.meta.env.MODE === "development"
-    ? "http://localhost:6203/api/keys"
-    : "/api/keys";
+const API_URL = config.api.keysUrl;
 
 // Helper function to transform backend key data to frontend format
 const transformKeyData = (backendKey) => {

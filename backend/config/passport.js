@@ -1,23 +1,21 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { User } from "../models/user.model.js";
+import { config } from "../utils/config.js";
 
 // Configure Google OAuth strategy
 console.log("🔍 Configuring Google OAuth strategy...");
-console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing");
-console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ Set" : "❌ Missing");
+console.log("GOOGLE_CLIENT_ID:", config.auth.google.clientId ? "✅ Set" : "❌ Missing");
+console.log("GOOGLE_CLIENT_SECRET:", config.auth.google.clientSecret ? "✅ Set" : "❌ Missing");
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Determine callback URL based on environment
-  const callbackURL = 'https://dev-keys.vjstartup.com/be/api/auth/google/callback';
-
+if (config.auth.google.clientId && config.auth.google.clientSecret) {
+  const callbackURL = config.urls.oauthCallback;
   console.log("🔗 OAuth callback URL:", callbackURL);
-
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        clientID: config.auth.google.clientId,
+        clientSecret: config.auth.google.clientSecret,
         callbackURL: callbackURL,
       },
     async (accessToken, refreshToken, profile, done) => {

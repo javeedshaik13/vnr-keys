@@ -1,24 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { config } from "../../utils/config.js";
 
 const GoogleOAuthButton = ({ isLoading = false, disabled = false }) => {
   const [isClicked, setIsClicked] = useState(false);
 
   const handleGoogleLogin = () => {
     setIsClicked(true);
-    
-    // Get the API URL from environment or use default
-    const API_URL = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL
-      : import.meta.env.MODE === "development"
-        ? "http://localhost:6203/api"
-        : "/api";
-
-    console.log('🔧 GOOGLE OAUTH DEBUG:');
-    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-    console.log('Final API_URL:', API_URL);
-
-    // Redirect to Google OAuth
+    const API_URL = config.api.baseUrl;
     window.location.href = `${API_URL}/auth/google`;
   };
 

@@ -1,11 +1,8 @@
 import axios from 'axios';
 import { handleError, handleSuccess } from '../utils/errorHandler.js';
+import { config } from '../utils/config.js';
 
-const API_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/keys`
-  : import.meta.env.MODE === "development"
-    ? "http://localhost:6203/api/keys"
-    : "/api/keys";
+const API_URL = config.api.keysUrl;
 
 /**
  * Process QR code scan for key return

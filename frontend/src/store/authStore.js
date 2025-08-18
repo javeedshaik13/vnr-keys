@@ -1,18 +1,9 @@
 import { create } from "zustand";
 import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
+import { config } from "../utils/config.js";
 
-const API_URL = import.meta.env.VITE_API_URL
-	? `${import.meta.env.VITE_API_URL}/auth`
-	: import.meta.env.MODE === "development"
-		? "http://localhost:6203/api/auth"
-		: "/api/auth";
-
-// Debug logging
-console.log('🔧 AUTH STORE DEBUG:');
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('MODE:', import.meta.env.MODE);
-console.log('Final API_URL:', API_URL);
+const API_URL = config.api.authUrl;
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -51,9 +42,6 @@ export const useAuthStore = create((set, get) => ({
 	isLoading: false,
 	isCheckingAuth: false,
 	message: null,
-	_isCheckingAuthInProgress: false, // Flag to prevent multiple simultaneous checks
-
-	// Role-based routing helper
 	getRoleBasedRoute: () => {
 		const { user } = get();
 		if (!user || !user.role) return '/dashboard';

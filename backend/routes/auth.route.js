@@ -15,6 +15,7 @@ import {
 } from "../middleware/security.js";
 import passport from "../config/passport.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+import { config } from "../utils/config.js";
 
 const router = express.Router();
 
@@ -63,9 +64,7 @@ router.get("/google/callback",
 			// Generate JWT token for the authenticated user
 			const token = generateTokenAndSetCookie(res, req.user._id, req.user.role);
 
-			const frontendURL = process.env.NODE_ENV === "production"
-				? "https://dev-keys.vjstartup.com"
-				: process.env.CLIENT_URL || "http://dev-keys.vjstartup.com";
+			const frontendURL = config.urls.client;
 
 			// Check if user needs to complete registration
 			const needsRegistration = req.user.role === 'pending' ||
@@ -83,9 +82,7 @@ router.get("/google/callback",
 			res.redirect(redirectURL);
 		} catch (error) {
 			console.error("OAuth callback error:", error);
-			const frontendURL = process.env.NODE_ENV === "production"
-				? "https://dev-keys.vjstartup.com"
-				: process.env.CLIENT_URL || "http://dev-keys.vjstartup.com";
+			const frontendURL = config.urls.client;
 
 			const redirectURL = `${frontendURL}/login?error=oauth_failed`;
 			console.log("❌ Error redirect to:", redirectURL);

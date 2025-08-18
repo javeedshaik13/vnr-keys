@@ -13,6 +13,7 @@ import passport from "./config/passport.js";
 import { connectDB } from "./db/connectDB.js";
 import { verifyTransporter } from "./nodemailer/nodemailer.config.js";
 import { globalErrorHandler } from "./utils/errorHandler.js";
+import { config } from "./utils/config.js";
 import {
 	generalLimiter,
 	helmetConfig,
@@ -50,24 +51,8 @@ const corsOptions = {
 		// Allow requests with no origin (like mobile apps or curl requests)
 		if (!origin) return callback(null, true);
 
-		// Define allowed origins based on environment
-		const allowedOrigins = [
-			'https://vnr-keys.vercel.app',
-			'https://dev-keys.vjstartup.com',
-			'https://keys.vjstartup.com',
-			'http://localhost:5173',
-			'http://localhost:3000',
-			'http://localhost:3203',
-			'http://localhost:3204',
-			'http://127.0.0.1:5173',
-			'http://127.0.0.1:3203',
-			'http://127.0.0.1:3204'
-		];
-
-		// Add CLIENT_URL from environment if it exists
-		if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
-			allowedOrigins.push(process.env.CLIENT_URL);
-		}
+		// Get allowed origins from config
+		const allowedOrigins = config.cors.origins;
 
 		if (allowedOrigins.includes(origin)) {
 			if (process.env.NODE_ENV === 'development') {
@@ -124,14 +109,7 @@ app.get("/api/health", (req, res) => {
 		env: process.env.NODE_ENV,
 		cors: {
 			origin: req.headers.origin,
-			allowedOrigins: [
-				'https://vnr-keys.vercel.app',
-				'https://dev-keys.vjstartup.com',
-				'https://keys.vjstartup.com',
-				'http://localhost:5173',
-				'http://localhost:3000',
-				'http://127.0.0.1:5173'
-			]
+			allowedOrigins: config.cors.origins
 		}
 	});
 });
@@ -171,14 +149,7 @@ if (process.env.NODE_ENV === "production") {
 // Configure Socket.IO with CORS
 const io = new Server(server, {
 	cors: {
-		origin: [
-			'https://vnr-keys.vercel.app',
-			'https://dev-keys.vjstartup.com',
-			'https://keys.vjstartup.com',
-			'http://localhost:5173',
-			'http://localhost:3000',
-			'http://127.0.0.1:5173'
-		],
+		origin: config.cors.origins,
 		methods: ["GET", "POST"],
 		credentials: true
 	}
@@ -219,8 +190,8 @@ server.listen(PORT, async () => {
 	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 	console.log("🔌 Socket.IO server ready for real-time updates");
 
-	if (process.env.NODE_ENV === 'development') {
-		console.log(`📱 Frontend URL: http://localhost:5173`);
-		console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+	if (config.server.nodeEnv === 'development' || config.environment === 'local') {
+		console.log(`📱 Frontend URL: ${config.urls.client}`);
+		console.log(`🔗 API Health: ${config.urls.backend}/api/health`);
 	}
 });
