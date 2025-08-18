@@ -23,35 +23,47 @@ const AboutPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ✅ API URL definition inside this file
+  const ENV = import.meta.env.VITE_ENVIRONMENT;
+  const API_URLS = {
+    local: import.meta.env.VITE_API_URL_LOCAL,
+    dev: import.meta.env.VITE_API_URL_DEV,
+    pro: import.meta.env.VITE_API_URL_PRO,
+  };
+  const API_URL = API_URLS[ENV] || API_URLS.local;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Changed from /api/about to /about
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/about`);
 
-        console.log('API URL:', `${import.meta.env.VITE_API_URL}/about`);
-        console.log('Response status:', response.status);
-        
+        const response = await fetch(`${API_URL}/about`);
+
+        console.log("Environment:", ENV);
+        console.log("API URL Used:", `${API_URL}/about`);
+        console.log("Response status:", response.status);
+
         if (response.status === 404) {
-          throw new Error("About page data not found. Please check if the API endpoint is correct.");
+          throw new Error(
+            "About page data not found. Please check if the API endpoint is correct."
+          );
         }
-        
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            errorData.message || 
-            `Server error (${response.status}). Please try again later.`
+            errorData.message ||
+              `Server error (${response.status}). Please try again later.`
           );
         }
 
         const jsonData = await response.json();
-        console.log('Received data:', jsonData);
+        console.log("Received data:", jsonData);
         setData(jsonData);
       } catch (err) {
         console.error("Error details:", {
           message: err.message,
-          url: `${import.meta.env.VITE_API_URL}/about`
+          url: `${API_URL}/about`,
         });
         setError(err.message);
       } finally {
@@ -60,7 +72,7 @@ const AboutPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [API_URL, ENV]);
 
   if (isLoading) {
     return (
