@@ -27,7 +27,7 @@ const LoginPage = () => {
 			toast.error('Google authentication failed. Please try again.');
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [searchParams]); // Only depend on searchParams, not functions
+	}, [searchParams.get('auth')]); // Only depend on searchParams, not functions
 
 	return (
 		<div className='min-h-screen flex items-center justify-center relative z-50 px-4'>
