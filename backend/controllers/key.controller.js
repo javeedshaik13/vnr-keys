@@ -145,6 +145,60 @@ export const getFrequentlyUsedKeys = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Get user's most frequently used keys based on usage count
+ */
+export const getUserFrequentlyUsedKeys = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.userId);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  // Get user's key usage data
+  const keyUsage = user.keyUsage || new Map();
+  
+  // Convert Map to array and sort by usage count (descending)
+  const sortedKeyUsage = Array.from(keyUsage.entries())
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10); // Limit to top 10 keys
+
+  if (sortedKeyUsage.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: "No frequently used keys found",
+      data: {
+        keys: [],
+        total: 0,
+      },
+    });
+  }
+
+  // Get the key IDs
+  const keyIds = sortedKeyUsage.map(([keyId]) => keyId);
+
+  // Fetch the actual key data
+  const keys = await Key.find({
+    _id: { $in: keyIds },
+    isActive: true
+  }).populate('takenBy.userId', 'name email');
+
+  // Sort keys according to usage count order
+  const keyMap = new Map(keys.map(key => [key._id.toString(), key]));
+  const sortedKeys = sortedKeyUsage
+    .map(([keyId]) => keyMap.get(keyId))
+    .filter(Boolean); // Remove any keys that might not exist anymore
+
+  res.status(200).json({
+    success: true,
+    message: "User's frequently used keys retrieved successfully",
+    data: {
+      keys: sortedKeys,
+      total: sortedKeys.length,
+      usageCounts: Object.fromEntries(sortedKeyUsage),
+    },
+  });
+});
+
+/**
  * Get a single key by ID
  */
 export const getKeyById = asyncHandler(async (req, res) => {
@@ -185,6 +239,14 @@ export const takeKey = asyncHandler(async (req, res) => {
   }
 
   await key.takeKey(user);
+
+  // Increment usage count for the user
+  if (!user.keyUsage) {
+    user.keyUsage = new Map();
+  }
+  const currentCount = user.keyUsage.get(keyId) || 0;
+  user.keyUsage.set(keyId, currentCount + 1);
+  await user.save();
 
   // Emit real-time update
   emitKeyTaken(key, req.userId);
@@ -516,6 +578,14 @@ export const qrScanRequest = asyncHandler(async (req, res) => {
 
   // Take the key for the requesting user
   await key.takeKey(requestingUser);
+
+  // Increment usage count for the requesting user
+  if (!requestingUser.keyUsage) {
+    requestingUser.keyUsage = new Map();
+  }
+  const currentCount = requestingUser.keyUsage.get(keyId) || 0;
+  requestingUser.keyUsage.set(keyId, currentCount + 1);
+  await requestingUser.save();
 
   // Emit real-time update for QR scan request
   emitQRScanRequest(key, req.userId, userId);

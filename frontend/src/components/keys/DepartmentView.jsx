@@ -18,8 +18,6 @@ const applyAvailabilityFilter = (keys, filter) => {
 			return keys.filter((k) => k.status === "available");
 		case "unavailable":
 			return keys.filter((k) => k.status !== "available");
-		case "favorites":
-			return keys.filter((k) => k.frequentlyUsed);
 		default:
 			return keys;
 	}
@@ -30,7 +28,6 @@ const DepartmentView = ({
 	keys,
 	searchQuery,
 	onRequestKey,
-	onToggleFrequent,
 	onBack
 }) => {
 	const [availabilityFilter, setAvailabilityFilter] = useState("all");
@@ -93,16 +90,7 @@ const DepartmentView = ({
 					>
 						Unavailable
 					</button>
-					<button
-						onClick={() => handleFilterChange("favorites")}
-						className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-							availabilityFilter === "favorites"
-								? "bg-green-500 text-white"
-								: "bg-white/10 text-gray-300 hover:bg-white/20"
-						}`}
-					>
-						Favorites
-					</button>
+
 				</div>
 			</div>
 
@@ -124,7 +112,6 @@ const DepartmentView = ({
 							keyData={key}
 							variant="default"
 							onRequestKey={onRequestKey}
-							onToggleFrequent={onToggleFrequent}
 						/>
 					))
 				)}

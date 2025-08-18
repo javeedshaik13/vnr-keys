@@ -34,8 +34,11 @@ const transformKeyData = (backendKey) => {
 export const useKeyStore = create((set, get) => ({
   keys: [],
   takenKeys: [], // Separate state for taken keys
+  frequentlyUsedKeys: [], // State for user's frequently used keys
+  usageCounts: {}, // State for usage counts
   isLoading: false,
   isLoadingTakenKeys: false, // Separate loading state for taken keys
+  isLoadingFrequentlyUsed: false, // Loading state for frequently used keys
   error: null,
   searchQuery: "",
   activeQRRequest: null,
@@ -171,6 +174,38 @@ export const useKeyStore = create((set, get) => ({
       const errorMessage = handleError(error);
       set({ error: errorMessage, isLoadingTakenKeys: false });
       return [];
+    }
+  },
+
+  // Fetch user's frequently used keys
+  fetchUserFrequentlyUsedKeys: async () => {
+    set({ isLoadingFrequentlyUsed: true, error: null });
+
+    try {
+      const response = await axios.get(`${API_URL}/my-frequently-used`, {
+        withCredentials: true,
+      });
+
+      const backendKeys = response.data.data.keys || [];
+      const keys = backendKeys.map(transformKeyData);
+      const usageCounts = response.data.data.usageCounts || {};
+
+      set({ 
+        frequentlyUsedKeys: keys, 
+        usageCounts,
+        isLoadingFrequentlyUsed: false 
+      });
+      return { keys, usageCounts };
+    } catch (error) {
+      console.error("Error fetching frequently used keys:", error);
+      const errorMessage = handleError(error);
+      set({ 
+        frequentlyUsedKeys: [], 
+        usageCounts: {},
+        error: errorMessage, 
+        isLoadingFrequentlyUsed: false 
+      });
+      throw error;
     }
   },
 

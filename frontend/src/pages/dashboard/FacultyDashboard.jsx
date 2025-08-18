@@ -7,7 +7,7 @@ import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
 import SearchBar from "../../components/keys/SearchBar";
-import FavoritesSection from "../../components/keys/FavoritesSection";
+import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
 
@@ -21,13 +21,16 @@ const FacultyDashboard = () => {
   const { user } = useAuthStore();
   const {
     keys,
+    frequentlyUsedKeys,
+    usageCounts,
     getTakenKeys,
     generateKeyRequestQR,
     generateKeyReturnQR,
-    toggleFrequentlyUsedAPI,
     fetchKeys,
     fetchTakenKeys,
-    isLoadingTakenKeys
+    fetchUserFrequentlyUsedKeys,
+    isLoadingTakenKeys,
+    isLoadingFrequentlyUsed
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
@@ -45,10 +48,11 @@ const FacultyDashboard = () => {
       console.log('🔑 FacultyDashboard: User ID:', user.id);
       fetchKeys().catch(console.error);
       fetchTakenKeys(user.id).catch(console.error);
+      fetchUserFrequentlyUsedKeys().catch(console.error);
     } else {
       console.log('❌ FacultyDashboard: No user found');
     }
-  }, [user, fetchKeys, fetchTakenKeys]);
+  }, [user, fetchKeys, fetchTakenKeys, fetchUserFrequentlyUsedKeys]);
 
   const takenKeys = getTakenKeys(user?.id);
   console.log('🔑 FacultyDashboard: Taken keys count:', takenKeys.length);
@@ -112,11 +116,8 @@ const FacultyDashboard = () => {
   };
 
   const handleToggleFrequent = async (keyId) => {
-    try {
-      await toggleFrequentlyUsedAPI(keyId);
-    } catch (error) {
-      console.error("Toggle frequent error:", error);
-    }
+    // This function is no longer needed as we're using usage-based frequently used keys
+    console.log("Toggle frequent function deprecated - using usage-based frequently used keys");
   };
 
   const handleDepartmentClick = (department) => {
@@ -198,13 +199,13 @@ const FacultyDashboard = () => {
               />
             ) : (
               <>
-                {/* Favorites Section */}
-                <FavoritesSection
-                  keys={keys}
+                {/* Frequently Used Keys Section */}
+                <FrequentlyUsedSection
+                  keys={frequentlyUsedKeys}
                   searchQuery={searchQuery}
                   availabilityFilter="all"
                   onRequestKey={handleRequestKey}
-                  onToggleFrequent={handleToggleFrequent}
+                  usageCounts={usageCounts}
                 />
 
                 {/* Departments Section */}

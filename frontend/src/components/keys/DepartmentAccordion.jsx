@@ -43,8 +43,6 @@ const applyAvailabilityFilter = (keys, filter) => {
 			return keys.filter((k) => k.status === "available");
 		case "unavailable":
 			return keys.filter((k) => k.status !== "available");
-		case "favorites":
-			return keys.filter((k) => k.frequentlyUsed);
 		default:
 			return keys;
 	}
@@ -65,7 +63,6 @@ const DepartmentAccordion = ({
 	searchQuery,
 	availabilityFilter,
 	onRequestKey,
-	onToggleFrequent,
 	openState,
 	setOpenState,
 }) => {
@@ -115,7 +112,6 @@ const DepartmentAccordion = ({
 										keyData={key}
 										variant="default"
 										onRequestKey={onRequestKey}
-										onToggleFrequent={onToggleFrequent}
 									/>
 								))
 							)}

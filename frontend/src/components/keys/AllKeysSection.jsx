@@ -1,25 +1,25 @@
 import { useState } from "react";
-import FavoritesSection from "./FavoritesSection";
+import FrequentlyUsedSection from "./FrequentlyUsedSection";
 import DepartmentAccordion from "./DepartmentAccordion";
 
 const AllKeysSection = ({
 	keys,
+	frequentlyUsedKeys = [],
+	usageCounts = {},
 	searchQuery,
 	availabilityFilter,
 	onRequestKey,
-	onToggleFrequent,
 }) => {
 	const [openState, setOpenState] = useState({});
 	return (
 		<div>
-			{/* Favorites */}
-			<FavoritesSection
-				keys={keys}
+			{/* Frequently Used Keys */}
+			<FrequentlyUsedSection
+				keys={frequentlyUsedKeys}
 				searchQuery={searchQuery}
 				availabilityFilter={availabilityFilter}
 				onRequestKey={onRequestKey}
-				onToggleFrequent={onToggleFrequent}
-				limit={5}
+				usageCounts={usageCounts}
 			/>
 
 			{/* All Keys by Department */}
@@ -30,7 +30,6 @@ const AllKeysSection = ({
 					searchQuery={searchQuery}
 					availabilityFilter={availabilityFilter}
 					onRequestKey={onRequestKey}
-					onToggleFrequent={onToggleFrequent}
 					openState={openState}
 					setOpenState={setOpenState}
 				/>

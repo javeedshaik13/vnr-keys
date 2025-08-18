@@ -5,6 +5,7 @@ import {
   getUnavailableKeys,
   getMyTakenKeys,
   getFrequentlyUsedKeys,
+  getUserFrequentlyUsedKeys,
   getKeyById,
   takeKey,
   returnKey,
@@ -29,6 +30,7 @@ router.get("/available", getAvailableKeys); // Get available keys
 router.get("/unavailable", getUnavailableKeys); // Get unavailable keys
 router.get("/my-taken", getMyTakenKeys); // Get keys taken by current user
 router.get("/frequently-used", getFrequentlyUsedKeys); // Get frequently used keys
+router.get("/my-frequently-used", getUserFrequentlyUsedKeys); // Get user's frequently used keys
 
 // POST routes - specific routes MUST come before parameterized routes
 router.post("/", rolePermissions.adminOnly, createKey); // Create new key (admin only)
