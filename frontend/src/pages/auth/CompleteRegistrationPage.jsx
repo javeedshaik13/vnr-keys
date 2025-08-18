@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -16,47 +16,47 @@ const CompleteRegistrationPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, checkAuth, getRoleBasedRoute, isCheckingAuth, forceResetAuthState } = useAuthStore();
+  const hasShownAuthToast = useRef(false);
 
+  // Combined auth and form display effect
   useEffect(() => {
+    let isSubscribed = true;
+
+    // Handle auth status from URL
     const authStatus = searchParams.get('auth');
-    if (authStatus === 'success') {
+    if (authStatus === 'success' && !hasShownAuthToast.current) {
       toast.success('Successfully authenticated with Google!');
+      hasShownAuthToast.current = true;
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [searchParams]);
 
-  // Auth is handled by App.jsx, but let's ensure it's called
-  useEffect(() => {
-    console.log('🔍 CompleteRegistrationPage - Auth state:', { user: !!user, isCheckingAuth });
-
+    // Handle auth check
     if (!user && !isCheckingAuth) {
-      console.log('🔄 Manually triggering auth check from CompleteRegistrationPage');
       checkAuth();
     }
 
-    // Force reset if stuck in checking state for too long
+    // Force reset if stuck
     const resetTimeout = setTimeout(() => {
-      if (isCheckingAuth && !user) {
-        console.log('⚠️ Auth check stuck, forcing reset...');
+      if (isCheckingAuth && !user && isSubscribed) {
         forceResetAuthState();
-        // Try auth check again after reset
-        setTimeout(() => checkAuth(), 100);
+        setTimeout(() => isSubscribed && checkAuth(), 100);
       }
     }, 3000);
 
-    return () => clearTimeout(resetTimeout);
-  }, [user, isCheckingAuth, checkAuth, forceResetAuthState]);
-
-  // Force show form after 2 seconds if still loading
-  useEffect(() => {
+    // Force show form if taking too long
     const forceShowTimeout = setTimeout(() => {
-      if (isCheckingAuth && !user && !forceShowForm) {
-        console.log('🚨 Forcing registration form to show - auth check taking too long');
+      if (isCheckingAuth && !user && !forceShowForm && isSubscribed) {
         setForceShowForm(true);
       }
     }, 2000);
 
-    return () => clearTimeout(forceShowTimeout);
-  }, [isCheckingAuth, user, forceShowForm]);
+    return () => {
+      isSubscribed = false;
+      clearTimeout(resetTimeout);
+      clearTimeout(forceShowTimeout);
+    };
+  }, [searchParams, user, isCheckingAuth, checkAuth, forceResetAuthState, forceShowForm]);
 
   // Redirect if user doesn't need registration
   useEffect(() => {
@@ -400,35 +400,6 @@ const CompleteRegistrationPage = () => {
       </motion.div>
     );
   }
-
-  // Force show form after 2 seconds if still loading
-  useEffect(() => {
-    const forceShowTimeout = setTimeout(() => {
-      if (isCheckingAuth && !user && !forceShowForm) {
-        console.log('🚨 Forcing registration form to show - auth check taking too long');
-        setForceShowForm(true);
-      }
-    }, 2000);
-
-    return () => clearTimeout(forceShowTimeout);
-  }, [isCheckingAuth, user, forceShowForm]);
-
-  // Show loading while checking auth (with timeout fallback) - TEMPORARILY DISABLED FOR TESTING
-  // if (isCheckingAuth && !user && !forceShowForm) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center px-4">
-  //       <motion.div
-  //         initial={{ opacity: 0, y: 20 }}
-  //         animate={{ opacity: 1, y: 0 }}
-  //         transition={{ duration: 0.5 }}
-  //         className="max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden p-8 text-center"
-  //       >
-  //         <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-  //         <p className="text-white">Loading user data...</p>
-  //       </motion.div>
-  //     </div>
-  //   );
-  // }
 };
 
 export default CompleteRegistrationPage;
