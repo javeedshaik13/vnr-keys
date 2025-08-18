@@ -14,8 +14,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Base menu items for all users
@@ -32,25 +32,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { icon: BarChart3, label: "View Reports", path: "/dashboard/admin/reports" },
   ];
 
-  // Combine menu items based on user role
-  // (rendered inline below based on user role)
-
   const sidebarVariants = {
     open: {
       x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 40,
-      },
+      transition: { type: "spring", stiffness: 300, damping: 40 },
     },
     closed: {
       x: "-100%",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 40,
-      },
+      transition: { type: "spring", stiffness: 300, damping: 40 },
     },
   };
 
@@ -87,7 +76,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         variants={sidebarVariants}
         className={`${
           isMobile
-            ? "fixed left-0 top-0 h-full w-64 z-50"
+            ? "fixed left-0 top-[64px] h-[calc(100%-64px)] w-64 z-50" // 👈 shifted below navbar
             : "relative w-64 h-[calc(100vh-4rem)]"
         } bg-gray-900 bg-opacity-95 backdrop-filter backdrop-blur-lg border-r border-gray-800`}
       >
@@ -120,14 +109,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               ))}
 
               {/* Admin menu items */}
-              {user && user.role === 'admin' && (
+              {user && user.role === "admin" && (
                 <>
                   {adminMenuItems.map((item, index) => (
                     <motion.li
                       key={item.path}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: (baseMenuItems.length + index) * 0.1 }}
+                      transition={{
+                        delay: (baseMenuItems.length + index) * 0.1,
+                      }}
                     >
                       <NavLink
                         to={item.path}
