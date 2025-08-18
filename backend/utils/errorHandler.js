@@ -100,11 +100,19 @@ export const globalErrorHandler = (error, req, res, next) => {
 	// Handle MongoDB errors
 	if (error.name === 'ValidationError') {
 		statusCode = 400;
-		message = Object.values(error.errors).map(val => val.message).join(', ');
+		if (error.errors && typeof error.errors === 'object') {
+			message = Object.values(error.errors).map(val => val.message).join(', ');
+		} else {
+			message = error.message || 'Validation error';
+		}
 	} else if (error.code === 11000) {
 		statusCode = 409;
-		const field = Object.keys(error.keyValue)[0];
-		message = `${field} already exists`;
+		if (error.keyValue && typeof error.keyValue === 'object') {
+			const field = Object.keys(error.keyValue)[0];
+			message = `${field} already exists`;
+		} else {
+			message = 'Duplicate key error';
+		}
 	} else if (error.name === 'CastError') {
 		statusCode = 400;
 		message = 'Invalid ID format';
