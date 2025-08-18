@@ -498,30 +498,30 @@ const SecurityDashboard = () => {
               </h4>
 
               {/* User details section with dynamic text */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <p className="font-medium text-gray-900 mb-1">
+              {/* <div className="bg-gray-50 rounded-lg p-4 mb-4"> */}
+                {/* <p className="font-medium text-gray-900 mb-1">
                   {scanResult.type === 'return' ? 'Returned By:' :
                    scanResult.type === 'request' ? 'Collected By:' :
                    'Processed By:'}
-                </p>
-                <p className="text-gray-600">
+                </p> */}
+                {/* <p className="text-gray-600">
                   {scanResult.type === 'return' ?
                     (scanResult.keyData?.returnedBy?.name || 'Unknown User') :
                    scanResult.type === 'request' ?
                     (scanResult.keyData?.takenBy?.name || scanResult.key?.takenBy?.name || 'Unknown User') :
                    'Security Personnel'}
-                </p>
-                <p className="text-gray-500 text-sm">
+                </p> */}
+                {/* <p className="text-gray-500 text-sm">
                   {scanResult.type === 'return' ?
                     (scanResult.keyData?.returnedBy?.email || 'N/A') :
                    scanResult.type === 'request' ?
                     (scanResult.keyData?.takenBy?.email || scanResult.key?.takenBy?.email || 'N/A') :
                    'N/A'}
-                </p>
-                <p className="text-gray-400 text-xs mt-1">
+                </p> */}
+                {/* <p className="text-gray-400 text-xs mt-1">
                   {new Date().toLocaleString()}
-                </p>
-              </div>
+                </p> */}
+              {/* </div> */}
 
               <p className="text-gray-600 mb-6">
                 {scanResult.message}    
