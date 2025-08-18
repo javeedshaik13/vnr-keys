@@ -1,31 +1,36 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, Search, X, RefreshCw } from "lucide-react";
+import { Key, KeyRound, List, X, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
+import SearchBar from "../../components/keys/SearchBar";
+import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
+import DepartmentsSection from "../../components/keys/DepartmentsSection";
+import DepartmentView from "../../components/keys/DepartmentView";
 
 const FacultyDashboard = () => {
   const [activeTab, setActiveTab] = useState("taken");
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
-  const [availabilityFilter, setAvailabilityFilter] = useState("all"); // "all", "available", "unavailable", "favorites"
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const { user } = useAuthStore();
   const {
     keys,
+    frequentlyUsedKeys,
+    usageCounts,
     getTakenKeys,
-    // getFrequentlyUsedKeys,
-    searchKeys,
     generateKeyRequestQR,
     generateKeyReturnQR,
-    toggleFrequentlyUsedAPI,
     fetchKeys,
     fetchTakenKeys,
-    isLoadingTakenKeys
+    fetchUserFrequentlyUsedKeys,
+    isLoadingTakenKeys,
+    isLoadingFrequentlyUsed
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
@@ -43,35 +48,16 @@ const FacultyDashboard = () => {
       console.log('🔑 FacultyDashboard: User ID:', user.id);
       fetchKeys().catch(console.error);
       fetchTakenKeys(user.id).catch(console.error);
+      fetchUserFrequentlyUsedKeys().catch(console.error);
     } else {
       console.log('❌ FacultyDashboard: No user found');
     }
-  }, [user, fetchKeys, fetchTakenKeys]);
+  }, [user, fetchKeys, fetchTakenKeys, fetchUserFrequentlyUsedKeys]);
 
   const takenKeys = getTakenKeys(user?.id);
   console.log('🔑 FacultyDashboard: Taken keys count:', takenKeys.length);
   console.log('🔑 FacultyDashboard: All keys count:', keys.length);
   console.log('🔑 FacultyDashboard: User ID being used:', user?.id);
-  // Access frequently used keys when needed via getFrequentlyUsedKeys()
-  const searchResults = searchKeys(searchQuery);
-
-  // Filter keys based on availability and favorites
-  const getFilteredKeys = (keyList) => {
-    switch (availabilityFilter) {
-      case "available":
-        return keyList.filter(key => key.status === "available");
-      case "unavailable":
-        return keyList.filter(key => key.status !== "available");
-      case "favorites":
-        return keyList.filter(key => key.frequentlyUsed);
-      default:
-        return keyList;
-    }
-  };
-
-  const filteredKeys = getFilteredKeys(keys);
-  const filteredSearchResults = getFilteredKeys(searchResults);
-  // frequentlyUsedKeys is available via getFrequentlyUsedKeys(); derive on demand when needed
 
   const tabs = [
     {
@@ -129,18 +115,17 @@ const FacultyDashboard = () => {
     }
   };
 
-
-
   const handleToggleFrequent = async (keyId) => {
-    try {
-      await toggleFrequentlyUsedAPI(keyId);
-    } catch (error) {
-      console.error("Toggle frequent error:", error);
-    }
+    // This function is no longer needed as we're using usage-based frequently used keys
+    console.log("Toggle frequent function deprecated - using usage-based frequently used keys");
   };
 
-  const handleFilterChange = (filter) => {
-    setAvailabilityFilter(filter);
+  const handleDepartmentClick = (department) => {
+    setSelectedDepartment(department);
+  };
+
+  const handleBackToDepartments = () => {
+    setSelectedDepartment(null);
   };
 
   const renderTabContent = () => {
@@ -197,104 +182,40 @@ const FacultyDashboard = () => {
         return (
           <div className="flex-1 p-4 pb-20">
             {/* Search Bar */}
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search keys..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            <SearchBar 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
+
+            {/* Department View or Main Content */}
+            {selectedDepartment ? (
+              <DepartmentView
+                department={selectedDepartment}
+                keys={keys}
+                searchQuery={searchQuery}
+                onRequestKey={handleRequestKey}
+                onToggleFrequent={handleToggleFrequent}
+                onBack={handleBackToDepartments}
+              />
+            ) : (
+              <>
+                {/* Frequently Used Keys Section */}
+                <FrequentlyUsedSection
+                  keys={frequentlyUsedKeys}
+                  searchQuery={searchQuery}
+                  availabilityFilter="all"
+                  onRequestKey={handleRequestKey}
+                  usageCounts={usageCounts}
                 />
-              </div>
-            </div>
 
-            {/* Filter Buttons */}
-            <div className="mb-6">
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                <button
-                  onClick={() => handleFilterChange("all")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    availabilityFilter === "all"
-                      ? "bg-green-500 text-white"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => handleFilterChange("available")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    availabilityFilter === "available"
-                      ? "bg-green-500 text-white"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                >
-                  Available
-                </button>
-                <button
-                  onClick={() => handleFilterChange("unavailable")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    availabilityFilter === "unavailable"
-                      ? "bg-green-500 text-white"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                >
-                  Unavailable
-                </button>
-                <button
-                  onClick={() => handleFilterChange("favorites")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    availabilityFilter === "favorites"
-                      ? "bg-green-500 text-white"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                >
-                  Favorites
-                </button>
-              </div>
-            </div>
-
-
-
-            {/* All Keys */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                {searchQuery ? `Search Results (${filteredSearchResults.length})` : "All Keys"}
-                {availabilityFilter !== "all" && (
-                  <span className="text-sm text-gray-400 ml-2">
-                    ({availabilityFilter === "available" ? "Available" : availabilityFilter === "unavailable" ? "Unavailable" : "Favorites"} only)
-                  </span>
-                )}
-              </h3>
-
-              {(searchQuery ? filteredSearchResults : filteredKeys).length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">
-                    {searchQuery ? "No keys found" : "No keys available"}
-                    {availabilityFilter !== "all" && (
-                      <span className="block text-sm text-gray-500 mt-1">
-                        with current filter
-                      </span>
-                    )}
-                  </p>
-                </div>
-              ) : (
-                                 <div className="space-y-3">
-                   {(searchQuery ? filteredSearchResults : filteredKeys).map((key) => (
-                     <KeyCard
-                       key={key.id}
-                       keyData={key}
-                       variant="default"
-                       onRequestKey={handleRequestKey}
-                       onToggleFrequent={handleToggleFrequent}
-                     />
-                   ))}
-                 </div>
-              )}
-            </div>
+                {/* Departments Section */}
+                <DepartmentsSection
+                  keys={keys}
+                  onDepartmentClick={handleDepartmentClick}
+                  selectedDepartment={selectedDepartment}
+                />
+              </>
+            )}
           </div>
         );
 

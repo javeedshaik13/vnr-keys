@@ -19,9 +19,14 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
       enum: [
-        "CSE", // Computer Science Engineering
-        "CSE-AIML", // Computer Science Engineering - Artificial Intelligence and Machine Learning
-        "CSE-DS", // Computer Science Engineering - Data Science
+        "CSE",
+        "EEE",
+        "AIML",
+        "IoT",
+        "ECE",
+        "MECH",
+        "CIVIL",
+        "IT"
       ],
       required: function() {
         // Department is required only for faculty
@@ -76,6 +81,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
       maxlength: 200,
+    },
+    keyUsage: {
+      type: Map,
+      of: Number, // keyId -> usage count
+      default: {},
     },
   },
   { timestamps: true }
