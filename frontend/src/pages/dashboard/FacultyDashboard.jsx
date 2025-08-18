@@ -282,7 +282,7 @@ const FacultyDashboard = () => {
                   </p>
                 </div>
               ) : (
-                                 <div className="space-y-3">
+                 <div className="space-y-3">
                    {(searchQuery ? filteredSearchResults : filteredKeys).map((key) => (
                      <KeyCard
                        key={key.id}

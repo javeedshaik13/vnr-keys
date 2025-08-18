@@ -175,7 +175,7 @@ const CompleteRegistrationPage = () => {
         : import.meta.env.MODE === "development"
           ? "http://localhost:6203/api/auth"
           : "/api/auth";
-      const response = await fetch(`${API_URL}/complete-registration`, {
+      const response = await fetch(`${API_URL}/complete-registration`,{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
