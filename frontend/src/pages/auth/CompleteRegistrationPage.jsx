@@ -131,14 +131,14 @@ const CompleteRegistrationPage = () => {
           {step === 3 && renderStep3()}
 
           {/* Development only - Clear users button */}
-          {import.meta.env.DEV && (
+          {/* {import.meta.env.DEV && (
             <button
               onClick={clearUsers}
               className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
             >
               🗑️ Clear All Users (Dev Only)
             </button>
-          )}
+          )} */}
         </div>
       </motion.div>
     </div>
