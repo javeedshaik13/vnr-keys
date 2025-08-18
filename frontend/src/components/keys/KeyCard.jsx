@@ -12,7 +12,8 @@ const KeyCard = ({
   onReturnKey,
   showQR = false,
   qrData = null,
-  usageCount
+  usageCount,
+  userRole = "faculty" // "faculty", "security", "admin"
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [localQRData, setLocalQRData] = useState(null);
@@ -160,49 +161,62 @@ const KeyCard = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
-          {variant === "default" && keyData.status === "available" && (
-            <button
-              onClick={handleRequestKey}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <QrCode className="w-4 h-4" />
-              Generate QR to Request
-            </button>
-          )}
-
-          {variant === "default" && keyData.status === "unavailable" && (
-            <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
-              Not Available
-            </div>
-          )}
-
-          {variant === "taken" && (
-            <button
-              onClick={handleReturnKeyClick}
-              disabled={isGeneratingQR}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              {isGeneratingQR ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
+          {/* QR Generation buttons - only show for non-security users */}
+          {userRole !== "security" && (
+            <>
+              {variant === "default" && keyData.status === "available" && (
+                <button
+                  onClick={handleRequestKey}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
                   <QrCode className="w-4 h-4" />
-                  Show Return QR
-                </>
+                  Generate QR to Request
+                </button>
               )}
-            </button>
+
+              {variant === "default" && keyData.status === "unavailable" && (
+                <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
+                  Not Available
+                </div>
+              )}
+
+              {variant === "taken" && (
+                <button
+                  onClick={handleReturnKeyClick}
+                  disabled={isGeneratingQR}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {isGeneratingQR ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <QrCode className="w-4 h-4" />
+                      Show Return QR
+                    </>
+                  )}
+                </button>
+              )}
+            </>
           )}
 
-          {variant === "unavailable" && (
+          {/* Security-specific actions */}
+          {userRole === "security" && variant === "unavailable" && (
             <button
               onClick={handleCollectKey}
               className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
               Collect
             </button>
+          )}
+
+          {/* Non-security unavailable key display */}
+          {userRole !== "security" && variant === "unavailable" && (
+            <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
+              Not Available
+            </div>
           )}
         </div>
       </motion.div>
