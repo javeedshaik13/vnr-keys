@@ -174,7 +174,7 @@ const CompleteRegistrationPage = () => {
         ? `${import.meta.env.VITE_API_URL}/auth`
         : import.meta.env.MODE === "development"
           ? "http://localhost:6203/api/auth"
-          : "/be/api/auth";
+          : "/api/auth";
       const response = await fetch(`${API_URL}/complete-registration`,{
         method: "POST",
         headers: {
