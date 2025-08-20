@@ -83,29 +83,30 @@ const DepartmentView = ({
         </div>
       </div>
 
-      {/* Keys List */}
-      <div className="space-y-4">
-        {finalKeys.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
-            <p className="text-gray-400 text-lg">
-              {searchQuery.trim()
-                ? `No keys found matching "${searchQuery}"`
-                : "No keys available in this department"}
-            </p>
-          </div>
-        ) : (
-          finalKeys.map((key) => (
-            <KeyCard
-              key={key.id}
-              keyData={key}
-              variant="default"
-              onRequestKey={onRequestKey}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
+			{/* Keys List */}
+			<div className="space-y-4">
+				{finalKeys.length === 0 ? (
+					<div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
+						<p className="text-gray-400 text-lg">
+							{searchQuery.trim() 
+								? `No keys found matching "${searchQuery}"` 
+								: "No keys available in this department"
+							}
+						</p>
+					</div>
+				) : (
+					finalKeys.map((key) => (
+						<KeyCard
+							key={key.id}
+							keyData={key}
+							variant="default"
+							onRequestKey={onRequestKey}
+						/>
+					))
+				)}
+			</div>
+		</div>
+	);
 };
 
 export default DepartmentView;
