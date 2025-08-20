@@ -7,6 +7,10 @@ import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRScanner from "../../components/keys/QRScanner";
+import SearchBar from "../../components/keys/SearchBar";
+import SearchResults from "../../components/keys/SearchResults";
+import DepartmentsSection from "../../components/keys/DepartmentsSection";
+import DepartmentView from "../../components/keys/DepartmentView";
 import { processQRScanReturn, processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
 
@@ -18,9 +22,12 @@ const SecurityDashboard = () => {
   const [showReturnConfirmation, setShowReturnConfirmation] = useState(false);
   const [pendingReturnData, setPendingReturnData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const { user } = useAuthStore();
   const {
+    keys,
     getAvailableKeys,
     getUnavailableKeys,
     fetchKeys,
@@ -36,6 +43,14 @@ const SecurityDashboard = () => {
 
   const availableKeys = getAvailableKeys();
   const unavailableKeys = getUnavailableKeys();
+
+  const handleDepartmentClick = (department) => {
+    setSelectedDepartment(department);
+  };
+
+  const handleBackToDepartments = () => {
+    setSelectedDepartment(null);
+  };
 
   const tabs = [
     {
@@ -263,8 +278,9 @@ const SecurityDashboard = () => {
     switch (activeTab) {
       case "scanner":
         return (
-          <div className="flex-1 flex items-center justify-center p-8">
-            <div className="text-center max-w-sm">
+          <div className="flex-1 p-4 pb-20">
+            {/* QR Scanner Section - Focused solely on scanning functionality */}
+            <div className="text-center max-w-sm mx-auto mt-8 mb-8">
               <QrCode className="w-24 h-24 text-green-400 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-white mb-4">QR Scanner</h2>
               <p className="text-gray-300 mb-8">
@@ -284,28 +300,70 @@ const SecurityDashboard = () => {
       case "available":
         return (
           <div className="flex-1 p-4 pb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Available Keys</h2>
-              <div className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-sm font-medium border border-green-600/30">
-                {availableKeys.length} Available
-              </div>
-            </div>
+            {/* Global Search Bar */}
+            <SearchBar 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
 
-            {availableKeys.length === 0 ? (
-              <div className="text-center py-12">
-                <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">No keys available</p>
-              </div>
+            {/* Global Search Results Section - Only show when outside departments and search is active */}
+            {!selectedDepartment && searchQuery.trim() && (
+              <SearchResults
+                searchQuery={searchQuery}
+                keys={keys}
+                onCollectKey={handleCollectKey}
+                userRole="security"
+              />
+            )}
+
+            {/* Department View or Main Content */}
+            {selectedDepartment ? (
+              <DepartmentView
+                department={selectedDepartment}
+                keys={keys}
+                searchQuery={searchQuery} // Pass search query to filter department keys
+                onRequestKey={() => {}} // Security doesn't request keys
+                onToggleFrequent={() => {}} // Not applicable for security
+                onBack={handleBackToDepartments}
+                userRole="security"
+              />
             ) : (
-              <div className="space-y-4">
-                {availableKeys.map((key) => (
-                  <KeyCard
-                    key={key.id}
-                    keyData={key}
-                    variant="available"
-                  />
-                ))}
-              </div>
+              <>
+                {/* Departments Section */}
+                <DepartmentsSection
+                  keys={keys}
+                  onDepartmentClick={handleDepartmentClick}
+                  selectedDepartment={selectedDepartment}
+                />
+
+                {/* Available Keys Section */}
+                {/* <div className="mt-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-white">Available Keys</h2>
+                    <div className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-sm font-medium border border-green-600/30">
+                      {availableKeys.length} Available
+                    </div>
+                  </div>
+
+                  {availableKeys.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-400 text-lg">No keys available</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {availableKeys.map((key) => (
+                        <KeyCard
+                          key={key.id}
+                          keyData={key}
+                          variant="available"
+                          userRole="security"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div> */}
+              </>
             )}
           </div>
         );
@@ -333,6 +391,7 @@ const SecurityDashboard = () => {
                     keyData={key}
                     variant="unavailable"
                     onCollectKey={handleCollectKey}
+                    userRole="security"
                   />
                 ))}
               </div>

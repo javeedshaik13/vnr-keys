@@ -7,6 +7,7 @@ import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
 import SearchBar from "../../components/keys/SearchBar";
+import SearchResults from "../../components/keys/SearchResults";
 import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
@@ -138,47 +139,71 @@ const FacultyDashboard = () => {
       case "taken":
         return (
           <div className="flex-1 p-4 pb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">My Keys</h2>
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30">
-                  {takenKeys.length} Taken
-                </div>
-                <button
-                  onClick={() => fetchTakenKeys(user?.id)}
-                  disabled={isLoadingTakenKeys}
-                  className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg border border-blue-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Refresh taken keys"
-                >
-                  <RefreshCw className={`w-4 h-4 ${isLoadingTakenKeys ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
-            </div>
+            {/* Global Search Bar */}
+            <SearchBar 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
 
-            {isLoadingTakenKeys ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">Loading taken keys...</p>
-              </div>
-            ) : takenKeys.length === 0 ? (
-              <div className="text-center py-12">
-                <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">No keys taken</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Go to Key List to request keys
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {takenKeys.map((key) => (
-                  <KeyCard
-                    key={key.id}
-                    keyData={key}
-                    variant="taken"
-                    onReturnKey={handleReturnKey}
-                    showQR={false}
-                  />
-                ))}
-              </div>
+            {/* Global Search Results Section - Only show when search is active */}
+            {searchQuery.trim() && (
+              <SearchResults
+                searchQuery={searchQuery}
+                keys={keys}
+                onRequestKey={handleRequestKey}
+                onToggleFrequent={handleToggleFrequent}
+                onReturnKey={handleReturnKey}
+                userRole="faculty"
+              />
+            )}
+
+            {/* My Keys Section - Only show when no search is active */}
+            {!searchQuery.trim() && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">My Keys</h2>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30">
+                      {takenKeys.length} Taken
+                    </div>
+                    <button
+                      onClick={() => fetchTakenKeys(user?.id)}
+                      disabled={isLoadingTakenKeys}
+                      className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg border border-blue-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Refresh taken keys"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isLoadingTakenKeys ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {isLoadingTakenKeys ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400 text-lg">Loading taken keys...</p>
+                  </div>
+                ) : takenKeys.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">No keys taken</p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      Go to Key List to request keys
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {takenKeys.map((key) => (
+                      <KeyCard
+                        key={key.id}
+                        keyData={key}
+                        variant="taken"
+                        onReturnKey={handleReturnKey}
+                        showQR={false}
+                        userRole="faculty"
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
@@ -186,11 +211,23 @@ const FacultyDashboard = () => {
       case "keylist":
         return (
           <div className="flex-1 p-4 pb-20">
-            {/* Search Bar */}
+            {/* Global Search Bar */}
             <SearchBar 
               searchQuery={searchQuery} 
               setSearchQuery={setSearchQuery} 
             />
+
+            {/* Global Search Results Section - Only show when outside departments and search is active */}
+            {!selectedDepartment && searchQuery.trim() && (
+              <SearchResults
+                searchQuery={searchQuery}
+                keys={keys}
+                onRequestKey={handleRequestKey}
+                onToggleFrequent={handleToggleFrequent}
+                onReturnKey={handleReturnKey}
+                userRole="faculty"
+              />
+            )}
 
             {/* Department View or Main Content */}
             {selectedDepartment ? (
@@ -207,7 +244,6 @@ const FacultyDashboard = () => {
                 {/* Frequently Used Keys Section */}
                 <FrequentlyUsedSection
                   keys={frequentlyUsedKeys}
-                  searchQuery={searchQuery}
                   availabilityFilter="all"
                   onRequestKey={handleRequestKey}
                   usageCounts={usageCounts}

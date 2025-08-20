@@ -1,16 +1,6 @@
 import KeyCard from "./KeyCard";
 import { Star } from "lucide-react";
 
-const matchesSearch = (key, query) => {
-	if (!query.trim()) return true;
-	const term = query.toLowerCase();
-	return (
-		key.keyName.toLowerCase().includes(term) ||
-		String(key.keyNumber).toLowerCase().includes(term) ||
-		(key.location || "").toLowerCase().includes(term)
-	);
-};
-
 const applyAvailabilityFilter = (keys, filter) => {
 	switch (filter) {
 		case "available":
@@ -26,15 +16,11 @@ const applyAvailabilityFilter = (keys, filter) => {
 
 const FavoritesSection = ({
 	keys,
-	searchQuery,
 	availabilityFilter,
 	onRequestKey,
 	onToggleFrequent,
 }) => {
-	const favoriteKeys = keys
-		.filter((k) => k.frequentlyUsed)
-		.filter((k) => matchesSearch(k, searchQuery));
-
+	const favoriteKeys = keys.filter((k) => k.frequentlyUsed);
 	const filtered = applyAvailabilityFilter(favoriteKeys, availabilityFilter);
 
 	return (

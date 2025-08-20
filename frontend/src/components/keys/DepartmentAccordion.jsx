@@ -27,16 +27,6 @@ const AccordionItem = ({ title, isOpen, onToggle, children, count }) => {
 	);
 };
 
-const matchesSearch = (key, query) => {
-	if (!query.trim()) return true;
-	const term = query.toLowerCase();
-	return (
-		key.keyName.toLowerCase().includes(term) ||
-		String(key.keyNumber).toLowerCase().includes(term) ||
-		(key.location || "").toLowerCase().includes(term)
-	);
-};
-
 const applyAvailabilityFilter = (keys, filter) => {
 	switch (filter) {
 		case "available":
@@ -60,7 +50,6 @@ const groupByDepartment = (keys) => {
 
 const DepartmentAccordion = ({
 	keys,
-	searchQuery,
 	availabilityFilter,
 	onRequestKey,
 	openState,
@@ -85,15 +74,11 @@ const DepartmentAccordion = ({
 				.filter((dept, idx, arr) => arr.indexOf(dept) === idx)
 				.map((dept) => {
 					const list = grouped[dept] || [];
-					const filteredBySearch = list.filter((k) => matchesSearch(k, searchQuery));
-					const finalList = applyAvailabilityFilter(filteredBySearch, availabilityFilter);
+					const finalList = applyAvailabilityFilter(list, availabilityFilter);
 
-					// Auto-open if search matches exist
-					const isOpen = openState[dept] || (searchQuery.trim() && finalList.length > 0);
+					// Auto-open if department has keys
+					const isOpen = openState[dept] || finalList.length > 0;
 					const toggle = () => setOpenState((prev) => ({ ...prev, [dept]: !isOpen }));
-
-					// Hide empty departments when a search is active
-					if (searchQuery.trim() && finalList.length === 0) return null;
 
 					return (
 						<AccordionItem

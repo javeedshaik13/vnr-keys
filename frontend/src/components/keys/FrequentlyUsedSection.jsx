@@ -1,16 +1,6 @@
 import KeyCard from "./KeyCard";
 import { TrendingUp } from "lucide-react";
 
-const matchesSearch = (key, query) => {
-	if (!query.trim()) return true;
-	const term = query.toLowerCase();
-	return (
-		key.keyName.toLowerCase().includes(term) ||
-		String(key.keyNumber).toLowerCase().includes(term) ||
-		(key.location || "").toLowerCase().includes(term)
-	);
-};
-
 const applyAvailabilityFilter = (keys, filter) => {
 	switch (filter) {
 		case "available":
@@ -24,15 +14,11 @@ const applyAvailabilityFilter = (keys, filter) => {
 
 const FrequentlyUsedSection = ({
 	keys,
-	searchQuery,
 	availabilityFilter,
 	onRequestKey,
 	usageCounts = {},
 }) => {
-	const frequentlyUsedKeys = keys
-		.filter((k) => matchesSearch(k, searchQuery));
-
-	const filtered = applyAvailabilityFilter(frequentlyUsedKeys, availabilityFilter);
+	const filtered = applyAvailabilityFilter(keys, availabilityFilter);
 
 	return (
 		<div className="mb-8">
