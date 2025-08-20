@@ -203,7 +203,7 @@ const KeyCard = ({
           )}
 
           {/* Security-specific actions */}
-          {userRole === "security" && variant === "unavailable" && (
+          {userRole !== "security" && variant === "unavailable" && (
             <button
               onClick={handleCollectKey}
               className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
@@ -213,7 +213,7 @@ const KeyCard = ({
           )}
 
           {/* Non-security unavailable key display */}
-          {userRole !== "security" && variant === "unavailable" && (
+          {userRole === "security" && variant === "unavailable" && (
             <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
               Not Available
             </div>
