@@ -1,5 +1,13 @@
 import { motion } from "framer-motion";
-import { Clock, MapPin, User, Star, QrCode, CheckCircle, TrendingUp } from "lucide-react";
+import {
+  Clock,
+  MapPin,
+  User,
+  Star,
+  QrCode,
+  CheckCircle,
+  TrendingUp,
+} from "lucide-react";
 import QRCode from "react-qr-code";
 import { useState } from "react";
 
@@ -12,7 +20,7 @@ const KeyCard = ({
   onReturnKey,
   showQR = false,
   qrData = null,
-  usageCount
+  usageCount,
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [localQRData, setLocalQRData] = useState(null);
@@ -21,11 +29,11 @@ const KeyCard = ({
   const getStatusColor = () => {
     switch (keyData.status) {
       case "available":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-indigo-500/20 text-indigo-300 border-indigo-400/40";
       case "unavailable":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-500/20 text-red-300 border-red-400/40";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-700/40 text-gray-300 border-gray-600/40";
     }
   };
 
@@ -62,9 +70,7 @@ const KeyCard = ({
   };
 
   const handleRequestKey = () => {
-    if (onRequestKey) {
-      onRequestKey(keyData.id);
-    }
+    if (onRequestKey) onRequestKey(keyData.id);
   };
 
   const handleReturnKeyClick = async () => {
@@ -83,15 +89,11 @@ const KeyCard = ({
   };
 
   const handleCollectKey = () => {
-    if (onCollectKey) {
-      onCollectKey(keyData.id);
-    }
+    if (onCollectKey) onCollectKey(keyData.id);
   };
 
   const handleToggleFrequent = () => {
-    if (onToggleFrequent) {
-      onToggleFrequent(keyData.id);
-    }
+    if (onToggleFrequent) onToggleFrequent(keyData.id);
   };
 
   return (
@@ -99,7 +101,9 @@ const KeyCard = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg"
+        className="bg-gray-800 border border-gray-700 rounded-2xl p-5
+          transition-all duration-500
+          hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] hover:border-indigo-500"
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
@@ -108,17 +112,19 @@ const KeyCard = ({
               <h3 className="text-lg font-bold text-white">
                 Key #{keyData.keyNumber}
               </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor()}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor()}`}
+              >
                 {getStatusIcon()}
                 <span className="capitalize">{keyData.status}</span>
               </span>
             </div>
-            <p className="text-emerald-200 font-medium">{keyData.keyName}</p>
+            <p className="text-indigo-300 font-medium">{keyData.keyName}</p>
             {usageCount && (
               <div className="flex items-center gap-1 mt-1">
                 <TrendingUp className="w-3 h-3 text-blue-400" />
                 <span className="text-xs text-blue-400 font-medium">
-                  Used {usageCount} time{usageCount !== 1 ? 's' : ''}
+                  Used {usageCount} time{usageCount !== 1 ? "s" : ""}
                 </span>
               </div>
             )}
@@ -126,19 +132,19 @@ const KeyCard = ({
         </div>
 
         {/* Location */}
-        <div className="flex items-center gap-2 mb-3 text-gray-300">
+        <div className="flex items-center gap-2 mb-3 text-gray-400">
           <MapPin className="w-4 h-4" />
           <span className="text-sm">{keyData.location}</span>
         </div>
 
         {/* Status Info */}
         {keyData.status === "unavailable" && keyData.takenBy && (
-          <div className="flex items-center gap-2 mb-3 text-gray-300">
+          <div className="flex items-center gap-2 mb-3 text-gray-400">
             <User className="w-4 h-4" />
             <span className="text-sm">
               Taken by {keyData.takenBy.name}
               {keyData.takenAt && (
-                <span className="text-gray-400 ml-1">
+                <span className="text-gray-500 ml-1">
                   • {formatTime(keyData.takenAt)}
                 </span>
               )}
@@ -146,13 +152,13 @@ const KeyCard = ({
           </div>
         )}
 
-        {/* QR Code Display for taken keys */}
+        {/* QR Code Display */}
         {showQR && qrData && (
-          <div className="mb-4 p-3 bg-white rounded-lg">
+          <div className="mb-4 p-3 bg-gray-900 rounded-lg">
             <div className="flex justify-center">
               <QRCode value={JSON.stringify(qrData)} size={120} />
             </div>
-            <p className="text-center text-xs text-gray-600 mt-2">
+            <p className="text-center text-xs text-gray-400 mt-2">
               Show this QR code to security to return the key
             </p>
           </div>
@@ -163,10 +169,10 @@ const KeyCard = ({
           {variant === "default" && keyData.status === "available" && (
             <button
               onClick={handleRequestKey}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
               <QrCode className="w-4 h-4" />
-              Generate QR to Request
+              Generate QR
             </button>
           )}
 
@@ -207,21 +213,24 @@ const KeyCard = ({
         </div>
       </motion.div>
 
-      {/* QR Modal for return */}
+      {/* QR Modal */}
       {showQRModal && (localQRData || qrData) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-sm w-full"
+            className="bg-gray-800 rounded-xl p-6 max-w-sm w-full border border-gray-700"
           >
-            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
+            <h3 className="text-xl font-bold text-white mb-4 text-center">
               Return Key #{keyData.keyNumber}
             </h3>
             <div className="flex justify-center mb-4">
-              <QRCode value={JSON.stringify(localQRData || qrData)} size={200} />
+              <QRCode
+                value={JSON.stringify(localQRData || qrData)}
+                size={200}
+              />
             </div>
-            <p className="text-center text-gray-600 mb-4">
+            <p className="text-center text-gray-400 mb-4">
               Show this QR code to security to return the key
             </p>
             <button
@@ -229,7 +238,7 @@ const KeyCard = ({
                 setShowQRModal(false);
                 setLocalQRData(null);
               }}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
               Close
             </button>
