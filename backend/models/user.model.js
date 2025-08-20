@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
       enum: [
         "CSE",
         "EEE",
-        "AIML",
+        "CSE-AIML",
         "IoT",
         "ECE",
         "MECH",

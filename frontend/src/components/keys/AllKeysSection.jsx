@@ -6,7 +6,6 @@ const AllKeysSection = ({
 	keys,
 	frequentlyUsedKeys = [],
 	usageCounts = {},
-	searchQuery,
 	availabilityFilter,
 	onRequestKey,
 }) => {
@@ -16,7 +15,6 @@ const AllKeysSection = ({
 			{/* Frequently Used Keys */}
 			<FrequentlyUsedSection
 				keys={frequentlyUsedKeys}
-				searchQuery={searchQuery}
 				availabilityFilter={availabilityFilter}
 				onRequestKey={onRequestKey}
 				usageCounts={usageCounts}
@@ -27,7 +25,6 @@ const AllKeysSection = ({
 				<h3 className="text-lg font-semibold text-white mb-4">All Keys (By Department)</h3>
 				<DepartmentAccordion
 					keys={keys}
-					searchQuery={searchQuery}
 					availabilityFilter={availabilityFilter}
 					onRequestKey={onRequestKey}
 					openState={openState}

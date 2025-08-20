@@ -28,7 +28,7 @@ const DepartmentCard = ({ department, keyCount, onClick, isSelected = false }) =
         <span className="text-sm text-gray-300">
           Department
         </span>
-        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+        {/* <div className="w-2 h-2 bg-green-400 rounded-full"></div> */}
       </div>
     </motion.div>
   );
