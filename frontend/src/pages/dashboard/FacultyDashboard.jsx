@@ -85,7 +85,12 @@ const FacultyDashboard = () => {
 
       // Generate QR code for key request
       const qrData = await generateKeyRequestQR(keyId, user.id);
-      setQrData(qrData);
+      // Attach key metadata for better UX in the modal (e.g., show key number)
+      const selectedKey = keys.find(k => k.id === keyId);
+      const qrDataWithMeta = selectedKey?.keyNumber
+        ? { ...qrData, keyNumber: selectedKey.keyNumber }
+        : qrData;
+      setQrData(qrDataWithMeta);
       setShowQRModal(true);
     } catch (error) {
       console.error("Request key error:", error);
@@ -258,18 +263,22 @@ const FacultyDashboard = () => {
             className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
-                {qrData?.type === 'key-return' ? 'Return Key' : 'Request Key'}
+              <h3 className="text-xl font-bold text-gray-900 m-auto">
+                {qrData?.type === 'key-return'
+                  ? `Return Key ${qrData?.keyNumber ? `#${qrData.keyNumber}` : ''}`
+                  : `Request Key ${qrData?.keyNumber ? `#${qrData.keyNumber}` : ''}`}
               </h3>
+              {/* <h1>Hell0</h1> */}
               <button
                 onClick={() => setShowQRModal(false)}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                {/* <X className="w-5 h-5 text-gray-500" /> */}
               </button>
             </div>
 
             <div className="text-center">
+          
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
@@ -279,14 +288,14 @@ const FacultyDashboard = () => {
                   : 'Show this QR code to security to return the key'
                 }
               </p>
-              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              {/* <div className="bg-gray-50 rounded-lg p-3 mb-4">
                 <p className="text-sm text-gray-500">
                   {qrData.type === 'key-request' ? 'Request ID:' : 'Return ID:'}
                 </p>
                 <p className="text-xs font-mono text-gray-700 break-all">
                   {qrData.requestId || qrData.returnId}
                 </p>
-              </div>
+              </div> */}
               <button
                 onClick={() => setShowQRModal(false)}
                 className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
