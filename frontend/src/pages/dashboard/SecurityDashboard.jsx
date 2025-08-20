@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
-import { QrCode, Key, KeyRound, CheckCircle, RefreshCw } from "lucide-react";
+import { QrCode, Key, KeyRound, CheckCircle, XCircle } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -11,6 +12,7 @@ import SearchResults from "../../components/keys/SearchResults";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
 import { processQRScanReturn, processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
+import { config } from "../../utils/config";
 
 const SecurityDashboard = () => {
   const [activeTab, setActiveTab] = useState("scanner");
@@ -92,28 +94,16 @@ const SecurityDashboard = () => {
         try {
           console.log('🔍 Fetching details for keyId:', parsedData.keyId, 'userId:', parsedData.userId);
 
-          // Create proper API URLs
-          const keyUrl = `/api/keys/${parsedData.keyId}`;
-          const userUrl = `/api/auth/user/${parsedData.userId}`;
+          // Create proper API URLs using configured backend base URL
+          const keyUrl = `${config.api.keysUrl}/${parsedData.keyId}`;
+          const userUrl = `${config.api.authUrl}/user/${parsedData.userId}`;
 
           console.log('🔍 Key URL:', keyUrl);
           console.log('🔍 User URL:', userUrl);
 
           const [keyResponse, userResponse] = await Promise.all([
-            fetch(keyUrl, {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-              }
-            }),
-            fetch(userUrl, {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-              }
-            })
+            axios.get(keyUrl, { withCredentials: true }),
+            axios.get(userUrl, { withCredentials: true })
           ]);
 
           let keyData = null;
@@ -122,27 +112,17 @@ const SecurityDashboard = () => {
           console.log('🔍 Key response status:', keyResponse.status);
           console.log('🔍 User response status:', userResponse.status);
 
-          if (keyResponse.ok) {
-            const keyResult = await keyResponse.json();
-            console.log('🔍 Key result:', keyResult);
-            // Handle nested data structure: keyResult.data.key
-            keyData = keyResult.data?.key || keyResult.data || keyResult;
-            console.log('🔍 Extracted keyData:', keyData);
-          } else {
-            const errorText = await keyResponse.text();
-            console.error('❌ Key fetch failed:', keyResponse.status, errorText);
-          }
+          // Axios wraps data under .data
+          const keyResult = keyResponse.data;
+          const userResult = userResponse.data;
+          console.log('🔍 Key result:', keyResult);
+          console.log('🔍 User result:', userResult);
 
-          if (userResponse.ok) {
-            const userResult = await userResponse.json();
-            console.log('🔍 User result:', userResult);
-            // Handle user data structure: userResult.user
-            userData = userResult.user || userResult.data || userResult;
-            console.log('🔍 Extracted userData:', userData);
-          } else {
-            const errorText = await userResponse.text();
-            console.error('❌ User fetch failed:', userResponse.status, errorText);
-          }
+          // Handle nested data structure: keyResult.data.key
+          keyData = keyResult?.data?.key || keyResult?.data || keyResult;
+          userData = userResult?.user || userResult?.data || userResult;
+          console.log('🔍 Extracted keyData:', keyData);
+          console.log('🔍 Extracted userData:', userData);
 
           // Extract data with multiple fallback strategies
           const extractedKeyNumber = keyData?.keyNumber || keyData?.number || 'Unknown';
@@ -156,7 +136,7 @@ const SecurityDashboard = () => {
             keyNumber: extractedKeyNumber,
             keyName: extractedKeyName,
             keyFullName: (extractedKeyNumber !== 'Unknown' && extractedKeyName !== 'Unknown Key')
-              ? `Key ${extractedKeyNumber} (${extractedKeyName})`
+              ? `key ${extractedKeyNumber} , ${extractedKeyName}`
               : `Key #${parsedData.keyId.substring(0, 8)}...`,
             userName: extractedUserName,
             userEmail: extractedUserEmail
@@ -169,32 +149,6 @@ const SecurityDashboard = () => {
           setShowScanner(false);
         } catch (error) {
           console.error("Error fetching key/user details:", error);
-
-          // TEMPORARY: Try to process the QR scan directly to get data from backend
-          console.log('🔄 Attempting direct QR scan processing to get data from backend...');
-          try {
-            const result = await processQRScanReturn(parsedData);
-            console.log('✅ Got data from backend (direct path):', result);
-            console.log('✅ Original User Data (direct path):', result.data.originalUser);
-
-            setScanResult({
-              success: true,
-              message: result.message,
-              keyData: {
-                ...result.data.key,
-                keyNumber: result.data.key.keyNumber,
-                keyName: result.data.key.keyName,
-                returnedBy: result.data.originalUser,
-                collectedBy: result.data.scannedBy
-              },
-              type: 'return'
-            });
-            setShowScanResult(true);
-            setShowScanner(false);
-            return;
-          } catch (directError) {
-            console.error("Direct processing also failed:", directError);
-          }
 
           // Show confirmation with basic data and shortened ID
           const shortKeyId = parsedData.keyId.substring(0, 8);
@@ -293,9 +247,23 @@ const SecurityDashboard = () => {
     setScanResult({
       success: false,
       message: 'Key return was rejected by security',
+      keyData: {
+        keyNumber: pendingReturnData?.keyNumber,
+        keyName: pendingReturnData?.keyName,
+      },
       type: 'rejected'
     });
     setShowScanResult(true);
+  };
+
+  const handleCloseScanResult = () => {
+    const wasRejected = scanResult?.type === 'rejected';
+    const wasReturnSuccess = scanResult?.type === 'return';
+    setShowScanResult(false);
+    if (wasRejected || wasReturnSuccess) {
+      // Re-open the scanner so security can continue scanning
+      setShowScanner(true);
+    }
   };
 
   const handleCollectKey = async (keyId) => {
@@ -406,7 +374,7 @@ const SecurityDashboard = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Unavailable Keys</h2>
               <div className="bg-red-600/20 text-red-300 px-3 py-1 rounded-full text-sm font-medium border border-red-600/30">
-                {unavailableKeys.length} Taken
+                {unavailableKeys.length} Unavailable
               </div>
             </div>
 
@@ -478,10 +446,10 @@ const SecurityDashboard = () => {
           >
             <div className="text-center">
               <Key className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-2xl font-semibold text-gray-700 mb-2">
                 Confirm Key Return
               </h3>
-              <h4 className="text-lg font-semibold text-gray-700 mb-4">
+              <h4 className="text-lg font-bold text-gray-900 mb-4">
                 {pendingReturnData.keyFullName}
               </h4>
 
@@ -494,8 +462,7 @@ const SecurityDashboard = () => {
                 </div>
                 <div className="mb-3">
                   <p className="font-medium text-gray-900 mb-1">Key Details:</p>
-                  <p className="text-gray-600">Key {pendingReturnData.keyNumber}</p>
-                  <p className="text-gray-500 text-sm">{pendingReturnData.keyName}</p>
+                  <p className="text-gray-600">key {pendingReturnData.keyNumber} , {pendingReturnData.keyName}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 mb-1">Return Time:</p>
@@ -548,7 +515,11 @@ const SecurityDashboard = () => {
               {console.log('🔍 Scan Result Data:', scanResult)}
               {console.log('🔍 Key Data:', scanResult.keyData)}
               {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              {scanResult.type === 'rejected' ? (
+                <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              ) : (
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              )}
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
               </h3>
@@ -586,7 +557,7 @@ const SecurityDashboard = () => {
                 {scanResult.message}    
               </p>
               <button
-                onClick={() => setShowScanResult(false)}
+                onClick={handleCloseScanResult}
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
               >
                 Continue
