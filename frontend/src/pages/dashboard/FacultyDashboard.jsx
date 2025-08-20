@@ -193,6 +193,7 @@ const FacultyDashboard = () => {
                         variant="taken"
                         onReturnKey={handleReturnKey}
                         showQR={false}
+                        userRole="faculty"
                       />
                     ))}
                   </div>
