@@ -88,6 +88,30 @@ export const validateQRData = (qrData) => {
     return result;
   }
 
+  // Timestamp validation logic (<20 seconds window)
+  const now = Date.now();
+  const maxTimeValidForQR = 20;
+  let qrTimestamp = null;
+  if (qrData.timestamp) {
+    try {
+      qrTimestamp = new Date(qrData.timestamp).getTime();
+      if (isNaN(qrTimestamp)) {
+        result.errors.push('QR timestamp is invalid');
+        return result;
+      }
+      if ((now - qrTimestamp) / 1000 > maxTimeValidForQR) {
+        result.errors.push(`QR code is expired (older than ${maxTimeValidForQR} seconds)`);
+        return result;
+      }
+    } catch (e) {
+      result.errors.push('QR timestamp parsing failed');
+      return result;
+    }
+  } else {
+    result.errors.push('QR code does not contain a timestamp');
+    return result;
+  }
+
   // Check for key return QR code
   if (qrData.returnId && qrData.keyId && qrData.userId) {
     result.isValid = true;
@@ -104,37 +128,6 @@ export const validateQRData = (qrData) => {
 
   result.errors.push('QR code does not contain valid key data');
   return result;
-};
-
-/**
- * Generate QR data for key return
- * @param {string} keyId - The key ID
- * @param {string} userId - The user ID
- * @returns {Object} QR data object
- */
-export const generateKeyReturnQRData = (keyId, userId) => {
-  // Validate input parameters
-  if (!keyId) {
-    throw new Error('Key ID is required for QR generation');
-  }
-
-  if (!userId) {
-    throw new Error('User ID is required for QR generation');
-  }
-
-  // Ensure IDs are strings (MongoDB ObjectIds should be strings)
-  const keyIdStr = String(keyId);
-  const userIdStr = String(userId);
-
-  const qrData = {
-    type: 'key-return',
-    keyId: keyIdStr,
-    userId: userIdStr,
-    timestamp: new Date().toISOString(),
-    returnId: `ret-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
-  };
-
-  return qrData;
 };
 
 /**
@@ -163,6 +156,33 @@ export const generateKeyRequestQRData = (keyId, userId) => {
     userId: userIdStr,
     timestamp: new Date().toISOString(),
     requestId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  };
+};
+
+/**
+ * Generate QR data for key return
+ * @param {string} keyId - The key ID
+ * @param {string} userId - The user ID
+ * @returns {Object} QR data object
+ */
+export const generateKeyReturnQRData = (keyId, userId) => {
+  if (!keyId) {
+    throw new Error('Key ID is required for QR generation');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for QR generation');
+  }
+
+  const keyIdStr = String(keyId);
+  const userIdStr = String(userId);
+
+  return {
+    type: 'key-return',
+    keyId: keyIdStr,
+    userId: userIdStr,
+    timestamp: new Date().toISOString(),
+    returnId: `ret-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
   };
 };
 
