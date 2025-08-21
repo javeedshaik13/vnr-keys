@@ -405,7 +405,7 @@ const SecurityDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex flex-col">
+  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-white/20">
         <div className="flex items-center justify-between">
