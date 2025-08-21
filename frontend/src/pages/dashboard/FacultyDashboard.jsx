@@ -11,6 +11,9 @@ import SearchResults from "../../components/keys/SearchResults";
 import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
+import { CheckCircle } from "lucide-react";
+import socketService from "../../services/socketService";
+import { config } from "../../utils/config";
 
 const FacultyDashboard = () => {
   const [activeTab, setActiveTab] = useState("taken");
@@ -20,6 +23,7 @@ const FacultyDashboard = () => {
   const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
   const [qrExpired, setQrExpired] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [qrCollected, setQrCollected] = useState(false);
 
   const { user } = useAuthStore();
   const {
@@ -95,6 +99,7 @@ const FacultyDashboard = () => {
       setQrData(qrDataWithMeta);
       setShowQRModal(true);
       setQrExpired(false);
+      setQrCollected(false); // reset
     } catch (error) {
       console.error("Request key error:", error);
       // Show error to user
@@ -102,9 +107,9 @@ const FacultyDashboard = () => {
     }
   };
 
-  // Countdown timer for QR modal (20 seconds expiry)
+  // Countdown timer for QR modal using config.qr.validitySeconds
   useEffect(() => {
-    const MAX_SECONDS = 20;
+    const MAX_SECONDS = config.qr.validitySeconds;
     if (!showQRModal || !qrData?.timestamp) return;
 
     const update = () => {
@@ -120,6 +125,30 @@ const FacultyDashboard = () => {
     return () => clearInterval(id);
   }, [showQRModal, qrData]);
 
+  // Listen for request QR collected via sockets
+  useEffect(() => {
+    if (!showQRModal || !qrData) return;
+    try { socketService.connect(); } catch {}
+
+    const onEvent = (data) => {
+      try {
+        if (data?.action !== 'qr-request') return;
+        const eventKeyId = data.key?._id || data.key?.id;
+        if (eventKeyId === qrData.keyId && data.requestingUserId === user?.id) {
+          setQrCollected(true);
+          setQrExpired(false);
+        }
+      } catch {}
+    };
+
+    socketService.on('userKeyUpdated', onEvent);
+    socketService.on('keyUpdated', onEvent);
+    return () => {
+      socketService.off('userKeyUpdated', onEvent);
+      socketService.off('keyUpdated', onEvent);
+    };
+  }, [showQRModal, qrData, user?.id]);
+
   const handleRegenerateRequestQR = async () => {
     if (!qrData?.keyId || !user?.id) return;
     try {
@@ -128,6 +157,7 @@ const FacultyDashboard = () => {
       const withMeta = selectedKey?.keyNumber ? { ...newQR, keyNumber: selectedKey.keyNumber } : newQR;
       setQrData(withMeta);
       setQrExpired(false);
+      setQrCollected(false);
     } catch (e) {
       console.error('Failed to regenerate request QR:', e);
     }
@@ -339,7 +369,7 @@ const FacultyDashboard = () => {
               </h3>
               {/* <h1>Hell0</h1> */}
               <button
-                onClick={() => setShowQRModal(false)}
+                onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
               >
                 {/* <X className="w-5 h-5 text-gray-500" /> */}
@@ -348,18 +378,31 @@ const FacultyDashboard = () => {
 
             <div className="text-center">
           
-              <div className="flex justify-center mb-4">
-                <QRCode value={JSON.stringify(qrData)} size={200} />
-              </div>
-              <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
-                {qrData.type === 'key-request'
-                  ? 'Show this QR code to security to request the key'
-                  : 'Show this QR code to security to return the key'
-                }
-              </p>
-              <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
-                {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
-              </p>
+              {qrCollected ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <CheckCircle className="w-20 h-20 text-green-600" />
+                  </div>
+                  <p className="text-center text-green-700 font-semibold mb-4">
+                    QR collected by security
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <QRCode value={JSON.stringify(qrData)} size={200} />
+                  </div>
+                  <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
+                    {qrData.type === 'key-request'
+                      ? 'Show this QR code to security to request the key'
+                      : 'Show this QR code to security to return the key'
+                    }
+                  </p>
+                  <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
+                    {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
+                  </p>
+                </>
+              )}
               {/* <div className="bg-gray-50 rounded-lg p-3 mb-4">
                 <p className="text-sm text-gray-500">
                   {qrData.type === 'key-request' ? 'Request ID:' : 'Return ID:'}
@@ -377,7 +420,7 @@ const FacultyDashboard = () => {
                     Regenerate
                   </button>
                   <button
-                    onClick={() => setShowQRModal(false)}
+                    onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
                   >
                     Close
@@ -385,10 +428,10 @@ const FacultyDashboard = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowQRModal(false)}
+                  onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
                 >
-                  Close
+                  {qrCollected ? 'Done' : 'Close'}
                 </button>
               )}
             </div>

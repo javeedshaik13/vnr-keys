@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { config } from '../utils/config.js';
+import { useAuthStore } from '../store/authStore.js';
 
 class SocketService {
   constructor() {
@@ -108,17 +109,25 @@ class SocketService {
    * Get current user ID from auth store or localStorage
    */
   getCurrentUserId() {
-    // Try to get from auth store first
+    // Prefer live Zustand store (reliable during active session)
+    try {
+      const userFromStore = useAuthStore.getState()?.user;
+      if (userFromStore?.id) {
+        return userFromStore.id;
+      }
+    } catch (error) {
+      // ignore
+    }
+
+    // Fallback: try persisted state if any
     try {
       const authStore = JSON.parse(localStorage.getItem('auth-store') || '{}');
       if (authStore.state?.user?.id) {
         return authStore.state.user.id;
       }
-    } catch (error) {
-      console.warn('Could not get user ID from auth store');
-    }
-    
-    // Fallback to a default or generate a session ID
+    } catch (_) {}
+
+    // Last resort
     return 'anonymous-' + Date.now();
   }
 

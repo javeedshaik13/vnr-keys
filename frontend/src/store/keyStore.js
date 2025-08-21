@@ -4,6 +4,7 @@ import { handleError, handleSuccess } from "../utils/errorHandler.js";
 import socketService from "../services/socketService.js";
 import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/qrService.js";
 import { config } from "../utils/config.js";
+import { useAuthStore } from "./authStore.js";
 
 const API_URL = config.api.keysUrl;
 
@@ -75,18 +76,18 @@ export const useKeyStore = create((set, get) => ({
     }
     
     // Fallback to filtering from main keys array (for backward compatibility)
-    console.log('🔄 getTakenKeys: Falling back to filtering from main keys array');
-    console.log('🔍 Keys status breakdown:', keys.reduce((acc, key) => {
-      acc[key.status] = (acc[key.status] || 0) + 1;
-      return acc;
-    }, {}));
+    // console.log('🔄 getTakenKeys: Falling back to filtering from main keys array');
+    // console.log('🔍 Keys status breakdown:', keys.reduce((acc, key) => {
+    //   acc[key.status] = (acc[key.status] || 0) + 1;
+    //   return acc;
+    // }, {}));
     
     const userIdStr = String(userId);
-    console.log('🔍 Looking for userId:', userIdStr);
+    // console.log('🔍 Looking for userId:', userIdStr);
     
     const filteredTakenKeys = keys.filter(key => {
       if (key.status !== "unavailable" || !key.takenBy?.id) {
-        console.log(`🔍 Key ${key.keyNumber}: status=${key.status}, takenBy.id=${key.takenBy?.id}`);
+        // console.log(`🔍 Key ${key.keyNumber}: status=${key.status}, takenBy.id=${key.takenBy?.id}`);
         return false;
       }
       
@@ -95,7 +96,7 @@ export const useKeyStore = create((set, get) => ({
       
       // Try exact string match first
       if (String(keyUserId) === userIdStr) {
-        console.log(`✅ Key ${key.keyNumber}: Exact string match found for user ${userIdStr}`);
+        // console.log(`✅ Key ${key.keyNumber}: Exact string match found for user ${userIdStr}`);
         return true;
       }
       
@@ -103,7 +104,7 @@ export const useKeyStore = create((set, get) => ({
       if (keyUserId && typeof keyUserId === 'object' && keyUserId.toString) {
         const keyUserIdStr = keyUserId.toString();
         const match = keyUserIdStr === userIdStr;
-        console.log(`🔍 Key ${key.keyNumber}: ObjectId comparison: ${keyUserIdStr} === ${userIdStr} = ${match}`);
+        // console.log(`🔍 Key ${key.keyNumber}: ObjectId comparison: ${keyUserIdStr} === ${userIdStr} = ${match}`);
         return match;
       }
       
@@ -434,6 +435,33 @@ export const useKeyStore = create((set, get) => ({
         }
 
         set({ keys: updatedKeys });
+
+        // Keep takenKeys in sync for faculty users
+        try {
+          const { takenKeys } = get();
+          const currentUserId = (() => {
+            try { return useAuthStore.getState()?.user?.id || null; } catch { return null; }
+          })();
+
+          if (data.action === 'return' || data.action === 'qr-return') {
+            // Remove returned key from takenKeys if present
+            const filtered = takenKeys.filter(k => k.id !== data.key._id);
+            if (filtered.length !== takenKeys.length) {
+              set({ takenKeys: filtered });
+            }
+          } else if (data.action === 'qr-request') {
+            // If this user just got a key via QR, add/update it in takenKeys
+            if (currentUserId && data.requestingUserId === currentUserId) {
+              const transformed = transformKeyData(data.key);
+              const idx = takenKeys.findIndex(k => k.id === transformed.id);
+              const newTaken = [...takenKeys];
+              if (idx !== -1) newTaken[idx] = transformed; else newTaken.push(transformed);
+              set({ takenKeys: newTaken });
+            }
+          }
+        } catch (e) {
+          // non-fatal
+        }
 
         // Show notification based on action
         // Skip notifications for QR scan actions as they are handled by the UI components

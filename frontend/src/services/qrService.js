@@ -88,9 +88,9 @@ export const validateQRData = (qrData) => {
     return result;
   }
 
-  // Timestamp validation logic (<20 seconds window)
+  // Timestamp validation logic (<config.qr.validitySeconds seconds window)
   const now = Date.now();
-  const maxTimeValidForQR = 20;
+  const maxTimeValidForQR = config.qr.validitySeconds;
   let qrTimestamp = null;
   if (qrData.timestamp) {
     try {

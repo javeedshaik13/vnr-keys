@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Clock, MapPin, User, QrCode, CheckCircle, TrendingUp } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useState, useEffect } from "react";
+import socketService from "../../services/socketService.js";
+import { config } from "../../utils/config.js";
 
 const KeyCard = ({
   keyData,
@@ -19,6 +21,7 @@ const KeyCard = ({
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
   const [qrExpired, setQrExpired] = useState(false);
+  const [qrCollected, setQrCollected] = useState(false);
 
   const getStatusColor = () => {
     switch (keyData.status) {
@@ -87,7 +90,7 @@ const KeyCard = ({
 
   // Countdown for return QR inside this card's modal
   useEffect(() => {
-    const MAX_SECONDS = 20;
+    const MAX_SECONDS = config.qr.validitySeconds;
     if (!showQRModal || !(localQRData || qrData)?.timestamp) return;
 
     const source = localQRData || qrData;
@@ -102,6 +105,36 @@ const KeyCard = ({
     update();
     const id = setInterval(update, 500);
     return () => clearInterval(id);
+  }, [showQRModal, localQRData, qrData]);
+
+  // Listen for socket event indicating the QR was scanned/collected by security
+  useEffect(() => {
+    if (!showQRModal) return;
+
+    // Ensure socket is connected
+    try { socketService.connect(); } catch (_) {}
+
+    const handler = (data) => {
+      try {
+        if (data?.action !== 'qr-return') return;
+        const currentQR = localQRData || qrData;
+        if (!currentQR) return;
+        const eventKeyId = data.key?._id || data.key?.id;
+        if (eventKeyId && eventKeyId === currentQR.keyId) {
+          setQrCollected(true);
+          setQrExpired(false);
+        }
+      } catch {}
+    };
+
+    // Primary: user-specific event
+    socketService.on('userKeyUpdated', handler);
+    // Fallback: global key update event
+    socketService.on('keyUpdated', handler);
+    return () => {
+      socketService.off('userKeyUpdated', handler);
+      socketService.off('keyUpdated', handler);
+    };
   }, [showQRModal, localQRData, qrData]);
 
   const handleCollectKey = () => {
@@ -249,15 +282,28 @@ const KeyCard = ({
             <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
               Return Key #{keyData.keyNumber}
             </h3>
-            <div className="flex justify-center mb-4">
-              <QRCode value={JSON.stringify(localQRData || qrData)} size={200} />
-            </div>
-            <p className="text-center text-gray-900 mb-2 text-sm whitespace-nowrap">
-              Show this QR code to security to return the key
-            </p>
-            <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
-              {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
-            </p>
+            {qrCollected ? (
+              <>
+                <div className="flex justify-center mb-4">
+                  <CheckCircle className="w-20 h-20 text-green-600" />
+                </div>
+                <p className="text-center text-green-700 font-semibold mb-4">
+                  QR collected by security
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-center mb-4">
+                  <QRCode value={JSON.stringify(localQRData || qrData)} size={200} />
+                </div>
+                <p className="text-center text-gray-900 mb-2 text-sm whitespace-nowrap">
+                  Show this QR code to security to return the key
+                </p>
+                <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
+                  {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
+                </p>
+              </>
+            )}
             {qrExpired ? (
               <div className="flex gap-3">
                 <button
@@ -268,6 +314,7 @@ const KeyCard = ({
                       const newQR = await onReturnKey(keyData.id);
                       setLocalQRData(newQR);
                       setQrExpired(false);
+                      setQrCollected(false);
                     } finally {
                       setIsGeneratingQR(false);
                     }
@@ -280,6 +327,7 @@ const KeyCard = ({
                   onClick={() => {
                     setShowQRModal(false);
                     setLocalQRData(null);
+                    setQrCollected(false);
                   }}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
                 >
@@ -291,10 +339,11 @@ const KeyCard = ({
                 onClick={() => {
                   setShowQRModal(false);
                   setLocalQRData(null);
+                  setQrCollected(false);
                 }}
                 className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Close
+                {qrCollected ? 'Done' : 'Close'}
               </button>
             )}
           </motion.div>
