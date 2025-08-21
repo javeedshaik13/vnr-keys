@@ -4,7 +4,6 @@ import { Outlet } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import FloatingShape from "../ui/FloatingShape";
 
 // Create context for sidebar state
 const SidebarContext = createContext();

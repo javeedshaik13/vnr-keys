@@ -3,7 +3,6 @@ import {
   Clock,
   MapPin,
   User,
-  Star,
   QrCode,
   CheckCircle,
   TrendingUp,
@@ -117,7 +116,9 @@ const KeyCard = ({
     if (!showQRModal) return;
 
     // Ensure socket is connected
-    try { socketService.connect(); } catch (_) {}
+    try { socketService.connect(); } catch (_) {
+      // Ignore connection errors; socket may already be connected
+    }
 
     const handler = (data) => {
       try {
@@ -129,7 +130,9 @@ const KeyCard = ({
           setQrCollected(true);
           setQrExpired(false);
         }
-      } catch {}
+      } catch {
+        // Ignore errors
+      }
     };
 
     // Primary: user-specific event
@@ -144,9 +147,6 @@ const KeyCard = ({
 
   const handleCollectKey = () => {
     if (onCollectKey) onCollectKey(keyData.id);
-  };
-  const handleToggleFrequent = () => {
-    if (onToggleFrequent) onToggleFrequent(keyData.id);
   };
 
   return (

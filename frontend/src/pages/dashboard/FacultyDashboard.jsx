@@ -11,7 +11,6 @@ import SearchResults from "../../components/keys/SearchResults";
 import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
-import { CheckCircle } from "lucide-react";
 import socketService from "../../services/socketService";
 import { config } from "../../utils/config";
 
@@ -119,7 +118,7 @@ const FacultyDashboard = () => {
   // Listen for request QR collected via sockets
   useEffect(() => {
     if (!showQRModal || !qrData) return;
-    try { socketService.connect(); } catch {}
+    try { socketService.connect(); } catch { /* intentionally ignored */ }
 
     const onEvent = (data) => {
       try {
@@ -129,7 +128,9 @@ const FacultyDashboard = () => {
           setQrCollected(true);
           setQrExpired(false);
         }
-      } catch {}
+      } catch {
+        // intentionally left blank
+      }
     };
 
     socketService.on('userKeyUpdated', onEvent);

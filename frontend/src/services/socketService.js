@@ -125,7 +125,9 @@ class SocketService {
       if (authStore.state?.user?.id) {
         return authStore.state.user.id;
       }
-    } catch (_) {}
+    } catch (_) {
+      // intentionally ignore errors when reading localStorage
+    }
 
     // Last resort
     return 'anonymous-' + Date.now();

@@ -11,7 +11,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import FloatingShape from "../../components/ui/FloatingShape";
 
 const CompleteRegistrationPage = () => {
   const [step, setStep] = useState(1);
