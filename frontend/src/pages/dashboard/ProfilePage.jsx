@@ -32,7 +32,6 @@ const ProfilePage = () => {
       await updateProfile(formData);
       setIsEditing(false);
     } catch (error) {
-      // Error handling is done in the auth store
       console.error("Profile update failed:", error);
     }
   };
@@ -51,34 +50,23 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className={`space-y-6 ${sidebarOpen ? 'p-4 lg:p-6' : 'p-4 lg:p-8 xl:px-12'}`}>
+  <div className={`space-y-6 ${sidebarOpen ? "p-4 lg:p-6" : "p-4 lg:p-8 xl:px-12"}`} style={{background: "radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)"}}>
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text mb-4">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 text-transparent bg-clip-text mb-2">
           Profile Settings
         </h1>
-        <p className="text-gray-300">
-          Manage your account information and preferences
-        </p>
+        <p className="text-gray-300">Manage your account information and preferences</p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-1"
-        >
-          <div className="bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-gray-800">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-1">
+          <div className="bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
             <div className="text-center">
               {/* Profile Picture */}
               <div className="relative inline-block mb-4">
-                <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                <div className="w-24 h-24 bg-gradient-to-tr from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white text-2xl font-bold drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
                   {user?.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
                 <button className="absolute bottom-0 right-0 p-2 bg-gray-800 rounded-full border-2 border-gray-700 hover:bg-gray-700 transition-colors duration-200">
@@ -88,17 +76,19 @@ const ProfilePage = () => {
 
               <h2 className="text-xl font-bold text-white mb-1">{user?.name}</h2>
               <p className="text-gray-400 mb-1">{user?.email}</p>
-              {user?.role === 'faculty' && (
+              {user?.role === "faculty" && (
                 <>
-                  <p className="text-green-400 text-sm font-medium mb-1">
-                    {user?.department === 'CSE-AIML' ? 'CSE - AI & ML' :
-                     user?.department === 'CSE-DS' ? 'CSE - Data Science' :
-                     user?.department || 'Department'}
+                  <p className="text-blue-400 font-medium mb-1">
+                    {user?.department === "CSE-AIML"
+                      ? "CSE - AI & ML"
+                      : user?.department === "CSE-DS"
+                      ? "CSE - Data Science"
+                      : user?.department || "Department"}
                   </p>
                   <p className="text-gray-500 text-sm mb-4">Faculty ID: {user?.facultyId}</p>
                 </>
               )}
-              {user?.role !== 'faculty' && <div className="mb-4"></div>}
+              {user?.role !== "faculty" && <div className="mb-4"></div>}
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -114,21 +104,17 @@ const ProfilePage = () => {
 
               {/* Account Info */}
               <div className="space-y-3 text-left">
-                <div className="flex items-center space-x-3 p-3 bg-gray-800 bg-opacity-50 rounded-lg">
-                  <Calendar size={16} className="text-gray-400" />
+                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-200">
+                  <Calendar size={16} className="text-blue-400" />
                   <div>
                     <p className="text-gray-400 text-xs">Member since</p>
                     <p className="text-white text-sm">
-                      {new Date(user?.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(user?.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-3 bg-gray-800 bg-opacity-50 rounded-lg">
-                  <User size={16} className="text-gray-400" />
+                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-200">
+                  <User size={16} className="text-blue-400" />
                   <div>
                     <p className="text-gray-400 text-xs">Last login</p>
                     <p className="text-white text-sm">{formatDate(user?.lastLogin)}</p>
@@ -140,19 +126,14 @@ const ProfilePage = () => {
         </motion.div>
 
         {/* Profile Form */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="lg:col-span-2"
-        >
-          <div className="bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-gray-800">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
+          <div className="bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Personal Information</h2>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200"
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg hover:from-blue-600 hover:to-cyan-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-200"
                 >
                   <Edit3 size={16} />
                   <span>Edit Profile</span>
@@ -162,7 +143,7 @@ const ProfilePage = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={isLoading}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg hover:from-blue-600 hover:to-cyan-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -178,7 +159,7 @@ const ProfilePage = () => {
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-200"
+                    className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all duration-200"
                   >
                     <X size={16} />
                     <span>Cancel</span>
@@ -200,7 +181,7 @@ const ProfilePage = () => {
                     value={formData.name}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -215,13 +196,12 @@ const ProfilePage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
 
-              {/* Faculty-specific fields */}
-              {user?.role === 'faculty' && (
+              {user?.role === "faculty" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="department" className="block text-sm font-medium text-gray-300 mb-2">
@@ -233,7 +213,7 @@ const ProfilePage = () => {
                       value={formData.department}
                       onChange={handleChange}
                       disabled={!isEditing}
-                      className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Select Department</option>
                       <option value="CSE">Computer Science Engineering</option>
@@ -254,7 +234,7 @@ const ProfilePage = () => {
                       onChange={handleChange}
                       disabled={!isEditing}
                       placeholder="Enter your faculty ID"
-                      className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -273,7 +253,7 @@ const ProfilePage = () => {
                     onChange={handleChange}
                     disabled={!isEditing}
                     placeholder="City, Country"
-                    className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -289,7 +269,7 @@ const ProfilePage = () => {
                     onChange={handleChange}
                     disabled={!isEditing}
                     placeholder="https://yourwebsite.com"
-                    className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -306,7 +286,7 @@ const ProfilePage = () => {
                   disabled={!isEditing}
                   rows={4}
                   placeholder="Tell us about yourself..."
-                  className="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
                 />
               </div>
             </form>
