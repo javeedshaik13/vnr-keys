@@ -100,6 +100,14 @@ export const config = {
   app: {
     name: import.meta.env.VITE_APP_NAME,
     version: import.meta.env.VITE_APP_VERSION
+  },
+  // QR-related configuration
+  qr: {
+    // Use env override if provided, default to 60 seconds
+    validitySeconds: (() => {
+      const v = Number(import.meta.env.VITE_QR_VALIDITY_SECONDS);
+      return Number.isFinite(v) && v > 0 ? v : 60;
+    })()
   }
 };
 
