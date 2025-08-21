@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"
 import {
   Clock,
   MapPin,
@@ -9,14 +9,13 @@ import {
   TrendingUp,
 } from "lucide-react";
 import QRCode from "react-qr-code";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const KeyCard = ({
   keyData,
   variant = "default", // "default", "available", "unavailable", "taken"
   onRequestKey,
   onCollectKey,
-  onToggleFrequent,
   onReturnKey,
   showQR = false,
   qrData = null,
@@ -25,6 +24,8 @@ const KeyCard = ({
   const [showQRModal, setShowQRModal] = useState(false);
   const [localQRData, setLocalQRData] = useState(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
+  const [qrExpired, setQrExpired] = useState(false);
 
   const getStatusColor = () => {
     switch (keyData.status) {
@@ -80,6 +81,7 @@ const KeyCard = ({
         const qrData = await onReturnKey(keyData.id);
         setLocalQRData(qrData);
         setShowQRModal(true);
+        setQrExpired(false);
       } catch (error) {
         console.error("Error generating return QR:", error);
       } finally {
@@ -88,10 +90,28 @@ const KeyCard = ({
     }
   };
 
+  // Countdown for return QR inside this card's modal
+  useEffect(() => {
+    const MAX_SECONDS = 20;
+    if (!showQRModal || !(localQRData || qrData)?.timestamp) return;
+
+    const source = localQRData || qrData;
+    const update = () => {
+      const createdAt = new Date(source.timestamp).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+      const left = Math.max(0, MAX_SECONDS - elapsed);
+      setQrSecondsLeft(left);
+      setQrExpired(left <= 0);
+    };
+
+    update();
+    const id = setInterval(update, 500);
+    return () => clearInterval(id);
+  }, [showQRModal, localQRData, qrData]);
+
   const handleCollectKey = () => {
     if (onCollectKey) onCollectKey(keyData.id);
   };
-
   const handleToggleFrequent = () => {
     if (onToggleFrequent) onToggleFrequent(keyData.id);
   };
@@ -230,18 +250,51 @@ const KeyCard = ({
                 size={200}
               />
             </div>
-            <p className="text-center text-gray-400 mb-4">
+            <p className="text-center text-gray-900 mb-2 text-sm whitespace-nowrap">
               Show this QR code to security to return the key
             </p>
-            <button
-              onClick={() => {
-                setShowQRModal(false);
-                setLocalQRData(null);
-              }}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-            >
-              Close
-            </button>
+            <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
+              {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
+            </p>
+            {qrExpired ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => {
+                    if (!onReturnKey) return;
+                    setIsGeneratingQR(true);
+                    try {
+                      const newQR = await onReturnKey(keyData.id);
+                      setLocalQRData(newQR);
+                      setQrExpired(false);
+                    } finally {
+                      setIsGeneratingQR(false);
+                    }
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Regenerate
+                </button>
+                <button
+                  onClick={() => {
+                    setShowQRModal(false);
+                    setLocalQRData(null);
+                  }}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowQRModal(false);
+                  setLocalQRData(null);
+                }}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            )}
           </motion.div>
         </div>
       )}

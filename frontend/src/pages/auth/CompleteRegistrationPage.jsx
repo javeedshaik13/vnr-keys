@@ -187,6 +187,25 @@ const CompleteRegistrationPage = () => {
     }
   }
 
+  // Development utility retained for reference; disable unused var linting via comment
+  /* eslint-disable no-unused-vars */
+  async function clearUsers() {
+    if (confirm('Are you sure you want to clear all users from the database? This cannot be undone.')) {
+      try {
+        const response = await fetch('/api/auth/clear-users', { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+          toast.success(`Cleared ${data.deletedCount} users from database`);
+        } else {
+          toast.error('Failed to clear users');
+        }
+      } catch (error) {
+        toast.error('Error clearing users');
+      }
+    }
+  }
+  /* eslint-enable no-unused-vars */
+
   function renderStep1() {
     return (
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">

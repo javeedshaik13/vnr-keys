@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Frontend Environment Import Check Script
  * Tests if .env file is being imported correctly by Vite
