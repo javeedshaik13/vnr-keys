@@ -136,38 +136,6 @@ const AboutPage = () => {
               </div>
             </motion.div>
           ))}
-
-          {/* Extra Card - Srikar */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: data.team.length * 0.1 }}
-            whileHover={{ scale: 1.03 }}
-            className="relative bg-[#0d1628] border border-blue-400 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all p-6 text-center"
-          >
-            {/* Avatar */}
-            <div className="relative w-24 h-24 mx-auto mb-4">
-              <img
-                src="https://ui-avatars.com/api/?name=Srikar&background=0D1628&color=3B82F6"
-                alt="Srikar"
-                className="w-24 h-24 rounded-full object-cover border-2 border-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
-              />
-            </div>
-
-            {/* Info */}
-            <h3 className="text-lg font-bold text-white">Srikar</h3>
-            <p className="text-blue-200">UI/UX & Frontend Developer</p>
-
-            {/* Socials (optional placeholders) */}
-            <div className="flex justify-center gap-4 mt-4">
-              <a href="https://github.com" target="_blank" rel="noreferrer">
-                <Github className="w-6 h-6 text-blue-200 hover:text-white transition-colors" />
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer">
-                <Linkedin className="w-6 h-6 text-blue-200 hover:text-white transition-colors" />
-              </a>
-            </div>
-          </motion.div>
         </div>
       </section>
     </div>

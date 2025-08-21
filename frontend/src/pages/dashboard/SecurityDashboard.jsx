@@ -281,18 +281,20 @@ const SecurityDashboard = () => {
           <div className="flex-1 p-4 pb-20">
             {/* QR Scanner Section - Focused solely on scanning functionality */}
             <div className="text-center max-w-sm mx-auto mt-8 mb-8">
-              <QrCode className="w-24 h-24 text-green-400 mx-auto mb-6" />
+              <QrCode className="w-24 h-24 text-blue-400 mx-auto mb-6" />
+
               <h2 className="text-2xl font-bold text-white mb-4">QR Scanner</h2>
               <p className="text-gray-300 mb-8">
                 Scan QR codes from faculty to approve key requests or returns
               </p>
               <button
-                onClick={() => setShowScanner(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center gap-3 mx-auto"
-              >
-                <QrCode className="w-6 h-6" />
-                Start Scanning
-              </button>
+  onClick={() => setShowScanner(true)}
+  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center gap-3 mx-auto shadow-lg shadow-blue-500/30"
+>
+  <QrCode className="w-6 h-6 text-blue-200" />
+  Start Scanning
+</button>
+
             </div>
           </div>
         );
@@ -380,19 +382,20 @@ const SecurityDashboard = () => {
 
             {unavailableKeys.length === 0 ? (
               <div className="text-center py-12">
-                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+<CheckCircle className="w-16 h-16 text-blue-400 mx-auto mb-4" />
                 <p className="text-gray-400 text-lg">All keys are available!</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {unavailableKeys.map((key) => (
-                  <KeyCard
-                    key={key.id}
-                    keyData={key}
-                    variant="unavailable"
-                    onCollectKey={handleCollectKey}
-                    userRole="security"
-                  />
+                    <KeyCard
+                      key={key.id}
+                      keyData={key}
+                      variant="unavailable"
+                      onCollectKey={handleCollectKey}
+                      userRole="security"
+                      collectButtonClassName="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-medium text-lg transition-colors"
+                    />
                 ))}
               </div>
             )}
