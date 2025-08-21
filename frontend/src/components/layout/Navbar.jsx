@@ -24,21 +24,21 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           >
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          
+
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 flex items-center justify-center">
-              <img 
+            {/* ✅ White background for logo */}
+            <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-md">
+              <img
                 src="/logo.png"
                 alt="logo"
                 style={{
-                  width: "100%", 
-                  height: "40px", 
-                  borderRadius: "15%",   
-                  objectFit: "cover",    
-                }} 
+                  width: "70%",
+                  height: "70%",
+                  objectFit: "contain",
+                }}
               />
-          </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text hidden sm:block">
+            </div>
+            <h1 className="text-xl font-bold text-white hidden sm:block">
               Vnr Keys
             </h1>
           </div>
@@ -49,16 +49,19 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Notifications */}
           <button className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 relative">
             <Bell size={20} />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></span>
           </button>
 
           {/* User dropdown */}
           <div className="relative group">
             <button className="flex items-center space-x-2 p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200">
-              <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-600 rounded-full flex items-center justify-center">
+              {/* Profile icon → Blue background with White face */}
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                 <User size={16} className="text-white" />
               </div>
-              <span className="hidden md:block text-sm font-medium">{user?.name}</span>
+              <span className="hidden md:block text-sm font-medium">
+                {user?.name}
+              </span>
             </button>
 
             {/* Dropdown menu */}
