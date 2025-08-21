@@ -355,9 +355,9 @@ const SecurityDashboard = () => {
             <h1 className="text-2xl font-bold text-white">Security Dashboard</h1>
             <p className="text-gray-300">Welcome, {user?.name}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2">
+          {/* <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2">
             <span className="text-green-400 font-medium">Online</span>
-          </div>
+          </div> */}
         </div>
       </div>
 

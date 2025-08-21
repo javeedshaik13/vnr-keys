@@ -83,7 +83,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         style={{ background: "radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)" }}
         className={`${
           isMobile
-            ? "fixed left-0 top-[64px] h-[calc(100%-64px)] w-64 z-50"
+            ? "fixed left-0 top-[64px] h-[calc(100%-64px)] w-40 z-50" // 👈 reduced sidebar width
             : "relative w-64 h-[calc(100vh-4rem)]"
         } backdrop-blur-xl border border-gray-700 rounded-2xl shadow-lg`}
       >
@@ -111,7 +111,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                     }
                   >
                     <item.icon size={20} />
-                    <span className="font-medium">{item.label}</span>
+                    {/* 👇 font size adjusted for mobile vs desktop */}
+                    <span className="font-medium text-sm lg:text-base">{item.label}</span>
                   </NavLink>
                 </motion.li>
               ))}
@@ -130,7 +131,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                       className="flex items-center space-x-3 p-3 rounded-2xl transition-all duration-300 border border-gray-700 text-gray-300 hover:text-white hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
                     >
                       <item.icon size={20} />
-                      <span className="font-medium">{item.label}</span>
+                      {/* 👇 font size adjusted for mobile vs desktop */}
+                      <span className="font-medium text-sm lg:text-base">{item.label}</span>
                     </NavLink>
                   </motion.li>
                 ))}
