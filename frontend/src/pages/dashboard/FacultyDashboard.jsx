@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, X, RefreshCw } from "lucide-react";
+import { Key, KeyRound, List, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -32,8 +32,7 @@ const FacultyDashboard = () => {
     fetchKeys,
     fetchTakenKeys,
     fetchUserFrequentlyUsedKeys,
-    isLoadingTakenKeys,
-    isLoadingFrequentlyUsed
+    isLoadingTakenKeys
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
@@ -155,7 +154,7 @@ const FacultyDashboard = () => {
     }
   };
 
-  const handleToggleFrequent = async (keyId) => {
+  const handleToggleFrequent = async () => {
     // This function is no longer needed as we're using usage-based frequently used keys
     console.log("Toggle frequent function deprecated - using usage-based frequently used keys");
   };

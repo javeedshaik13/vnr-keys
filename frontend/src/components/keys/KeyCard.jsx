@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, MapPin, User, Star, QrCode, CheckCircle, TrendingUp } from "lucide-react";
+import { Clock, MapPin, User, QrCode, CheckCircle, TrendingUp } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useState, useEffect } from "react";
 
@@ -8,7 +8,6 @@ const KeyCard = ({
   variant = "default", // "default", "available", "unavailable", "taken"
   onRequestKey,
   onCollectKey,
-  onToggleFrequent,
   onReturnKey,
   showQR = false,
   qrData = null,
@@ -111,11 +110,7 @@ const KeyCard = ({
     }
   };
 
-  const handleToggleFrequent = () => {
-    if (onToggleFrequent) {
-      onToggleFrequent(keyData.id);
-    }
-  };
+  // Removed unused handleToggleFrequent; parent passes handler directly to KeyCard when needed
 
   return (
     <>

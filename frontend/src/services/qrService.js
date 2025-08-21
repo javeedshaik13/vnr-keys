@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { handleError, handleSuccess } from '../utils/errorHandler.js';
+import { handleError } from '../utils/errorHandler.js';
 import { config } from '../utils/config.js';
 
 const API_URL = config.api.keysUrl;
