@@ -3,27 +3,12 @@ import { motion } from "framer-motion";
 import { Github, Linkedin, Twitter } from "lucide-react";
 import { useSidebar } from "../../components/layout/DashboardLayout";
 
-/**
- * @typedef {Object} TeamMember
- * @property {string} name
- * @property {string} role
- * @property {string} avatar
- * @property {{ github?: string, linkedin?: string, twitter?: string }} socials
- */
-
-/**
- * @typedef {Object} AboutData
- * @property {{ title: string, description: string }} project
- * @property {TeamMember[]} team
- */
-
 const AboutPage = () => {
   const { sidebarOpen } = useSidebar();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ API URL definition inside this file
   const ENV = import.meta.env.VITE_ENVIRONMENT;
   const API_URLS = {
     local: import.meta.env.VITE_API_URL_LOCAL,
@@ -36,70 +21,46 @@ const AboutPage = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-
         const response = await fetch(`${API_URL}/about`);
-
-        console.log("Environment:", ENV);
-        console.log("API URL Used:", `${API_URL}/about`);
-        console.log("Response status:", response.status);
-
-        if (response.status === 404) {
-          throw new Error(
-            "About page data not found. Please check if the API endpoint is correct."
-          );
-        }
-
+        if (response.status === 404) throw new Error("About data not found");
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              `Server error (${response.status}). Please try again later.`
-          );
+          throw new Error(errorData.message || `Server error (${response.status})`);
         }
-
         const jsonData = await response.json();
-        console.log("Received data:", jsonData);
         setData(jsonData);
       } catch (err) {
-        console.error("Error details:", {
-          message: err.message,
-          url: `${API_URL}/about`,
-        });
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [API_URL, ENV]);
 
-  if (isLoading) {
+  if (isLoading)
     return (
-      <div className="p-4 text-center text-gray-400">
-        <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+      <div className="p-4 text-center text-blue-300">
+        <div className="animate-spin inline-block w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
         Loading project details...
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="p-4 text-center text-red-400">
         Error loading data: {error}
       </div>
     );
-  }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
   return (
     <div
-      className={`space-y-8 ${
-        sidebarOpen ? "p-4 lg:p-6" : "p-4 lg:p-8 xl:px-12"
-      }`}
+      className={`space-y-8 ${sidebarOpen ? "p-4 lg:p-6" : "p-4 lg:p-8 xl:px-12"}`}
+      style={{
+        background: "linear-gradient(to bottom right, #0a0f1c, #0f172a)",
+      }}
     >
       {/* Header */}
       <motion.div
@@ -107,10 +68,10 @@ const AboutPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text mb-4">
+        <h1 className="text-4xl font-extrabold text-white mb-4 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]">
           {data.project.title}
         </h1>
-        <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+        <p className="text-blue-200 text-lg max-w-3xl mx-auto">
           {data.project.description}
         </p>
       </motion.div>
@@ -120,30 +81,38 @@ const AboutPage = () => {
         <h2 className="text-2xl font-semibold text-white mb-6 text-center">
           Meet the Team
         </h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {data.team.map((member, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-gray-800 p-6 rounded-2xl shadow-md text-center hover:shadow-lg hover:bg-gray-700 transition-all"
+              whileHover={{ scale: 1.03 }}
+              className="relative bg-[#0d1628] border border-blue-400 rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all p-6 text-center"
             >
-              <img
-                src={member.avatar}
-                alt={member.name}
-                className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-green-500 object-cover"
-              />
+              {/* Avatar with subtle blue ring */}
+              <div className="relative w-24 h-24 mx-auto mb-4">
+                <img
+                  src={member.avatar}
+                  alt={member.name}
+                  className="w-24 h-24 rounded-full object-cover border-2 border-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+                />
+              </div>
+
+              {/* Info */}
               <h3 className="text-lg font-bold text-white">{member.name}</h3>
-              <p className="text-gray-400">{member.role}</p>
-              <div className="flex justify-center gap-3 mt-3">
+              <p className="text-blue-200">{member.role}</p>
+
+              {/* Socials */}
+              <div className="flex justify-center gap-4 mt-4">
                 {member.socials.github && (
                   <a
                     href={member.socials.github}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Github className="w-5 h-5 text-gray-400 hover:text-white" />
+                    <Github className="w-6 h-6 text-blue-200 hover:text-white transition-colors" />
                   </a>
                 )}
                 {member.socials.linkedin && (
@@ -152,7 +121,7 @@ const AboutPage = () => {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Linkedin className="w-5 h-5 text-gray-400 hover:text-white" />
+                    <Linkedin className="w-6 h-6 text-blue-200 hover:text-white transition-colors" />
                   </a>
                 )}
                 {member.socials.twitter && (
@@ -161,7 +130,7 @@ const AboutPage = () => {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Twitter className="w-5 h-5 text-gray-400 hover:text-white" />
+                    <Twitter className="w-6 h-6 text-blue-200 hover:text-white transition-colors" />
                   </a>
                 )}
               </div>

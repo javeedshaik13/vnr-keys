@@ -73,11 +73,12 @@ const SecurityDashboard = () => {
   ];
 
   const handleQRScan = async (qrData) => {
+    // Keep parsedData accessible in catch for additional context (e.g., expired QR)
+    let parsedData = qrData;
     try {
       console.log('QR scan received:', qrData);
 
       // Parse QR data if it's a string
-      let parsedData = qrData;
       if (typeof qrData === 'string') {
         parsedData = parseQRString(qrData);
       }
@@ -187,10 +188,33 @@ const SecurityDashboard = () => {
       }
     } catch (error) {
       console.error("QR scan error:", error);
+
+      // Try to enrich error modal with key details if QR is expired but contains a keyId
+      let enrichedKeyData = null;
+      try {
+        const isExpired = (error?.message || '').toLowerCase().includes('expired');
+        if (isExpired && parsedData && parsedData.keyId) {
+          const keyUrl = `${config.api.keysUrl}/${parsedData.keyId}`;
+          const keyResponse = await axios.get(keyUrl, { withCredentials: true });
+          const keyResult = keyResponse.data;
+          const keyData = keyResult?.data?.key || keyResult?.data || keyResult;
+          if (keyData) {
+            enrichedKeyData = {
+              keyNumber: keyData.keyNumber || keyData.number,
+              keyName: keyData.keyName || keyData.name
+            };
+          }
+        }
+      } catch (e) {
+        // If enrichment fails, continue with generic error info
+        console.warn('Failed to enrich expired QR error with key details:', e);
+      }
+
       setScanResult({
         success: false,
         message: error.message || 'Failed to process QR code',
-        type: 'error'
+        type: 'error',
+        keyData: enrichedKeyData || undefined
       });
       setShowScanResult(true);
       setShowScanner(false);
@@ -281,18 +305,20 @@ const SecurityDashboard = () => {
           <div className="flex-1 p-4 pb-20">
             {/* QR Scanner Section - Focused solely on scanning functionality */}
             <div className="text-center max-w-sm mx-auto mt-8 mb-8">
-              <QrCode className="w-24 h-24 text-green-400 mx-auto mb-6" />
+              <QrCode className="w-24 h-24 text-blue-400 mx-auto mb-6" />
+
               <h2 className="text-2xl font-bold text-white mb-4">QR Scanner</h2>
               <p className="text-gray-300 mb-8">
                 Scan QR codes from faculty to approve key requests or returns
               </p>
               <button
-                onClick={() => setShowScanner(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center gap-3 mx-auto"
-              >
-                <QrCode className="w-6 h-6" />
-                Start Scanning
-              </button>
+  onClick={() => setShowScanner(true)}
+  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center gap-3 mx-auto shadow-lg shadow-blue-500/30"
+>
+  <QrCode className="w-6 h-6 text-blue-200" />
+  Start Scanning
+</button>
+
             </div>
           </div>
         );
@@ -352,8 +378,8 @@ const SecurityDashboard = () => {
 
             {unavailableKeys.length === 0 ? (
               <div className="text-center py-12">
-                <XCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">No keys currently unavailable</p>
+                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">All keys are available!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -362,6 +388,7 @@ const SecurityDashboard = () => {
                     key={key.id}
                     keyData={key}
                     variant="unavailable"
+                    onCollectKey={handleCollectKey}
                     userRole="security"
                   />
                 ))}
@@ -376,7 +403,7 @@ const SecurityDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex flex-col">
+  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-white/20">
         <div className="flex items-center justify-between">
@@ -453,28 +480,58 @@ const SecurityDashboard = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-sm w-full"
+            className={`rounded-xl p-6 max-w-sm w-full ${(!scanResult.success || scanResult.type === 'error') ? 'bg-red-50' : 'bg-white'}`}
           >
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Key Return</h3>
-            <p className="text-gray-700 mb-4">Are you sure you want to collect the return for:</p>
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <p className="text-gray-800 font-medium">{pendingReturnData.keyFullName || `Key #${pendingReturnData.keyId}`}</p>
-              <p className="text-gray-600 text-sm">From: {pendingReturnData.userName} ({pendingReturnData.userEmail})</p>
-            </div>
-            <div className="flex gap-3">
+            <div className="text-center">
+              {console.log('🔍 Scan Result Data:', scanResult)}
+              {console.log('🔍 Key Data:', scanResult.keyData)}
+              {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
+              {scanResult.type === 'rejected' ? (
+                <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              ) : (
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              )}
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
+              </h3>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                ({scanResult.keyData?.keyName || scanResult.key?.keyName || 'Unknown Key'})
+              </h4>
+
+              {/* User details section with dynamic text */}
+              {/* <div className="bg-gray-50 rounded-lg p-4 mb-4"> */}
+                {/* <p className="font-medium text-gray-900 mb-1">
+                  {scanResult.type === 'return' ? 'Returned By:' :
+                   scanResult.type === 'request' ? 'Collected By:' :
+                   'Processed By:'}
+                </p> */}
+                {/* <p className="text-gray-600">
+                  {scanResult.type === 'return' ?
+                    (scanResult.keyData?.returnedBy?.name || 'Unknown User') :
+                   scanResult.type === 'request' ?
+                    (scanResult.keyData?.takenBy?.name || scanResult.key?.takenBy?.name || 'Unknown User') :
+                   'Security Personnel'}
+                </p> */}
+                {/* <p className="text-gray-500 text-sm">
+                  {scanResult.type === 'return' ?
+                    (scanResult.keyData?.returnedBy?.email || 'N/A') :
+                   scanResult.type === 'request' ?
+                    (scanResult.keyData?.takenBy?.email || scanResult.key?.takenBy?.email || 'N/A') :
+                   'N/A'}
+                </p> */}
+                {/* <p className="text-gray-400 text-xs mt-1">
+                  {new Date().toLocaleString()}
+                </p> */}
+              {/* </div> */}
+
+              <p className="text-gray-600 mb-6">
+                {scanResult.message}    
+              </p>
               <button
-                onClick={handleRejectReturn}
-                disabled={isProcessing}
-                className="flex-1 py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleCloseScanResult}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
               >
-                Reject
-              </button>
-              <button
-                onClick={handleCollectReturn}
-                disabled={isProcessing}
-                className="flex-1 py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? 'Processing...' : 'Collect'}
+                Continue
               </button>
             </div>
           </motion.div>

@@ -1,4 +1,4 @@
-// routes/about.js
+ls// routes/about.js
 import express from "express";
 const router = express.Router();
 
@@ -14,32 +14,59 @@ router.get("/", (req, res) => {
         name: "Karthik",
         role: "Full Stack Developer",
         avatar: "/karthik.png",
-        socials: { github: "https://github.com/gurramkarthiknetha", linkedin: "https://www.linkedin.com/in/gurramkarthiknetha/"},
+        socials: {
+          github: "https://github.com/gurramkarthiknetha",
+          linkedin: "https://www.linkedin.com/in/gurramkarthiknetha/",
+        },
       },
       {
         name: "Vishnu",
         role: "Frontend Developer",
-        avatar: "/images/vishnu.jpg",
-        socials: { github: "#", linkedin: "#"},
+        avatar: "/vishnu.jpg",
+        socials: {
+          github: "#",
+          linkedin: "#",
+        },
       },
       {
         name: "Bhavishwa",
         role: "Backend Developer",
-        avatar: "bhavishwa.jpg",
-        socials: { github: "https://github.com/BhavishwaReddy2023", linkedin: "https://www.linkedin.com/in/bhavishwa-reddy-puli-6946482b8/"},
+        avatar: "/bhavishwa.jpg",
+        socials: {
+          github: "https://github.com/BhavishwaReddy2023",
+          linkedin:
+            "https://www.linkedin.com/in/bhavishwa-reddy-puli-6946482b8/",
+        },
       },
       {
         name: "Shiva",
         role: "Designer & Frontend Developer",
-        avatar: "/images/shiva.jpg",
-        socials: { github: "https://github.com/codebyshivareddiee", linkedin: "https://www.linkedin.com/in/shivareddykottamittapally/"},
+        avatar: "/shivareddy.jpg",
+        socials: {
+          github: "https://github.com/codebyshivareddiee",
+          linkedin:
+            "https://www.linkedin.com/in/shivareddykottamittapally/",
+        },
+      },
+      {
+        name: "Srikar",
+        role: "UI/UX & Frontend Developer",
+        avatar: "/srikarreddy.jpg",
+        socials: {
+          github: "https://github.com",
+          linkedin: "https://linkedin.com",
+        },
       },
       {
         name: "Rishith",
         role: "Full Stack Developer",
-        avatar: "/images/rishith.jpg",
-        socials: { github: "#", linkedin: "#"},
+        avatar: "/rishith.jpg",
+        socials: {
+          github: "#",
+          linkedin: "#",
+        },
       },
+      
     ],
   });
 });

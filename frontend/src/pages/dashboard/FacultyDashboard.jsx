@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, X, RefreshCw } from "lucide-react";
+import { Key, KeyRound, List, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -17,6 +17,8 @@ const FacultyDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
+  const [qrExpired, setQrExpired] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const { user } = useAuthStore();
@@ -31,34 +33,24 @@ const FacultyDashboard = () => {
     fetchTakenKeys,
     fetchUserFrequentlyUsedKeys,
     isLoadingTakenKeys,
-    isLoadingFrequentlyUsed
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     if (tabId === "taken" && user) {
-      console.log('🔄 Switching to taken tab, refreshing taken keys');
       fetchTakenKeys(user.id).catch(console.error);
     }
   };
 
-  // Fetch keys on component mount
   useEffect(() => {
     if (user) {
-      console.log('🔑 FacultyDashboard: User authenticated:', user);
-      console.log('🔑 FacultyDashboard: User ID:', user.id);
       fetchKeys().catch(console.error);
       fetchTakenKeys(user.id).catch(console.error);
       fetchUserFrequentlyUsedKeys().catch(console.error);
-    } else {
-      console.log('❌ FacultyDashboard: No user found');
     }
   }, [user, fetchKeys, fetchTakenKeys, fetchUserFrequentlyUsedKeys]);
 
   const takenKeys = getTakenKeys(user?.id);
-  console.log('🔑 FacultyDashboard: Taken keys count:', takenKeys.length);
-  console.log('🔑 FacultyDashboard: All keys count:', keys.length);
-  console.log('🔑 FacultyDashboard: User ID being used:', user?.id);
 
   const tabs = [
     {
@@ -93,6 +85,7 @@ const FacultyDashboard = () => {
         : qrData;
       setQrData(qrDataWithMeta);
       setShowQRModal(true);
+      setQrExpired(false);
     } catch (error) {
       console.error("Request key error:", error);
       // Show error to user
@@ -100,30 +93,40 @@ const FacultyDashboard = () => {
     }
   };
 
-  const handleReturnKey = async (keyId) => {
+  // Countdown timer for QR modal (20 seconds expiry)
+  useEffect(() => {
+    const MAX_SECONDS = 20;
+    if (!showQRModal || !qrData?.timestamp) return;
+
+    const update = () => {
+      const createdAt = new Date(qrData.timestamp).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+      const left = Math.max(0, MAX_SECONDS - elapsed);
+      setQrSecondsLeft(left);
+      setQrExpired(left <= 0);
+    };
+
+    update();
+    const id = setInterval(update, 500);
+    return () => clearInterval(id);
+  }, [showQRModal, qrData]);
+
+  const handleRegenerateRequestQR = async () => {
+    if (!qrData?.keyId || !user?.id) return;
     try {
-      if (!user?.id) {
-        throw new Error('User not authenticated or user ID missing');
-      }
-
-      if (!keyId) {
-        throw new Error('Key ID is required');
-      }
-
-      const qrData = await generateKeyReturnQR(keyId, user.id);
-      // Don't set global modal state - let KeyCard handle its own modal
-      return qrData;
-    } catch (error) {
-      console.error("Return key error:", error);
-      // Show error to user
-      alert(`Error generating QR code: ${error.message}`);
-      return null;
+      const newQR = await generateKeyRequestQR(qrData.keyId, user.id);
+      const selectedKey = keys.find(k => k.id === qrData.keyId);
+      const withMeta = selectedKey?.keyNumber ? { ...newQR, keyNumber: selectedKey.keyNumber } : newQR;
+      setQrData(withMeta);
+      setQrExpired(false);
+    } catch (e) {
+      console.error('Failed to regenerate request QR:', e);
     }
   };
 
-  const handleToggleFrequent = async (keyId) => {
-    // This function is no longer needed as we're using usage-based frequently used keys
-    console.log("Toggle frequent function deprecated - using usage-based frequently used keys");
+  const handleReturnKey = async (keyId) => {
+    if (!user?.id || !keyId) return null;
+    return await generateKeyReturnQR(keyId, user.id);
   };
 
   const handleDepartmentClick = (department) => {
@@ -133,37 +136,30 @@ const FacultyDashboard = () => {
   const handleBackToListing = () => {
     setSelectedDepartment(null);
   };
+  const handleDepartmentClick = (department) => setSelectedDepartment(department);
+  const handleBackToDepartments = () => setSelectedDepartment(null);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "taken":
         return (
           <div className="flex-1 p-4 pb-20">
-            {/* Global Search Bar */}
-            <SearchBar 
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-            />
-
-            {/* Global Search Results Section - Only show when search is active */}
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {searchQuery.trim() && (
               <SearchResults
                 searchQuery={searchQuery}
                 keys={keys}
                 onRequestKey={handleRequestKey}
-                onToggleFrequent={handleToggleFrequent}
                 onReturnKey={handleReturnKey}
                 userRole="faculty"
               />
             )}
-
-            {/* My Keys Section - Only show when no search is active */}
             {!searchQuery.trim() && (
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">My Keys</h2>
                   <div className="flex items-center gap-3">
-                    <div className="bg-blue-600/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30">
+                    <div className="bg-gradient-to-r from-blue-600 to-cyan-400/40 text-white px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
                       {takenKeys.length} Taken
                     </div>
                     <button
@@ -176,7 +172,6 @@ const FacultyDashboard = () => {
                     </button>
                   </div>
                 </div>
-
                 {isLoadingTakenKeys ? (
                   <div className="text-center py-12">
                     <p className="text-gray-400 text-lg">Loading taken keys...</p>
@@ -185,9 +180,7 @@ const FacultyDashboard = () => {
                   <div className="text-center py-12">
                     <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-400 text-lg">No keys taken</p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Go to Key List to request keys
-                    </p>
+                    <p className="text-gray-500 text-sm mt-2">Go to Key List to request keys</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -218,12 +211,12 @@ const FacultyDashboard = () => {
             />
 
             {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {!selectedDepartment && searchQuery.trim() && (
               <SearchResults
                 searchQuery={searchQuery}
                 keys={keys}
                 onRequestKey={handleRequestKey}
-                onToggleFrequent={handleToggleFrequent}
                 onReturnKey={handleReturnKey}
                 userRole="faculty"
               />
@@ -238,18 +231,16 @@ const FacultyDashboard = () => {
                 onRequestKey={handleRequestKey}
                 onToggleFrequent={handleToggleFrequent}
                 onBack={handleBackToListing}
+                onBack={handleBackToDepartments}
               />
             ) : (
               <>
-                {/* Frequently Used Keys Section */}
                 <FrequentlyUsedSection
                   keys={frequentlyUsedKeys}
                   availabilityFilter="all"
                   onRequestKey={handleRequestKey}
                   usageCounts={usageCounts}
                 />
-
-                {/* Departments Section */}
                 <DepartmentsSection
                   keys={keys}
                   onDepartmentClick={handleDepartmentClick}
@@ -266,29 +257,21 @@ const FacultyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-emerald-900 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-white/20">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Faculty Dashboard</h1>
             <p className="text-gray-300">Welcome, {user?.name}</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2">
-            <span className="text-green-400 font-medium">Online</span>
-          </div>
-        </div>
+          </div>        </div>
       </div>
 
       {/* Content */}
       {renderTabContent()}
 
       {/* Bottom Navigation */}
-      <BottomNavigation
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      <BottomNavigation tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* QR Request Modal */}
       {showQRModal && qrData && (
@@ -304,22 +287,56 @@ const FacultyDashboard = () => {
                   ? `Return Key ${qrData?.keyNumber ? `#${qrData.keyNumber}` : ''}`
                   : `Request Key ${qrData?.keyNumber ? `#${qrData.keyNumber}` : ''}`}
               </h3>
-              {/* <h1>Hell0</h1> */}
               <button
                 onClick={() => setShowQRModal(false)}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                {/* <X className="w-5 h-5 text-gray-500" /> */}
-              </button>
+              ></button>
             </div>
-
             <div className="text-center">
-          
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
 
               <p className="text-gray-600">Show this QR code to security to {qrData?.type === 'key-return' ? 'return' : 'request'} the key</p>
+              <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
+                {qrData.type === 'key-request'
+                  ? 'Show this QR code to security to request the key'
+                  : 'Show this QR code to security to return the key'}
+              </p>
+              <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
+                {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
+              </p>
+              {/* <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <p className="text-sm text-gray-500">
+                  {qrData.type === 'key-request' ? 'Request ID:' : 'Return ID:'}
+                </p>
+                <p className="text-xs font-mono text-gray-700 break-all">
+                  {qrData.requestId || qrData.returnId}
+                </p>
+              </div> */}
+              {qrExpired ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRegenerateRequestQR}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Regenerate
+                  </button>
+                  <button
+                    onClick={() => setShowQRModal(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </motion.div>
         </div>

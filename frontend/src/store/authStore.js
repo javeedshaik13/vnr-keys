@@ -157,6 +157,8 @@ export const useAuthStore = create((set, get) => ({
 	},
 
 	checkAuth: async () => {
+		// Access flags but suppress unused warning (used for debugging logs and future guards)
+		// eslint-disable-next-line no-unused-vars
 		const { _isCheckingAuthInProgress, isCheckingAuth } = get();
 
 		// Prevent multiple simultaneous auth checks - TEMPORARILY DISABLED FOR DEBUGGING
