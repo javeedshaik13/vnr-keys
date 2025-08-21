@@ -32,6 +32,9 @@ const DepartmentView = ({
 }) => {
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
 
+	const departmentKeys = keys.filter(key => key.department === department);
+	const filteredBySearch = departmentKeys.filter(key => matchesSearch(key, searchQuery));
+	const finalKeys = applyAvailabilityFilter(filteredBySearch, availabilityFilter);
   const departmentKeys = keys.filter((key) => key.category === department);
   const filteredBySearch = departmentKeys.filter((key) =>
     matchesSearch(key, searchQuery)

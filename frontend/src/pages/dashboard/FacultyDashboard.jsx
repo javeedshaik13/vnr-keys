@@ -160,6 +160,13 @@ const FacultyDashboard = () => {
     return await generateKeyReturnQR(keyId, user.id);
   };
 
+  const handleDepartmentClick = (department) => {
+    setSelectedDepartment(department);
+  };
+
+  const handleBackToListing = () => {
+    setSelectedDepartment(null);
+  };
   const handleDepartmentClick = (department) => setSelectedDepartment(department);
   const handleBackToDepartments = () => setSelectedDepartment(null);
 
@@ -228,6 +235,13 @@ const FacultyDashboard = () => {
       case "keylist":
         return (
           <div className="flex-1 p-4 pb-20">
+            {/* Global Search Bar */}
+            <SearchBar 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
+
+            {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
             <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {!selectedDepartment && searchQuery.trim() && (
               <SearchResults
@@ -238,12 +252,16 @@ const FacultyDashboard = () => {
                 userRole="faculty"
               />
             )}
+
+            {/* Department View */}
             {selectedDepartment ? (
               <DepartmentView
                 department={selectedDepartment}
                 keys={keys}
                 searchQuery={searchQuery}
                 onRequestKey={handleRequestKey}
+                onToggleFrequent={handleToggleFrequent}
+                onBack={handleBackToListing}
                 onBack={handleBackToDepartments}
               />
             ) : (
@@ -309,6 +327,8 @@ const FacultyDashboard = () => {
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
+
+              <p className="text-gray-600">Show this QR code to security to {qrData?.type === 'key-return' ? 'return' : 'request'} the key</p>
               <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
                 {qrData.type === 'key-request'
                   ? 'Show this QR code to security to request the key'

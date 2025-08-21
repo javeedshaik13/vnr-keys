@@ -1,48 +1,45 @@
 import { useMemo } from "react";
 import DepartmentCard from "./DepartmentCard";
 
-const groupByDepartment = (keys) => {
-	const grouped = {};
-	for (const key of keys) {
-		const dept = key.category || "Other";
-		if (!grouped[dept]) grouped[dept] = [];
-		grouped[dept].push(key);
-	}
-	return grouped;
-};
+const DEPARTMENTS = [
+	{ value: "CSE", label: "CSE" },
+	{ value: "EEE", label: "EEE" },
+	{ value: "AIML", label: "AIML" },
+	{ value: "IoT", label: "IoT" },
+	{ value: "ECE", label: "ECE" },
+	{ value: "MECH", label: "MECH" },
+	{ value: "CIVIL", label: "CIVIL" },
+	{ value: "IT", label: "IT" },
+	{ value: "ADMIN", label: "ADMIN" },
+	{ value: "RESEARCH", label: "RESEARCH" },
+	{ value: "COMMON", label: "COMMON" }
+];
 
 const DepartmentsSection = ({ keys, onDepartmentClick, selectedDepartment }) => {
-	const grouped = useMemo(() => groupByDepartment(keys), [keys]);
-
-	// Sort departments by key count (descending)
-	const sortedDepartments = Object.entries(grouped)
-		.sort(([, a], [, b]) => b.length - a.length)
-		.map(([department, departmentKeys]) => ({
-			department,
-			keyCount: departmentKeys.length
-		}));
+	const counts = useMemo(() => {
+		const map = {};
+		for (const dept of DEPARTMENTS) map[dept.value] = 0;
+		for (const key of keys) {
+			const dept = key.department;
+			if (dept && map.hasOwnProperty(dept)) map[dept] += 1;
+		}
+		return map;
+	}, [keys]);
 
 	return (
 		<div className="mb-8">
 			<h3 className="text-lg font-semibold text-white mb-4">Departments</h3>
-			
-			{sortedDepartments.length === 0 ? (
-				<div className="text-center py-8 bg-white/5 rounded-xl border border-white/10">
-					<p className="text-gray-400 text-lg">No departments found</p>
-				</div>
-			) : (
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-					{sortedDepartments.map(({ department, keyCount }) => (
-						<DepartmentCard
-							key={department}
-							department={department}
-							keyCount={keyCount}
-							onClick={() => onDepartmentClick(department)}
-							isSelected={selectedDepartment === department}
-						/>
-					))}
-				</div>
-			)}
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+				{DEPARTMENTS.map(({ value, label }) => (
+					<DepartmentCard
+						key={value}
+						department={label}
+						keyCount={counts[value] || 0}
+						onClick={() => onDepartmentClick(value)}
+						isSelected={selectedDepartment === value}
+					/>
+				))}
+			</div>
 		</div>
 	);
 };
