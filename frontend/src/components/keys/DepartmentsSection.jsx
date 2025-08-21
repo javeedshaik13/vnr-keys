@@ -21,7 +21,7 @@ const DepartmentsSection = ({ keys, onDepartmentClick, selectedDepartment }) => 
 		for (const dept of DEPARTMENTS) map[dept.value] = 0;
 		for (const key of keys) {
 			const dept = key.department;
-			if (dept && map.hasOwnProperty(dept)) map[dept] += 1;
+			if (dept && Object.prototype.hasOwnProperty.call(map, dept)) map[dept] += 1;
 		}
 		return map;
 	}, [keys]);

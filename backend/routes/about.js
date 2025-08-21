@@ -1,4 +1,4 @@
-ls// routes/about.js
+// routes/about.js
 import express from "express";
 const router = express.Router();
 

@@ -164,11 +164,14 @@ const FacultyDashboard = () => {
     setSelectedDepartment(department);
   };
 
-  const handleBackToListing = () => {
+  const handleBackToDepartments = () => {
     setSelectedDepartment(null);
   };
-  const handleDepartmentClick = (department) => setSelectedDepartment(department);
-  const handleBackToDepartments = () => setSelectedDepartment(null);
+
+  const handleToggleFrequent = (keyId) => {
+    // Add your logic for toggling frequent keys here
+    console.log('Toggle frequent for key:', keyId);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -261,7 +264,6 @@ const FacultyDashboard = () => {
                 searchQuery={searchQuery}
                 onRequestKey={handleRequestKey}
                 onToggleFrequent={handleToggleFrequent}
-                onBack={handleBackToListing}
                 onBack={handleBackToDepartments}
               />
             ) : (

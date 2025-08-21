@@ -11,7 +11,7 @@ import SearchBar from "../../components/keys/SearchBar";
 import SearchResults from "../../components/keys/SearchResults";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
-import { processQRScanReturn, processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
+import { processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
 
 const SecurityDashboard = () => {
@@ -21,7 +21,7 @@ const SecurityDashboard = () => {
   const [showScanResult, setShowScanResult] = useState(false);
   const [showReturnConfirmation, setShowReturnConfirmation] = useState(false);
   const [pendingReturnData, setPendingReturnData] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Removed unused isProcessing state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
@@ -221,64 +221,8 @@ const SecurityDashboard = () => {
     }
   };
 
-  const handleCollectReturn = async () => {
-    if (!pendingReturnData) return;
+  // Removed unused handleCollectReturn function
 
-    setIsProcessing(true);
-    try {
-      const result = await processQRScanReturn(pendingReturnData);
-      console.log('🔍 QR Scan Return Result:', result);
-      console.log('🔍 Original User Data:', result.data.originalUser);
-      console.log('🔍 Scanned By Data:', result.data.scannedBy);
-
-      setScanResult({
-        success: true,
-        message: result.message,
-        keyData: {
-          ...result.data.key,
-          keyNumber: result.data.key.keyNumber,
-          keyName: result.data.key.keyName,
-          returnedBy: result.data.originalUser, // The person who returned the key
-          collectedBy: result.data.scannedBy    // The security person who collected it
-        },
-        type: 'return'
-      });
-      setShowReturnConfirmation(false);
-      setShowScanResult(true);
-      setPendingReturnData(null);
-    } catch (error) {
-      console.error("Error processing return:", error);
-      setScanResult({
-        success: false,
-        message: error.message || 'Failed to process key return',
-        type: 'error'
-      });
-      setShowReturnConfirmation(false);
-      setShowScanResult(true);
-      setPendingReturnData(null);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleRejectReturn = () => {
-    // For now, just close the confirmation dialog
-    // In the future, you could add a rejection reason or notification
-    setShowReturnConfirmation(false);
-    setPendingReturnData(null);
-
-    // Show a rejection message
-    setScanResult({
-      success: false,
-      message: 'Key return was rejected by security',
-      keyData: {
-        keyNumber: pendingReturnData?.keyNumber,
-        keyName: pendingReturnData?.keyName,
-      },
-      type: 'rejected'
-    });
-    setShowScanResult(true);
-  };
 
   const handleCloseScanResult = () => {
     const wasRejected = scanResult?.type === 'rejected';
@@ -432,6 +376,7 @@ const SecurityDashboard = () => {
         <QRScanner
           onScan={handleQRScan}
           onClose={() => setShowScanner(false)}
+          isOpen={showScanner}
         />
       )}
 
