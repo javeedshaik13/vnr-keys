@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, X, RefreshCw } from "lucide-react";
+import { Key, KeyRound, List, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
@@ -17,6 +17,8 @@ const FacultyDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
+  const [qrExpired, setQrExpired] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const { user } = useAuthStore();
@@ -30,8 +32,7 @@ const FacultyDashboard = () => {
     fetchKeys,
     fetchTakenKeys,
     fetchUserFrequentlyUsedKeys,
-    isLoadingTakenKeys,
-    isLoadingFrequentlyUsed
+    isLoadingTakenKeys
   } = useKeyStore();
 
   const handleTabChange = (tabId) => {
@@ -93,10 +94,42 @@ const FacultyDashboard = () => {
         : qrData;
       setQrData(qrDataWithMeta);
       setShowQRModal(true);
+      setQrExpired(false);
     } catch (error) {
       console.error("Request key error:", error);
       // Show error to user
       alert(`Error generating QR code: ${error.message}`);
+    }
+  };
+
+  // Countdown timer for QR modal (20 seconds expiry)
+  useEffect(() => {
+    const MAX_SECONDS = 20;
+    if (!showQRModal || !qrData?.timestamp) return;
+
+    const update = () => {
+      const createdAt = new Date(qrData.timestamp).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+      const left = Math.max(0, MAX_SECONDS - elapsed);
+      setQrSecondsLeft(left);
+      setQrExpired(left <= 0);
+    };
+
+    update();
+    const id = setInterval(update, 500);
+    return () => clearInterval(id);
+  }, [showQRModal, qrData]);
+
+  const handleRegenerateRequestQR = async () => {
+    if (!qrData?.keyId || !user?.id) return;
+    try {
+      const newQR = await generateKeyRequestQR(qrData.keyId, user.id);
+      const selectedKey = keys.find(k => k.id === qrData.keyId);
+      const withMeta = selectedKey?.keyNumber ? { ...newQR, keyNumber: selectedKey.keyNumber } : newQR;
+      setQrData(withMeta);
+      setQrExpired(false);
+    } catch (e) {
+      console.error('Failed to regenerate request QR:', e);
     }
   };
 
@@ -121,7 +154,7 @@ const FacultyDashboard = () => {
     }
   };
 
-  const handleToggleFrequent = async (keyId) => {
+  const handleToggleFrequent = async () => {
     // This function is no longer needed as we're using usage-based frequently used keys
     console.log("Toggle frequent function deprecated - using usage-based frequently used keys");
   };
@@ -318,11 +351,14 @@ const FacultyDashboard = () => {
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
                 {qrData.type === 'key-request'
                   ? 'Show this QR code to security to request the key'
                   : 'Show this QR code to security to return the key'
                 }
+              </p>
+              <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600 font-medium' : 'text-gray-900'}`}>
+                {qrExpired ? 'QR expired' : `Expires in ${String(Math.floor(qrSecondsLeft / 60)).padStart(2,'0')}:${String(qrSecondsLeft % 60).padStart(2,'0')}`}
               </p>
               {/* <div className="bg-gray-50 rounded-lg p-3 mb-4">
                 <p className="text-sm text-gray-500">
@@ -332,12 +368,29 @@ const FacultyDashboard = () => {
                   {qrData.requestId || qrData.returnId}
                 </p>
               </div> */}
-              <button
-                onClick={() => setShowQRModal(false)}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                Close
-              </button>
+              {qrExpired ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRegenerateRequestQR}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Regenerate
+                  </button>
+                  <button
+                    onClick={() => setShowQRModal(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </motion.div>
         </div>

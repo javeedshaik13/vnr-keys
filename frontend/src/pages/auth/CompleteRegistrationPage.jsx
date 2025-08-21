@@ -207,6 +207,8 @@ const CompleteRegistrationPage = () => {
     }
   }
 
+  // Development utility retained for reference; disable unused var linting via comment
+  /* eslint-disable no-unused-vars */
   async function clearUsers() {
     if (confirm('Are you sure you want to clear all users from the database? This cannot be undone.')) {
       try {
@@ -222,6 +224,7 @@ const CompleteRegistrationPage = () => {
       }
     }
   }
+  /* eslint-enable no-unused-vars */
 
   // Render functions
   function renderStep1() {

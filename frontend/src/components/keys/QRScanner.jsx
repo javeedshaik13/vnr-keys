@@ -153,11 +153,19 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
 
       {/* Footer */}
       <div className="p-4 bg-black/50 backdrop-blur-md">
-        <div className="flex items-center justify-center gap-2 text-gray-300">
-          <Camera className="w-5 h-5" />
-          <span className="text-sm">
-            {isScanning ? "Scanning..." : "Camera not active"}
-          </span>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            Go Back
+          </button>
+          <div className="flex items-center gap-2 text-gray-300">
+            <Camera className="w-5 h-5" />
+            <span className="text-sm">
+              {isScanning ? "Scanning..." : "Camera not active"}
+            </span>
+          </div>
         </div>
       </div>
     </div>

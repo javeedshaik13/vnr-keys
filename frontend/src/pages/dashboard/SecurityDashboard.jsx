@@ -73,11 +73,12 @@ const SecurityDashboard = () => {
   ];
 
   const handleQRScan = async (qrData) => {
+    // Keep parsedData accessible in catch for additional context (e.g., expired QR)
+    let parsedData = qrData;
     try {
       console.log('QR scan received:', qrData);
 
       // Parse QR data if it's a string
-      let parsedData = qrData;
       if (typeof qrData === 'string') {
         parsedData = parseQRString(qrData);
       }
@@ -187,10 +188,33 @@ const SecurityDashboard = () => {
       }
     } catch (error) {
       console.error("QR scan error:", error);
+
+      // Try to enrich error modal with key details if QR is expired but contains a keyId
+      let enrichedKeyData = null;
+      try {
+        const isExpired = (error?.message || '').toLowerCase().includes('expired');
+        if (isExpired && parsedData && parsedData.keyId) {
+          const keyUrl = `${config.api.keysUrl}/${parsedData.keyId}`;
+          const keyResponse = await axios.get(keyUrl, { withCredentials: true });
+          const keyResult = keyResponse.data;
+          const keyData = keyResult?.data?.key || keyResult?.data || keyResult;
+          if (keyData) {
+            enrichedKeyData = {
+              keyNumber: keyData.keyNumber || keyData.number,
+              keyName: keyData.keyName || keyData.name
+            };
+          }
+        }
+      } catch (e) {
+        // If enrichment fails, continue with generic error info
+        console.warn('Failed to enrich expired QR error with key details:', e);
+      }
+
       setScanResult({
         success: false,
         message: error.message || 'Failed to process QR code',
-        type: 'error'
+        type: 'error',
+        keyData: enrichedKeyData || undefined
       });
       setShowScanResult(true);
       setShowScanner(false);
@@ -509,21 +533,21 @@ const SecurityDashboard = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-sm w-full"
+            className={`rounded-xl p-6 max-w-sm w-full ${(!scanResult.success || scanResult.type === 'error') ? 'bg-red-50' : 'bg-white'}`}
           >
             <div className="text-center">
               {console.log('🔍 Scan Result Data:', scanResult)}
               {console.log('🔍 Key Data:', scanResult.keyData)}
               {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
-              {scanResult.type === 'rejected' ? (
+              {(!scanResult.success || scanResult.type === 'error' || scanResult.type === 'rejected') ? (
                 <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               ) : (
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               )}
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className={`text-2xl font-bold mb-2 ${(!scanResult.success || scanResult.type === 'error') ? 'text-red-900' : 'text-gray-900'}`}>
                 Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
               </h3>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+              <h4 className={`text-lg font-semibold mb-2 ${(!scanResult.success || scanResult.type === 'error') ? 'text-red-700' : 'text-gray-700'}`}>
                 ({scanResult.keyData?.keyName || scanResult.key?.keyName || 'Unknown Key'})
               </h4>
 
@@ -553,15 +577,32 @@ const SecurityDashboard = () => {
                 </p> */}
               {/* </div> */}
 
-              <p className="text-gray-600 mb-6">
+              <p className={`${(!scanResult.success || scanResult.type === 'error') ? 'text-red-700' : 'text-gray-600'} mb-6`}>
                 {scanResult.message}    
               </p>
-              <button
-                onClick={handleCloseScanResult}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
-              >
-                Continue
-              </button>
+              {(!scanResult.success || scanResult.type === 'error') ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowScanResult(false); setShowScanner(true); }}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Retry
+                  </button>
+                  <button
+                    onClick={() => { setShowScanResult(false); setShowScanner(true); }}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-3 px-4 rounded-lg font-medium transition-colors"
+                  >
+                    Go Back
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleCloseScanResult}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Continue
+                </button>
+              )}
             </div>
           </motion.div>
         </div>
