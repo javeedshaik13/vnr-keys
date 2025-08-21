@@ -17,6 +17,8 @@ const transformKeyData = (backendKey) => {
     status: backendKey.status,
     description: backendKey.description || "",
     category: backendKey.category,
+    department: backendKey.department,
+    block: backendKey.block,
     frequentlyUsed: backendKey.frequentlyUsed,
     takenBy: backendKey.takenBy?.userId ? {
       id: backendKey.takenBy.userId,
@@ -222,9 +224,12 @@ export const useKeyStore = create((set, get) => ({
 
     const searchTerm = query.toLowerCase();
     return keys.filter(key =>
-      key.keyName.toLowerCase().includes(searchTerm) ||
-      key.keyNumber.toLowerCase().includes(searchTerm) ||
-      key.location.toLowerCase().includes(searchTerm)
+      key.keyName?.toLowerCase().includes(searchTerm) ||
+      key.keyNumber?.toLowerCase().includes(searchTerm) ||
+      key.location?.toLowerCase().includes(searchTerm) ||
+      key.category?.toLowerCase().includes(searchTerm) ||
+      key.department?.toLowerCase().includes(searchTerm) ||
+      key.block?.toLowerCase().includes(searchTerm)
     );
   },
 

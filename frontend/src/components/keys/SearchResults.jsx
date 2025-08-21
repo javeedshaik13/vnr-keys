@@ -16,6 +16,8 @@ const SearchResults = ({
     key.keyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     key.keyNumber?.toString().includes(searchQuery) ||
     key.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    key.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    key.block?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     key.location?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -53,9 +55,8 @@ const SearchResults = ({
             <KeyCard
               key={key.id}
               keyData={key}
-              variant="default"
-              onRequestKey={userRole === "faculty" ? onRequestKey : undefined}
-              onCollectKey={userRole === "security" ? onCollectKey : undefined}
+              onRequestKey={onRequestKey}
+              onCollectKey={onCollectKey}
               onToggleFrequent={onToggleFrequent}
               onReturnKey={onReturnKey}
               userRole={userRole}

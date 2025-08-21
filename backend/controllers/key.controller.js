@@ -178,22 +178,18 @@ export const getUserFrequentlyUsedKeys = asyncHandler(async (req, res) => {
   // Fetch the actual key data
   const keys = await Key.find({
     _id: { $in: keyIds },
-    isActive: true
-  }).populate('takenBy.userId', 'name email');
+  }).sort({ keyNumber: 1 });
 
-  // Sort keys according to usage count order
-  const keyMap = new Map(keys.map(key => [key._id.toString(), key]));
-  const sortedKeys = sortedKeyUsage
-    .map(([keyId]) => keyMap.get(keyId))
-    .filter(Boolean); // Remove any keys that might not exist anymore
+  // Create a mapping from keyId to usage count for response
+  const usageCounts = Object.fromEntries(sortedKeyUsage);
 
   res.status(200).json({
     success: true,
-    message: "User's frequently used keys retrieved successfully",
+    message: "User frequently used keys retrieved successfully",
     data: {
-      keys: sortedKeys,
-      total: sortedKeys.length,
-      usageCounts: Object.fromEntries(sortedKeyUsage),
+      keys,
+      usageCounts,
+      total: keys.length,
     },
   });
 });
@@ -203,14 +199,14 @@ export const getUserFrequentlyUsedKeys = asyncHandler(async (req, res) => {
  */
 export const getKeyById = asyncHandler(async (req, res) => {
   const { keyId } = req.params;
-  
+
   const key = await Key.findById(keyId)
     .populate('takenBy.userId', 'name email');
-  
+
   if (!key) {
     throw new NotFoundError("Key not found");
   }
-  
+
   res.status(200).json({
     success: true,
     message: "Key retrieved successfully",
@@ -219,7 +215,7 @@ export const getKeyById = asyncHandler(async (req, res) => {
 });
 
 /**
- * Take a key (for faculty users)
+ * Take a key (for faculty/admin)
  */
 export const takeKey = asyncHandler(async (req, res) => {
   const { keyId } = req.params;
@@ -259,20 +255,9 @@ export const takeKey = asyncHandler(async (req, res) => {
 });
 
 /**
- * Return a key
+ * Return a key (user who took it, or security/admin)
  */
 export const returnKey = asyncHandler(async (req, res) => {
-  console.log('🚨 WARNING: returnKey function called instead of qrScanReturn!');
-  console.log('🔍 Request URL:', req.originalUrl);
-  console.log('🔍 Request method:', req.method);
-  console.log('🔍 Request params:', req.params);
-
-  // TEMPORARY FIX: If this is actually a QR scan return request, redirect to qrScanReturn
-  if (req.params.keyId === 'qr-scan' && req.originalUrl.includes('/qr-scan/return')) {
-    console.log('🔄 Redirecting to qrScanReturn function');
-    return qrScanReturn(req, res);
-  }
-
   const { keyId } = req.params;
 
   const key = await Key.findById(keyId);
@@ -284,9 +269,12 @@ export const returnKey = asyncHandler(async (req, res) => {
     throw new ConflictError("Key is already available");
   }
 
-  // Check if the user is returning their own key or if they're security/admin
-  if (req.userRole !== 'admin' && req.userRole !== 'security' &&
-      key.takenBy.userId.toString() !== req.userId) {
+  // Only the taker, security, or admin can return
+  if (
+    req.userRole !== 'admin' &&
+    req.userRole !== 'security' &&
+    key.takenBy?.userId?.toString() !== req.userId
+  ) {
     throw new ValidationError("You can only return keys you have taken");
   }
 
@@ -312,6 +300,7 @@ export const createKey = asyncHandler(async (req, res) => {
     location,
     description,
     category,
+    block,
     frequentlyUsed,
   } = req.body;
 
@@ -327,6 +316,7 @@ export const createKey = asyncHandler(async (req, res) => {
     location,
     description,
     category,
+    block,
     frequentlyUsed: frequentlyUsed || false,
   });
 
@@ -377,22 +367,19 @@ export const updateKey = asyncHandler(async (req, res) => {
  */
 export const deleteKey = asyncHandler(async (req, res) => {
   const { keyId } = req.params;
-  
+
   const key = await Key.findById(keyId);
   if (!key) {
     throw new NotFoundError("Key not found");
   }
-  
-  if (key.status === 'unavailable') {
-    throw new ConflictError("Cannot delete a key that is currently taken");
-  }
-  
+
   key.isActive = false;
   await key.save();
-  
+
   res.status(200).json({
     success: true,
     message: "Key deleted successfully",
+    data: { key },
   });
 });
 

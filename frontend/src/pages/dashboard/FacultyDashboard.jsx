@@ -130,7 +130,7 @@ const FacultyDashboard = () => {
     setSelectedDepartment(department);
   };
 
-  const handleBackToDepartments = () => {
+  const handleBackToListing = () => {
     setSelectedDepartment(null);
   };
 
@@ -217,7 +217,7 @@ const FacultyDashboard = () => {
               setSearchQuery={setSearchQuery} 
             />
 
-            {/* Global Search Results Section - Only show when outside departments and search is active */}
+            {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
             {!selectedDepartment && searchQuery.trim() && (
               <SearchResults
                 searchQuery={searchQuery}
@@ -229,7 +229,7 @@ const FacultyDashboard = () => {
               />
             )}
 
-            {/* Department View or Main Content */}
+            {/* Department View */}
             {selectedDepartment ? (
               <DepartmentView
                 department={selectedDepartment}
@@ -237,7 +237,7 @@ const FacultyDashboard = () => {
                 searchQuery={searchQuery}
                 onRequestKey={handleRequestKey}
                 onToggleFrequent={handleToggleFrequent}
-                onBack={handleBackToDepartments}
+                onBack={handleBackToListing}
               />
             ) : (
               <>
@@ -318,26 +318,8 @@ const FacultyDashboard = () => {
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
-              <p className="text-gray-600 mb-4">
-                {qrData.type === 'key-request'
-                  ? 'Show this QR code to security to request the key'
-                  : 'Show this QR code to security to return the key'
-                }
-              </p>
-              {/* <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                <p className="text-sm text-gray-500">
-                  {qrData.type === 'key-request' ? 'Request ID:' : 'Return ID:'}
-                </p>
-                <p className="text-xs font-mono text-gray-700 break-all">
-                  {qrData.requestId || qrData.returnId}
-                </p>
-              </div> */}
-              <button
-                onClick={() => setShowQRModal(false)}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                Close
-              </button>
+
+              <p className="text-gray-600">Show this QR code to security to {qrData?.type === 'key-return' ? 'return' : 'request'} the key</p>
             </div>
           </motion.div>
         </div>
