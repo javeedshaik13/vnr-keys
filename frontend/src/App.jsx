@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import FloatingShape from "./components/ui/FloatingShape";
 import LoginPage from "./pages/auth/LoginPage";
 import CompleteRegistrationPage from "./pages/auth/CompleteRegistrationPage";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
@@ -88,10 +87,10 @@ function App() {
 
 	if (isCheckingAuth) return <LoadingSpinner />;
 
-	 return (
-	 	<div className='min-h-screen bg-gray-900 relative overflow-hidden'>
-	 		{/* Removed FloatingShape and green gradient background */}
-	 		<Routes>
+	return (
+		<div className='min-h-screen bg-gray-900 relative overflow-hidden'>
+			{/* Removed FloatingShape and green gradient background */}
+			<Routes>
 				{/* Role-based Dashboard Routes */}
 				<Route
 					path='/dashboard'

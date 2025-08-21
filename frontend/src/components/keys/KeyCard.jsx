@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useState, useEffect } from "react";
+import socketService from "../../services/socketService.js";
+import { config } from "../../utils/config.js";
 
 const KeyCard = ({
   keyData,
@@ -25,6 +27,7 @@ const KeyCard = ({
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
   const [qrExpired, setQrExpired] = useState(false);
+  const [qrCollected, setQrCollected] = useState(false);
 
   const getStatusColor = () => {
     switch (keyData.status) {
@@ -91,7 +94,7 @@ const KeyCard = ({
 
   // Countdown for return QR inside this card's modal
   useEffect(() => {
-    const MAX_SECONDS = 20;
+    const MAX_SECONDS = config.qr.validitySeconds;
     if (!showQRModal || !(localQRData || qrData)?.timestamp) return;
 
     const source = localQRData || qrData;
@@ -106,6 +109,40 @@ const KeyCard = ({
     update();
     const id = setInterval(update, 500);
     return () => clearInterval(id);
+  }, [showQRModal, localQRData, qrData]);
+
+  // Listen for socket event indicating the QR was scanned/collected by security
+  useEffect(() => {
+    if (!showQRModal) return;
+
+    // Ensure socket is connected
+    try { socketService.connect(); } catch (_) {
+      // Ignore connection errors; socket may already be connected
+    }
+
+    const handler = (data) => {
+      try {
+        if (data?.action !== 'qr-return') return;
+        const currentQR = localQRData || qrData;
+        if (!currentQR) return;
+        const eventKeyId = data.key?._id || data.key?.id;
+        if (eventKeyId && eventKeyId === currentQR.keyId) {
+          setQrCollected(true);
+          setQrExpired(false);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+
+    // Primary: user-specific event
+    socketService.on('userKeyUpdated', handler);
+    // Fallback: global key update event
+    socketService.on('keyUpdated', handler);
+    return () => {
+      socketService.off('userKeyUpdated', handler);
+      socketService.off('keyUpdated', handler);
+    };
   }, [showQRModal, localQRData, qrData]);
 
   const handleCollectKey = () => {
@@ -287,6 +324,7 @@ const KeyCard = ({
                       const newQR = await onReturnKey(keyData.id);
                       setLocalQRData(newQR);
                       setQrExpired(false);
+                      setQrCollected(false);
                     } finally {
                       setIsGeneratingQR(false);
                     }
@@ -299,6 +337,7 @@ const KeyCard = ({
                   onClick={() => {
                     setShowQRModal(false);
                     setLocalQRData(null);
+                    setQrCollected(false);
                   }}
                   className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
                 >
@@ -310,10 +349,11 @@ const KeyCard = ({
                 onClick={() => {
                   setShowQRModal(false);
                   setLocalQRData(null);
+                  setQrCollected(false);
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Close
+                {qrCollected ? 'Done' : 'Close'}
               </button>
             )}
           </motion.div>

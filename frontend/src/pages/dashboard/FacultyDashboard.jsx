@@ -11,6 +11,8 @@ import SearchResults from "../../components/keys/SearchResults";
 import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
+import socketService from "../../services/socketService";
+import { config } from "../../utils/config";
 
 const FacultyDashboard = () => {
   const [activeTab, setActiveTab] = useState("taken");
@@ -20,6 +22,7 @@ const FacultyDashboard = () => {
   const [qrSecondsLeft, setQrSecondsLeft] = useState(20);
   const [qrExpired, setQrExpired] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [qrCollected, setQrCollected] = useState(false);
 
   const { user } = useAuthStore();
   const {
@@ -86,6 +89,7 @@ const FacultyDashboard = () => {
       setQrData(qrDataWithMeta);
       setShowQRModal(true);
       setQrExpired(false);
+      setQrCollected(false); // reset
     } catch (error) {
       console.error("Request key error:", error);
       // Show error to user
@@ -93,9 +97,9 @@ const FacultyDashboard = () => {
     }
   };
 
-  // Countdown timer for QR modal (20 seconds expiry)
+  // Countdown timer for QR modal using config.qr.validitySeconds
   useEffect(() => {
-    const MAX_SECONDS = 20;
+    const MAX_SECONDS = config.qr.validitySeconds;
     if (!showQRModal || !qrData?.timestamp) return;
 
     const update = () => {
@@ -111,6 +115,32 @@ const FacultyDashboard = () => {
     return () => clearInterval(id);
   }, [showQRModal, qrData]);
 
+  // Listen for request QR collected via sockets
+  useEffect(() => {
+    if (!showQRModal || !qrData) return;
+    try { socketService.connect(); } catch { /* intentionally ignored */ }
+
+    const onEvent = (data) => {
+      try {
+        if (data?.action !== 'qr-request') return;
+        const eventKeyId = data.key?._id || data.key?.id;
+        if (eventKeyId === qrData.keyId && data.requestingUserId === user?.id) {
+          setQrCollected(true);
+          setQrExpired(false);
+        }
+      } catch {
+        // intentionally left blank
+      }
+    };
+
+    socketService.on('userKeyUpdated', onEvent);
+    socketService.on('keyUpdated', onEvent);
+    return () => {
+      socketService.off('userKeyUpdated', onEvent);
+      socketService.off('keyUpdated', onEvent);
+    };
+  }, [showQRModal, qrData, user?.id]);
+
   const handleRegenerateRequestQR = async () => {
     if (!qrData?.keyId || !user?.id) return;
     try {
@@ -119,6 +149,7 @@ const FacultyDashboard = () => {
       const withMeta = selectedKey?.keyNumber ? { ...newQR, keyNumber: selectedKey.keyNumber } : newQR;
       setQrData(withMeta);
       setQrExpired(false);
+      setQrCollected(false);
     } catch (e) {
       console.error('Failed to regenerate request QR:', e);
     }
@@ -129,8 +160,18 @@ const FacultyDashboard = () => {
     return await generateKeyReturnQR(keyId, user.id);
   };
 
-  const handleDepartmentClick = (department) => setSelectedDepartment(department);
-  const handleBackToDepartments = () => setSelectedDepartment(null);
+  const handleDepartmentClick = (department) => {
+    setSelectedDepartment(department);
+  };
+
+  const handleBackToDepartments = () => {
+    setSelectedDepartment(null);
+  };
+
+  const handleToggleFrequent = (keyId) => {
+    // Add your logic for toggling frequent keys here
+    console.log('Toggle frequent for key:', keyId);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -197,6 +238,13 @@ const FacultyDashboard = () => {
       case "keylist":
         return (
           <div className="flex-1 p-4 pb-20">
+            {/* Global Search Bar */}
+            <SearchBar 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
+
+            {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
             <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {!selectedDepartment && searchQuery.trim() && (
               <SearchResults
@@ -207,12 +255,15 @@ const FacultyDashboard = () => {
                 userRole="faculty"
               />
             )}
+
+            {/* Department View */}
             {selectedDepartment ? (
               <DepartmentView
                 department={selectedDepartment}
                 keys={keys}
                 searchQuery={searchQuery}
                 onRequestKey={handleRequestKey}
+                onToggleFrequent={handleToggleFrequent}
                 onBack={handleBackToDepartments}
               />
             ) : (
@@ -270,7 +321,7 @@ const FacultyDashboard = () => {
                   : `Request Key ${qrData?.keyNumber ? `#${qrData.keyNumber}` : ''}`}
               </h3>
               <button
-                onClick={() => setShowQRModal(false)}
+                onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
               ></button>
             </div>
@@ -278,6 +329,8 @@ const FacultyDashboard = () => {
               <div className="flex justify-center mb-4">
                 <QRCode value={JSON.stringify(qrData)} size={200} />
               </div>
+
+              <p className="text-gray-600">Show this QR code to security to {qrData?.type === 'key-return' ? 'return' : 'request'} the key</p>
               <p className="text-gray-900 mb-2 text-center text-sm whitespace-nowrap">
                 {qrData.type === 'key-request'
                   ? 'Show this QR code to security to request the key'
@@ -303,7 +356,7 @@ const FacultyDashboard = () => {
                     Regenerate
                   </button>
                   <button
-                    onClick={() => setShowQRModal(false)}
+                    onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
                   >
                     Close
@@ -311,10 +364,10 @@ const FacultyDashboard = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowQRModal(false)}
+                  onClick={() => { setShowQRModal(false); setQrCollected(false); }}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
                 >
-                  Close
+                  {qrCollected ? 'Done' : 'Close'}
                 </button>
               )}
             </div>

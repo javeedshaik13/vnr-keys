@@ -11,7 +11,7 @@ import SearchBar from "../../components/keys/SearchBar";
 import SearchResults from "../../components/keys/SearchResults";
 import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
-import { processQRScanReturn, processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
+import { processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
 
 const SecurityDashboard = () => {
@@ -21,7 +21,7 @@ const SecurityDashboard = () => {
   const [showScanResult, setShowScanResult] = useState(false);
   const [showReturnConfirmation, setShowReturnConfirmation] = useState(false);
   const [pendingReturnData, setPendingReturnData] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Removed unused isProcessing state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
@@ -48,7 +48,7 @@ const SecurityDashboard = () => {
     setSelectedDepartment(department);
   };
 
-  const handleBackToDepartments = () => {
+  const handleBackToListing = () => {
     setSelectedDepartment(null);
   };
 
@@ -221,64 +221,8 @@ const SecurityDashboard = () => {
     }
   };
 
-  const handleCollectReturn = async () => {
-    if (!pendingReturnData) return;
+  // Removed unused handleCollectReturn function
 
-    setIsProcessing(true);
-    try {
-      const result = await processQRScanReturn(pendingReturnData);
-      console.log('🔍 QR Scan Return Result:', result);
-      console.log('🔍 Original User Data:', result.data.originalUser);
-      console.log('🔍 Scanned By Data:', result.data.scannedBy);
-
-      setScanResult({
-        success: true,
-        message: result.message,
-        keyData: {
-          ...result.data.key,
-          keyNumber: result.data.key.keyNumber,
-          keyName: result.data.key.keyName,
-          returnedBy: result.data.originalUser, // The person who returned the key
-          collectedBy: result.data.scannedBy    // The security person who collected it
-        },
-        type: 'return'
-      });
-      setShowReturnConfirmation(false);
-      setShowScanResult(true);
-      setPendingReturnData(null);
-    } catch (error) {
-      console.error("Error processing return:", error);
-      setScanResult({
-        success: false,
-        message: error.message || 'Failed to process key return',
-        type: 'error'
-      });
-      setShowReturnConfirmation(false);
-      setShowScanResult(true);
-      setPendingReturnData(null);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleRejectReturn = () => {
-    // For now, just close the confirmation dialog
-    // In the future, you could add a rejection reason or notification
-    setShowReturnConfirmation(false);
-    setPendingReturnData(null);
-
-    // Show a rejection message
-    setScanResult({
-      success: false,
-      message: 'Key return was rejected by security',
-      keyData: {
-        keyNumber: pendingReturnData?.keyNumber,
-        keyName: pendingReturnData?.keyName,
-      },
-      type: 'rejected'
-    });
-    setShowScanResult(true);
-  };
 
   const handleCloseScanResult = () => {
     const wasRejected = scanResult?.type === 'rejected';
@@ -350,7 +294,7 @@ const SecurityDashboard = () => {
                 searchQuery={searchQuery} // Pass search query to filter department keys
                 onRequestKey={() => {}} // Security doesn't request keys
                 onToggleFrequent={() => {}} // Not applicable for security
-                onBack={handleBackToDepartments}
+                onBack={handleBackToListing}
                 userRole="security"
               />
             ) : (
@@ -361,34 +305,6 @@ const SecurityDashboard = () => {
                   onDepartmentClick={handleDepartmentClick}
                   selectedDepartment={selectedDepartment}
                 />
-
-                {/* Available Keys Section */}
-                {/* <div className="mt-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-white">Available Keys</h2>
-                    <div className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-sm font-medium border border-green-600/30">
-                      {availableKeys.length} Available
-                    </div>
-                  </div>
-
-                  {availableKeys.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">No keys available</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {availableKeys.map((key) => (
-                        <KeyCard
-                          key={key.id}
-                          keyData={key}
-                          variant="available"
-                          userRole="security"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div> */}
               </>
             )}
           </div>
@@ -406,20 +322,19 @@ const SecurityDashboard = () => {
 
             {unavailableKeys.length === 0 ? (
               <div className="text-center py-12">
-<CheckCircle className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
                 <p className="text-gray-400 text-lg">All keys are available!</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {unavailableKeys.map((key) => (
-                    <KeyCard
-                      key={key.id}
-                      keyData={key}
-                      variant="unavailable"
-                      onCollectKey={handleCollectKey}
-                      userRole="security"
-                      collectButtonClassName="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-medium text-lg transition-colors"
-                    />
+                  <KeyCard
+                    key={key.id}
+                    keyData={key}
+                    variant="unavailable"
+                    onCollectKey={handleCollectKey}
+                    userRole="security"
+                  />
                 ))}
               </div>
             )}
@@ -457,81 +372,55 @@ const SecurityDashboard = () => {
       />
 
       {/* QR Scanner Modal */}
-      <QRScanner
-        isOpen={showScanner}
-        onScan={handleQRScan}
-        onClose={() => setShowScanner(false)}
-      />
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+          isOpen={showScanner}
+        />
+      )}
 
-      {/* Return Confirmation Modal */}
-      {showReturnConfirmation && pendingReturnData && (
+      {/* Scan Result Modal */}
+      {showScanResult && scanResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-md w-full"
+            className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{scanResult.success ? 'Success' : 'Error'}</h3>
+              <button
+                onClick={() => setShowScanResult(false)}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                {/* Close icon could go here */}
+              </button>
+            </div>
+
             <div className="text-center">
-              <Key className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-semibold text-gray-700 mb-2">
-                Confirm Key Return
-              </h3>
-              <h4 className="text-lg font-bold text-gray-900 mb-4">
-                {pendingReturnData.keyFullName}
-              </h4>
+              {scanResult.success ? (
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              ) : (
+                <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              )}
+              <p className="text-gray-700 mb-2">{scanResult.message}</p>
+            </div>
 
-              {/* Key and User Details */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <div className="mb-3">
-                  <p className="font-medium text-gray-900 mb-1">Returning Person:</p>
-                  <p className="text-gray-600">{pendingReturnData.userName}</p>
-                  <p className="text-gray-500 text-sm">{pendingReturnData.userEmail}</p>
-                </div>
-                <div className="mb-3">
-                  <p className="font-medium text-gray-900 mb-1">Key Details:</p>
-                  <p className="text-gray-600">key {pendingReturnData.keyNumber} , {pendingReturnData.keyName}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 mb-1">Return Time:</p>
-                  <p className="text-gray-500 text-sm">{new Date().toLocaleString()}</p>
-                </div>
-              </div>
-
-              <p className="text-gray-600 mb-6">
-                Do you want to collect this key return?
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleRejectReturn}
-                  disabled={isProcessing}
-                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={handleCollectReturn}
-                  disabled={isProcessing}
-                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    'Collect'
-                  )}
-                </button>
-              </div>
+            <div className="mt-4">
+              <button
+                onClick={handleCloseScanResult}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
             </div>
           </motion.div>
         </div>
       )}
 
-      {/* Scan Result Modal */}
-      {showScanResult && scanResult && (
+      {/* Return Confirmation Modal */}
+      {showReturnConfirmation && pendingReturnData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -542,15 +431,15 @@ const SecurityDashboard = () => {
               {console.log('🔍 Scan Result Data:', scanResult)}
               {console.log('🔍 Key Data:', scanResult.keyData)}
               {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
-              {(!scanResult.success || scanResult.type === 'error' || scanResult.type === 'rejected') ? (
+              {scanResult.type === 'rejected' ? (
                 <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               ) : (
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               )}
-              <h3 className={`text-2xl font-bold mb-2 ${(!scanResult.success || scanResult.type === 'error') ? 'text-red-900' : 'text-gray-900'}`}>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
               </h3>
-              <h4 className={`text-lg font-semibold mb-2 ${(!scanResult.success || scanResult.type === 'error') ? 'text-red-700' : 'text-gray-700'}`}>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
                 ({scanResult.keyData?.keyName || scanResult.key?.keyName || 'Unknown Key'})
               </h4>
 
@@ -580,32 +469,15 @@ const SecurityDashboard = () => {
                 </p> */}
               {/* </div> */}
 
-              <p className={`${(!scanResult.success || scanResult.type === 'error') ? 'text-red-700' : 'text-gray-600'} mb-6`}>
+              <p className="text-gray-600 mb-6">
                 {scanResult.message}    
               </p>
-              {(!scanResult.success || scanResult.type === 'error') ? (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => { setShowScanResult(false); setShowScanner(true); }}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    Retry
-                  </button>
-                  <button
-                    onClick={() => { setShowScanResult(false); setShowScanner(true); }}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    Go Back
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleCloseScanResult}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                >
-                  Continue
-                </button>
-              )}
+              <button
+                onClick={handleCloseScanResult}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+              >
+                Continue
+              </button>
             </div>
           </motion.div>
         </div>

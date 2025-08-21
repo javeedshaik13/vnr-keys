@@ -69,7 +69,10 @@ export const getBackendUrl = () => {
  */
 export const getOAuthCallbackUrl = () => {
   const backendUrl = getBackendUrl();
-  return `${backendUrl}/api/auth/google/callback`;
+  // If the backend URL already contains /be, don't add it again
+  return backendUrl.includes('/be') 
+    ? `${backendUrl}/api/auth/google/callback`
+    : `${backendUrl}/be/api/auth/google/callback`;
 };
 
 /**
@@ -84,8 +87,14 @@ export const getCorsOrigins = () => {
 
   // Add environment-specific client URLs
   if (process.env.CLIENT_URL_LOCAL) baseOrigins.push(process.env.CLIENT_URL_LOCAL);
-  if (process.env.CLIENT_URL_DEV) baseOrigins.push(process.env.CLIENT_URL_DEV);
-  if (process.env.CLIENT_URL_PRO) baseOrigins.push(process.env.CLIENT_URL_PRO);
+  if (process.env.CLIENT_URL_DEV) {
+    baseOrigins.push(process.env.CLIENT_URL_DEV);
+    baseOrigins.push(process.env.CLIENT_URL_DEV + '/be');
+  }
+  if (process.env.CLIENT_URL_PRO) {
+    baseOrigins.push(process.env.CLIENT_URL_PRO);
+    baseOrigins.push(process.env.CLIENT_URL_PRO + '/be');
+  }
 
   // Add additional CORS origins from environment variables if they exist
   if (process.env.CORS_ADDITIONAL_ORIGINS) {
@@ -98,10 +107,12 @@ export const getCorsOrigins = () => {
     local: [
       'http://localhost:3203',
       'http://localhost:3204',
+      'http://localhost:3205',
       'http://localhost:5173',
       'http://localhost:3000',
       'http://127.0.0.1:3203',
       'http://127.0.0.1:3204',
+      'http://127.0.0.1:3205',
       'http://127.0.0.1:5173'
     ],
     dev: [
