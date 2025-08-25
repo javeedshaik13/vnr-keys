@@ -14,6 +14,7 @@ import { connectDB } from "./db/connectDB.js";
 import { verifyTransporter } from "./nodemailer/nodemailer.config.js";
 import { globalErrorHandler } from "./utils/errorHandler.js";
 import { config } from "./utils/config.js";
+import { initializeScheduledJobs } from "./services/scheduledJobs.js";
 import {
 	generalLimiter,
 	helmetConfig,
@@ -25,6 +26,7 @@ import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
 import auditRoutes from "./routes/audit.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
 
 const app = express();
@@ -136,6 +138,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/about",about);
 
 // For local development - handle /be prefix routes to match Google OAuth redirect URIs
@@ -143,6 +146,7 @@ if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local
 	app.use("/be/api/auth", authRoutes);
 	app.use("/be/api/dashboard", dashboardRoutes);
 	app.use("/be/api/keys", keyRoutes);
+	app.use("/be/api/notifications", notificationRoutes);
 	app.use("/be/api/about", about);
 }
 
@@ -180,6 +184,16 @@ io.on('connection', (socket) => {
 		}
 	});
 
+	// Join user to role-based room for role-specific notifications
+	socket.on('join-role-room', (role) => {
+		if (['faculty', 'security', 'admin'].includes(role)) {
+			socket.join(`${role}-room`);
+			if (process.env.NODE_ENV === 'development') {
+				console.log(`👥 User joined ${role} room`);
+			}
+		}
+	});
+
 	// Join all users to a general keys room for global updates
 	socket.join('keys-updates');
 
@@ -196,6 +210,9 @@ global.io = io;
 server.listen(PORT, async () => {
 	await connectDB();
 	await verifyTransporter();
+
+	// Initialize scheduled jobs
+	initializeScheduledJobs();
 
 	console.log(`🚀 VNR Keys Server running on port ${PORT}`);
 	console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);

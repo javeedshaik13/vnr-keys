@@ -117,3 +117,41 @@ export const PASSWORD_RESET_REQUEST_TEMPLATE = `
 </body>
 </html>
 `;
+
+export const NOTIFICATION_EMAIL_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(to right, #FF6B35, #F7931E); padding: 20px; text-align: center;">
+    <h1 style="color: white; margin: 0;">🔑 VNR Keys Notification</h1>
+  </div>
+  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <h2 style="color: #FF6B35; margin-top: 0;">{title}</h2>
+    <p>Hello {name},</p>
+    <div style="background-color: #fff; padding: 15px; border-left: 4px solid #FF6B35; margin: 20px 0;">
+      <p style="margin: 0; font-size: 16px;">{message}</p>
+    </div>
+
+    <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+      <h3 style="margin-top: 0; color: #856404;">📋 Notification Details</h3>
+      <p><strong>Type:</strong> {type}</p>
+      <p><strong>Time:</strong> {currentDate}</p>
+      <p><strong>Priority:</strong> High</p>
+    </div>
+
+    <p style="margin-top: 30px;">Please take appropriate action as soon as possible.</p>
+    <p>If you have any questions or need assistance, please contact the security office.</p>
+    <p>Best regards,<br>The {companyName} Team</p>
+  </div>
+  <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.8em;">
+    <p>This is an automated notification from the VNR Keys Management System.</p>
+    <p>© {currentYear} {companyName}. All rights reserved.</p>
+  </div>
+</body>
+</html>
+`;

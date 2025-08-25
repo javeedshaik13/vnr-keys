@@ -17,9 +17,9 @@ import ManageUsersPage from "./pages/admin/ManageUsersPage";
 import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
 import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
-import { useAuthStore } from "./store/authStore";
 import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
+import { useAuthStore } from "./store/authStore";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
 
 // protect routes that require authentication
@@ -90,9 +90,8 @@ function App() {
 
 	return (
 		<div className='min-h-screen bg-gray-900 relative overflow-hidden'>
-			{/* Removed FloatingShape and green gradient background */}
 			<Routes>
-				{/* Role-based Dashboard Routes */}
+				{/* Dashboard Layout */}
 				<Route
 					path='/dashboard'
 					element={
@@ -174,7 +173,6 @@ function App() {
 							</RoleProtectedRoute>
 						}
 					/>
-
 					{/* Collective Key Return - accessible to Security and Faculty */}
 					<Route
 						path='collective-return'
@@ -185,7 +183,6 @@ function App() {
 						}
 					/>
 
-					{/* Common dashboard routes accessible to all authenticated users */}
 					<Route path='profile' element={<ProfilePage />} />
 					<Route path='about' element={<AboutPage />} />
 				</Route>
@@ -214,7 +211,7 @@ function App() {
 					element={<CompleteRegistrationPage />}
 				/>
 
-				{/* catch all routes */}
+				{/* Catch-all redirect */}
 				<Route path='*' element={<Navigate to='/dashboard' replace />} />
 			</Routes>
 			<Toaster />
