@@ -714,5 +714,96 @@ export const useKeyStore = create((set, get) => ({
       set({ error: errorMessage });
       throw error;
     }
+  },
+
+  // Admin functions for key management
+
+  // Create a new key (admin only)
+  createKey: async (keyData) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.post(API_URL, keyData, {
+        withCredentials: true,
+      });
+
+      const newKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = [...keys, newKey];
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return newKey;
+    } catch (error) {
+      console.error("Error creating key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Update an existing key (admin only)
+  updateKey: async (keyId, keyData) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.put(`${API_URL}/${keyId}`, keyData, {
+        withCredentials: true,
+      });
+
+      const updatedKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = keys.map(key =>
+        key.id === keyId ? updatedKey : key
+      );
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return updatedKey;
+    } catch (error) {
+      console.error("Error updating key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Delete a key (admin only)
+  deleteKey: async (keyId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.delete(`${API_URL}/${keyId}`, {
+        withCredentials: true,
+      });
+
+      const { keys } = get();
+      const updatedKeys = keys.filter(key => key.id !== keyId);
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return true;
+    } catch (error) {
+      console.error("Error deleting key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Get a single key by ID
+  getKeyById: async (keyId) => {
+    try {
+      const response = await axios.get(`${API_URL}/${keyId}`, {
+        withCredentials: true,
+      });
+
+      return transformKeyData(response.data.data.key);
+    } catch (error) {
+      console.error("Error fetching key:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage });
+      throw error;
+    }
   }
 }));

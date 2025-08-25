@@ -4,6 +4,16 @@ import { useSidebar } from "../../components/layout/DashboardLayout";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+<<<<<<< HEAD
+    Users,
+    Shield,
+    Activity,
+    UserCheck,
+    UserX,
+    Settings,
+    BarChart3,
+    Key
+=======
   Users,
   Shield,
   Activity,
@@ -12,6 +22,7 @@ import {
   BarChart3,
   Settings,
   User
+>>>>>>> 156769be0a0c116ec7ebc5ee0a1e2585b13ec6b3
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -49,12 +60,25 @@ const AdminDashboard = () => {
     navigate("/dashboard/admin/reports");
   };
 
+<<<<<<< HEAD
+	const handleManageKeys = () => {
+		navigate('/dashboard/admin/keys');
+	};
+
+	const adminStats = dashboardData?.stats || {
+		totalUsers: 0,
+		verifiedUsers: 0,
+		unverifiedUsers: 0,
+		usersByRole: { admin: 0, operator: 0, responder: 0 }
+	};
+=======
   const adminStats = dashboardData?.stats || {
     totalUsers: 0,
     verifiedUsers: 0,
     unverifiedUsers: 0,
     usersByRole: { admin: 0, operator: 0, responder: 0 },
   };
+>>>>>>> 156769be0a0c116ec7ebc5ee0a1e2585b13ec6b3
 
   const statsCards = [
     {
@@ -206,6 +230,54 @@ const AdminDashboard = () => {
         </motion.div>
       </div>
 
+<<<<<<< HEAD
+			{/* Admin Actions */}
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5, delay: 0.6 }}
+				className="mt-8 bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-xl p-6 border border-gray-700"
+			>
+				<h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+					<Settings className="h-5 w-5 mr-2" />
+					Admin Actions
+				</h3>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+					<button
+						onClick={handleManageUsers}
+						className="flex items-center justify-center p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+					>
+						<Users className="h-5 w-5 mr-2" />
+						<span className="text-white font-medium">Manage Users</span>
+					</button>
+					<button
+						onClick={handleManageKeys}
+						className="flex items-center justify-center p-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+					>
+						<Key className="h-5 w-5 mr-2" />
+						<span className="text-white font-medium">Manage Keys</span>
+					</button>
+					<button
+						onClick={handleSecuritySettings}
+						className="flex items-center justify-center p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+					>
+						<Shield className="h-5 w-5 mr-2" />
+						<span className="text-white font-medium">Security Settings</span>
+					</button>
+					<button
+						onClick={handleViewReports}
+						className="flex items-center justify-center p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+					>
+						<BarChart3 className="h-5 w-5 mr-2" />
+						<span className="text-white font-medium">View Reports</span>
+					</button>
+				</div>
+			</motion.div>
+
+
+		</div>
+	);
+=======
       {/* Admin Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -243,6 +315,7 @@ const AdminDashboard = () => {
       </motion.div>
     </div>
   );
+>>>>>>> 156769be0a0c116ec7ebc5ee0a1e2585b13ec6b3
 };
 
 export default AdminDashboard;

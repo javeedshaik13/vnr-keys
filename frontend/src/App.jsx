@@ -14,11 +14,26 @@ import CollectiveKeyReturnPage from "./pages/dashboard/CollectiveKeyReturnPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
 import ManageUsersPage from "./pages/admin/ManageUsersPage";
+import ManageKeysPage from "./pages/admin/ManageKeysPage";
 import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
 import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
 import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
+function App() {
+  const { isCheckingAuth, checkAuth } = useAuthStore();
+  const { initializeSocket, disconnectSocket } = useKeyStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    initializeSocket();
+    return () => disconnectSocket();
+  }, [initializeSocket, disconnectSocket]);
+
+  if (isCheckingAuth) return <LoadingSpinner />;
 import { useAuthStore } from "./store/authStore";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
 
@@ -83,7 +98,22 @@ function App() {
 		return () => {
 			disconnectSocket();
 		};
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+  return (
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+      <Routes>
+        {/* Dashboard Routes */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="/dashboard/admin" replace />} />
+
+          {/* Role Dashboards (now open) */}
+          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="operator" element={<OperatorDashboard />} />
+          <Route path="responder" element={<ResponderDashboard />} />
+          <Route path="security" element={<SecurityDashboard />} />
+          <Route path="faculty" element={<FacultyDashboard />} />
+
 	}, [isAuthenticated]); // Only depend on isAuthenticated
 
 	if (isCheckingAuth) return <LoadingSpinner />;
@@ -105,6 +135,31 @@ function App() {
 						index
 						element={<RoleBasedRedirect />}
 					/>
+
+          {/* Admin Feature Pages */}
+          <Route path="admin/users" element={<ManageUsersPage />} />
+          <Route path="admin/keys" element={<ManageKeysPage />} />
+          <Route path="admin/security" element={<SecuritySettingsPage />} />
+          <Route path="admin/reports" element={<ViewReportsPage />} />
+
+          {/* Common Pages */}
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="about" element={<AboutPage />} />
+        </Route>
+
+        {/* Root route */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Auth Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/complete-registration" element={<CompleteRegistrationPage />} />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+      <Toaster />
+    </div>
+  );
 
 					{/* Role-specific dashboard routes */}
 					<Route
