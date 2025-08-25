@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, User, Info, Users, Shield, BarChart3 } from "lucide-react";
+import { Home, User, Info, Users, Shield, BarChart3, KeyRound } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
@@ -28,6 +28,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { icon: Shield, label: "Security Settings", path: "/dashboard/admin/security" },
     { icon: BarChart3, label: "View Reports", path: "/dashboard/admin/reports" },
   ];
+
+  // Collective Key Return menu item for Security and Faculty
+  const collectiveKeyReturnItem = {
+    icon: KeyRound,
+    label: "Collective Key Return",
+    path: "/dashboard/collective-return"
+  };
 
   // 🔥 Smooth slide animations
   const sidebarVariants = isMobile
@@ -117,13 +124,39 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 </motion.li>
               ))}
 
+              {/* Collective Key Return - visible to Security and Faculty */}
+              {(user?.role === "security" || user?.role === "faculty") && (
+                <motion.li
+                  key={collectiveKeyReturnItem.path}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: baseMenuItems.length * 0.08 }}
+                >
+                  <NavLink
+                    to={collectiveKeyReturnItem.path}
+                    onClick={() => isMobile && setSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center space-x-3 p-3 rounded-2xl transition-all duration-300 border border-gray-700 text-gray-300
+                        ${
+                          isActive
+                            ? "text-white border-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.7)]"
+                            : "hover:text-white hover:border-orange-400 hover:shadow-[0_0_15px_rgba(251,146,60,0.5)]"
+                        }`
+                    }
+                  >
+                    <collectiveKeyReturnItem.icon size={20} />
+                    <span className="font-medium text-sm lg:text-base">{collectiveKeyReturnItem.label}</span>
+                  </NavLink>
+                </motion.li>
+              )}
+
               {user?.role === "admin" &&
                 adminMenuItems.map((item, index) => (
                   <motion.li
                     key={item.path}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (baseMenuItems.length + index) * 0.08 }}
+                    transition={{ delay: (baseMenuItems.length + index + 1) * 0.08 }}
                   >
                     <NavLink
                       to={item.path}

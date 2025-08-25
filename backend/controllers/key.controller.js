@@ -17,6 +17,7 @@ import {
   emitQRScanReturn,
   emitQRScanRequest
 } from "../services/socketService.js";
+import AuditService from "../services/auditService.js";
 
 /**
  * Get all keys with optional filtering (respects user department access)
@@ -116,10 +117,34 @@ export const getUnavailableKeys = asyncHandler(async (req, res) => {
 export const getMyTakenKeys = asyncHandler(async (req, res) => {
   const keys = await Key.findTakenByUser(req.userId)
     .sort({ takenAt: -1 });
-  
+
   res.status(200).json({
     success: true,
     message: "Your taken keys retrieved successfully",
+    data: {
+      keys,
+      total: keys.length,
+    },
+  });
+});
+
+/**
+ * Get all currently taken keys (for collective return interface)
+ * Only accessible to Security, Faculty, and Admin
+ */
+export const getAllTakenKeys = asyncHandler(async (req, res) => {
+  // Verify user has permission to view all taken keys
+  if (req.userRole !== 'admin' && req.userRole !== 'security' && req.userRole !== 'faculty') {
+    throw new ValidationError("Only Security, Faculty, or Admin users can view all taken keys");
+  }
+
+  const keys = await Key.findUnavailable()
+    .populate('takenBy.userId', 'name email role department')
+    .sort({ takenAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    message: "All taken keys retrieved successfully",
     data: {
       keys,
       total: keys.length,
@@ -236,6 +261,9 @@ export const takeKey = asyncHandler(async (req, res) => {
 
   await key.takeKey(user);
 
+  // Log the take operation
+  await AuditService.logKeyTaken(key, user, req);
+
   // Increment usage count for the user
   if (!user.keyUsage) {
     user.keyUsage = new Map();
@@ -278,7 +306,14 @@ export const returnKey = asyncHandler(async (req, res) => {
     throw new ValidationError("You can only return keys you have taken");
   }
 
+  // Get the original user who had the key for audit logging
+  const originalUser = key.takenBy?.userId ? await User.findById(key.takenBy.userId) : null;
+  const returnedBy = await User.findById(req.userId);
+
   await key.returnKey();
+
+  // Log the return operation
+  await AuditService.logKeyReturned(key, returnedBy, req, originalUser);
 
   // Emit real-time update
   emitKeyReturned(key, req.userId);
@@ -287,6 +322,71 @@ export const returnKey = asyncHandler(async (req, res) => {
     success: true,
     message: `Key ${key.keyNumber} (${key.keyName}) returned successfully`,
     data: { key },
+  });
+});
+
+/**
+ * Collective key return - allows Security and Faculty to return any key
+ */
+export const collectiveReturnKey = asyncHandler(async (req, res) => {
+  const { keyId } = req.params;
+  const { reason } = req.body;
+
+  // Verify user has permission for collective returns (Security or Faculty)
+  if (req.userRole !== 'admin' && req.userRole !== 'security' && req.userRole !== 'faculty') {
+    throw new ValidationError("Only Security, Faculty, or Admin users can perform collective key returns");
+  }
+
+  const key = await Key.findById(keyId);
+  if (!key) {
+    throw new NotFoundError("Key not found");
+  }
+
+  if (key.status === 'available') {
+    throw new ConflictError("Key is already available");
+  }
+
+  // Get the original user who had the key
+  const originalUser = key.takenBy?.userId ? await User.findById(key.takenBy.userId) : null;
+  const returnedBy = await User.findById(req.userId);
+
+  if (!returnedBy) {
+    throw new NotFoundError("User not found");
+  }
+
+  // Store original user info before returning the key
+  const originalUserInfo = originalUser ? {
+    id: originalUser._id,
+    name: originalUser.name,
+    email: originalUser.email,
+    role: originalUser.role
+  } : null;
+
+  await key.returnKey();
+
+  // Log the collective return operation with additional metadata
+  await AuditService.logKeyReturned(key, returnedBy, req, originalUser, {
+    reason: reason || "Collective key return",
+    isCollectiveReturn: true
+  });
+
+  // Emit real-time update
+  emitKeyReturned(key, req.userId);
+
+  res.status(200).json({
+    success: true,
+    message: `Key ${key.keyNumber} (${key.keyName}) returned successfully via collective return`,
+    data: {
+      key,
+      originalUser: originalUserInfo,
+      returnedBy: {
+        id: returnedBy._id,
+        name: returnedBy.name,
+        email: returnedBy.email,
+        role: returnedBy.role
+      },
+      reason: reason || "Collective key return"
+    },
   });
 });
 

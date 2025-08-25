@@ -637,6 +637,61 @@ export const useKeyStore = create((set, get) => ({
     }
   },
 
+  // Collective return a key via API
+  collectiveReturnKeyAPI: async (keyId, reason = null) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.post(`${API_URL}/${keyId}/collective-return`, {
+        reason: reason
+      }, {
+        withCredentials: true,
+      });
+
+      const updatedKey = transformKeyData(response.data.data.key);
+      const { keys } = get();
+      const updatedKeys = keys.map(key =>
+        key.id === keyId ? updatedKey : key
+      );
+
+      set({ keys: updatedKeys, isLoading: false });
+      handleSuccess(response.data.message);
+      return {
+        key: updatedKey,
+        originalUser: response.data.data.originalUser,
+        returnedBy: response.data.data.returnedBy,
+        reason: response.data.data.reason
+      };
+    } catch (error) {
+      console.error("Error performing collective return:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // Get all taken keys (for collective return interface)
+  getAllTakenKeysAPI: async () => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.get(`${API_URL}/all-taken`, {
+        withCredentials: true,
+      });
+
+      const backendKeys = response.data.data.keys || [];
+      const takenKeys = backendKeys.map(transformKeyData);
+
+      set({ isLoading: false });
+      return takenKeys;
+    } catch (error) {
+      console.error("Error fetching all taken keys:", error);
+      const errorMessage = handleError(error);
+      set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
   // Toggle frequently used status via API
   toggleFrequentlyUsedAPI: async (keyId) => {
     try {
