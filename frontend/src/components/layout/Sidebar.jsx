@@ -61,6 +61,26 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     closed: { x: "-100%", transition: { type: "tween", ease: "easeInOut", duration: 0.3 } },
   };
 
+  // When sidebar open state changes, broadcast to other components (notifications)
+  useEffect(() => {
+    const OPEN = "vnr:sidebar:open";
+    const CLOSED = "vnr:sidebar:closed";
+    if (sidebarOpen) {
+      window.dispatchEvent(new CustomEvent(OPEN));
+    } else {
+      window.dispatchEvent(new CustomEvent(CLOSED));
+    }
+  }, [sidebarOpen]);
+
+  // Close sidebar when notifications open elsewhere
+  useEffect(() => {
+    const onNotificationsOpen = () => {
+      if (sidebarOpen) setSidebarOpen(false);
+    };
+    window.addEventListener("vnr:notifications:open", onNotificationsOpen);
+    return () => window.removeEventListener("vnr:notifications:open", onNotificationsOpen);
+  }, [sidebarOpen, setSidebarOpen]);
+
   // Render nothing when closed (both mobile & desktop)
   return (
     <>
@@ -91,7 +111,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               background:
                 "radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)",
             }}
-            className={`${
+            className={`$${
               isMobile
                 ? "fixed left-0 top-[64px] h-[calc(100%-64px)] w-52 z-50"
                 : "relative w-64 h-[calc(100vh-4rem)]"

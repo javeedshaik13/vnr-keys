@@ -1,5 +1,5 @@
 // src/pages/dashboard/NotificationsSlidebar.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, CheckCircle, AlertTriangle, Info, X } from "lucide-react";
 
@@ -68,6 +68,26 @@ function NotificationsSlidebar({ isOpen, onClose }) {
       transition: { duration: 0.4, ease: "easeOut" },
     },
   };
+
+  // When notifications open/close, notify other components (sidebar)
+  useEffect(() => {
+    const OPEN = "vnr:notifications:open";
+    const CLOSED = "vnr:notifications:closed";
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent(OPEN));
+    } else {
+      window.dispatchEvent(new CustomEvent(CLOSED));
+    }
+  }, [isOpen]);
+
+  // Close notifications if sidebar opens elsewhere
+  useEffect(() => {
+    const onSidebarOpen = () => {
+      if (isOpen && typeof onClose === "function") onClose();
+    };
+    window.addEventListener("vnr:sidebar:open", onSidebarOpen);
+    return () => window.removeEventListener("vnr:sidebar:open", onSidebarOpen);
+  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
