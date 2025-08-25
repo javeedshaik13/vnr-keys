@@ -769,11 +769,12 @@ export const useKeyStore = create((set, get) => ({
   },
 
   // Delete a key (admin only)
-  deleteKey: async (keyId) => {
+  deleteKey: async (keyId, hardDelete = false) => {
     set({ isLoading: true, error: null });
 
     try {
-      const response = await axios.delete(`${API_URL}/${keyId}`, {
+      const url = hardDelete ? `${API_URL}/${keyId}?hard=true` : `${API_URL}/${keyId}`;
+      const response = await axios.delete(url, {
         withCredentials: true,
       });
 

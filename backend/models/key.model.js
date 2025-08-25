@@ -57,7 +57,7 @@ const keySchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["classroom", "lab", "office", "storage", "other"],
+      enum: ["classroom", "lab", "office", "storage", "library", "auditorium", "cafeteria", "hostel", "maintenance", "security", "other"],
       default: "other",
     },
     department: {
@@ -79,7 +79,7 @@ const keySchema = new mongoose.Schema(
     },
     block: {
       type: String,
-      enum: ["A", "B", "C", "D", "E", "PG"],
+      enum: ["A", "B", "C", "D", "E", "F", "G", "H", "PG", "MAIN", "LIB", "AUD", "CAF", "HOSTEL", "OTHER"],
       default: "A",
     },
     isActive: {
