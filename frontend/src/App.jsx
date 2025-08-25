@@ -217,7 +217,6 @@
 
 
 import { Navigate, Route, Routes } from "react-router-dom";
-import FloatingShape from "./components/ui/FloatingShape";
 import LoginPage from "./pages/auth/LoginPage";
 import CompleteRegistrationPage from "./pages/auth/CompleteRegistrationPage";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
@@ -269,6 +268,91 @@ function App() {
 					<Route path='responder' element={<ResponderDashboard />} />
 					<Route path='security' element={<SecurityDashboard />} />
 					<Route path='faculty' element={<FacultyDashboard />} />
+			{/* Removed FloatingShape and green gradient background */}
+			<Routes>
+				{/* Role-based Dashboard Routes */}
+				<Route
+					path='/dashboard'
+					element={
+						<ProtectedRoute>
+							<DashboardLayout />
+						</ProtectedRoute>
+					}
+				>
+					{/* Default dashboard - redirects to role-based dashboard */}
+					<Route
+						index
+						element={<RoleBasedRedirect />}
+					/>
+
+					{/* Role-specific dashboard routes */}
+					<Route
+						path='admin'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<AdminDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+
+					{/* Admin-only feature pages */}
+					<Route
+						path='admin/users'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<ManageUsersPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='admin/security'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<SecuritySettingsPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='admin/reports'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<ViewReportsPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='operator'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'operator']}>
+								<OperatorDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='responder'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'responder']}>
+								<ResponderDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='security'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'security']}>
+								<SecurityDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='faculty'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'faculty']}>
+								<FacultyDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+
 					<Route path='profile' element={<ProfilePage />} />
 					<Route path='about' element={<AboutPage />} />
 				</Route>

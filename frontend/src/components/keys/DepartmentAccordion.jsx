@@ -41,7 +41,7 @@ const applyAvailabilityFilter = (keys, filter) => {
 const groupByDepartment = (keys) => {
 	const grouped = {};
 	for (const key of keys) {
-		const dept = key.category || "Other";
+		const dept = key.department || "OTHER";
 		if (!grouped[dept]) grouped[dept] = [];
 		grouped[dept].push(key);
 	}
@@ -58,13 +58,19 @@ const DepartmentAccordion = ({
 	const grouped = useMemo(() => groupByDepartment(keys), [keys]);
 
 	const departmentOrder = [
-		"Computer Science",
-		"Electronics",
-		"Mechanical",
-		"Civil",
-		"Admin",
+		"CSE",
+		"EEE",
+		"AIML",
+		"IoT",
+		"ECE",
+		"MECH",
+		"CIVIL",
+		"IT",
+		"ADMIN",
+		"RESEARCH",
+		"COMMON",
 		...Object.keys(grouped).filter(
-			(d) => !["Computer Science", "Electronics", "Mechanical", "Civil", "Admin"].includes(d)
+			(d) => !["CSE","EEE","AIML","IoT","ECE","MECH","CIVIL","IT","ADMIN","RESEARCH","COMMON"].includes(d)
 		),
 	];
 

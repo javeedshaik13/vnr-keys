@@ -77,6 +77,11 @@ const keySchema = new mongoose.Schema(
       ],
       default: "COMMON", // Default to common access
     },
+    block: {
+      type: String,
+      enum: ["A", "B", "C", "D", "E", "PG"],
+      default: "A",
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -95,6 +100,7 @@ keySchema.index({ "takenBy.userId": 1 });
 keySchema.index({ frequentlyUsed: 1 });
 keySchema.index({ category: 1 });
 keySchema.index({ department: 1 });
+keySchema.index({ block: 1 });
 keySchema.index({ isActive: 1 });
 
 // Virtual for checking if key is currently taken
