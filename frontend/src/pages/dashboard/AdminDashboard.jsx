@@ -10,7 +10,8 @@ import {
     UserCheck,
     UserX,
     Settings,
-    BarChart3
+    BarChart3,
+    Key
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -46,6 +47,10 @@ const AdminDashboard = () => {
 
 	const handleViewReports = () => {
 		navigate('/dashboard/admin/reports');
+	};
+
+	const handleManageKeys = () => {
+		navigate('/dashboard/admin/keys');
 	};
 
 	const adminStats = dashboardData?.stats || {
@@ -218,13 +223,20 @@ const AdminDashboard = () => {
 					<Settings className="h-5 w-5 mr-2" />
 					Admin Actions
 				</h3>
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 					<button
 						onClick={handleManageUsers}
 						className="flex items-center justify-center p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
 					>
 						<Users className="h-5 w-5 mr-2" />
 						<span className="text-white font-medium">Manage Users</span>
+					</button>
+					<button
+						onClick={handleManageKeys}
+						className="flex items-center justify-center p-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+					>
+						<Key className="h-5 w-5 mr-2" />
+						<span className="text-white font-medium">Manage Keys</span>
 					</button>
 					<button
 						onClick={handleSecuritySettings}
