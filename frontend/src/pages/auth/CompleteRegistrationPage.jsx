@@ -131,7 +131,7 @@ const CompleteRegistrationPage = () => {
 
   function handleRoleSelect(selectedRole) {
     setRole(selectedRole);
-    if (selectedRole === "security") {
+    if (selectedRole === "security" || selectedRole === "adim") {
       setStep(3);
     } else {
       setStep(2);
@@ -238,6 +238,20 @@ const CompleteRegistrationPage = () => {
               <div className="text-sm text-gray-300">Security personnel</div>
             </div>
           </motion.button>
+
+          {/* AD,IM Role Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleRoleSelect("adim")}
+            className="w-full p-6 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-semibold flex items-center justify-center gap-4 border-2 border-transparent hover:border-pink-500"
+          >
+            <Shield className="w-8 h-8 text-pink-400" />
+            <div className="text-left">
+              <div className="text-lg">AD,IM</div>
+              <div className="text-sm text-gray-300">AD,IM personnel</div>
+            </div>
+          </motion.button>
         </div>
       </motion.div>
     );
@@ -292,11 +306,17 @@ const CompleteRegistrationPage = () => {
     return (
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">
         <h3 className="text-xl font-semibold text-white mb-2">
-          {role === "faculty" ? "Faculty Details" : "Complete Registration"}
+          {role === "faculty"
+            ? "Faculty Details"
+            : role === "adim"
+            ? "ADMIN Details"
+            : "Complete Registration"}
         </h3>
         <p className="text-gray-300 mb-6">
           {role === "faculty"
             ? "Please enter your faculty ID"
+            : role === "adim"
+            ? "You're all set as AD,IM! Click continue to complete registration."
             : "You're all set! Click continue to complete registration."}
         </p>
 
@@ -323,7 +343,7 @@ const CompleteRegistrationPage = () => {
           <div className="space-y-2 text-gray-300">
             <div className="flex justify-between">
               <span>Role:</span>
-              <span className="text-white capitalize">{role}</span>
+              <span className="text-white capitalize">{role === "adim" ? "AD,IM" : role}</span>
             </div>
             {role === "faculty" && (
               <>
