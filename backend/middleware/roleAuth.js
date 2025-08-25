@@ -62,7 +62,10 @@ export const rolePermissions = {
 	
 	// Admin and Faculty
 	adminOrFaculty: requireRole('admin', 'faculty'),
-	
+
+	// Admin, Security, and Faculty (for collective operations)
+	adminOrSecurityOrFaculty: requireRole('admin', 'security', 'faculty'),
+
 	// All roles (authenticated users)
 	anyRole: requireRole('admin', 'faculty', 'security'),
 	

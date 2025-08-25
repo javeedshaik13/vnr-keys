@@ -10,6 +10,7 @@ import OperatorDashboard from "./pages/dashboard/OperatorDashboard";
 import ResponderDashboard from "./pages/dashboard/ResponderDashboard";
 import SecurityDashboard from "./pages/dashboard/SecurityDashboard";
 import FacultyDashboard from "./pages/dashboard/FacultyDashboard";
+import CollectiveKeyReturnPage from "./pages/dashboard/CollectiveKeyReturnPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
 import ManageUsersPage from "./pages/admin/ManageUsersPage";
@@ -169,6 +170,15 @@ function App() {
 						element={
 							<RoleProtectedRoute allowedRoles={['admin', 'faculty']}>
 								<FacultyDashboard />
+							</RoleProtectedRoute>
+						}
+					/>
+					{/* Collective Key Return - accessible to Security and Faculty */}
+					<Route
+						path='collective-return'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin', 'security', 'faculty']}>
+								<CollectiveKeyReturnPage />
 							</RoleProtectedRoute>
 						}
 					/>

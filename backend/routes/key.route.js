@@ -4,11 +4,13 @@ import {
   getAvailableKeys,
   getUnavailableKeys,
   getMyTakenKeys,
+  getAllTakenKeys,
   getFrequentlyUsedKeys,
   getUserFrequentlyUsedKeys,
   getKeyById,
   takeKey,
   returnKey,
+  collectiveReturnKey,
   createKey,
   updateKey,
   deleteKey,
@@ -29,6 +31,7 @@ router.get("/", getAllKeys); // Get all keys with optional filtering
 router.get("/available", getAvailableKeys); // Get available keys
 router.get("/unavailable", getUnavailableKeys); // Get unavailable keys
 router.get("/my-taken", getMyTakenKeys); // Get keys taken by current user
+router.get("/all-taken", rolePermissions.adminOrSecurityOrFaculty, getAllTakenKeys); // Get all taken keys (for collective return)
 router.get("/frequently-used", getFrequentlyUsedKeys); // Get frequently used keys
 router.get("/my-frequently-used", getUserFrequentlyUsedKeys); // Get user's frequently used keys
 
@@ -64,6 +67,7 @@ router.use("/:keyId/*", (req, res, next) => {
 
 router.post("/:keyId/take", rolePermissions.adminOrFaculty, takeKey); // Take a key (faculty/admin)
 router.post("/:keyId/return", returnKey); // Return a key (any user can return their own key, security/admin can return any)
+router.post("/:keyId/collective-return", rolePermissions.adminOrSecurityOrFaculty, collectiveReturnKey); // Collective key return (security/faculty/admin)
 router.post("/:keyId/toggle-frequent", toggleFrequentlyUsed); // Toggle frequently used status
 
 // GET routes with parameters - MUST come after specific routes

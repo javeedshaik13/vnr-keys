@@ -25,6 +25,7 @@ import {
 import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
+import auditRoutes from "./routes/audit.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
 
@@ -127,7 +128,8 @@ app.get("/", (req, res) => {
 			health: "/api/health",
 			auth: "/api/auth",
 			dashboard: "/api/dashboard",
-			keys: "/api/keys"
+			keys: "/api/keys",
+			audit: "/api/audit"
 		}
 	});
 });
@@ -135,6 +137,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
+app.use("/api/audit", auditRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/about",about);
 
