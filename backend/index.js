@@ -135,6 +135,14 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
 app.use("/api/about",about);
 
+// For local development - handle /be prefix routes to match Google OAuth redirect URIs
+if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local') {
+	app.use("/be/api/auth", authRoutes);
+	app.use("/be/api/dashboard", dashboardRoutes);
+	app.use("/be/api/keys", keyRoutes);
+	app.use("/be/api/about", about);
+}
+
 // Global error handler (must be after all routes)
 app.use(globalErrorHandler);
 

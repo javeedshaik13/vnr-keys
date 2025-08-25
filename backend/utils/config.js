@@ -69,8 +69,15 @@ export const getBackendUrl = () => {
  */
 export const getOAuthCallbackUrl = () => {
   const backendUrl = getBackendUrl();
-  // If the backend URL already contains /be, don't add it again
-  return backendUrl.includes('/be') 
+  const env = getEnvironment();
+
+  // For local environment, use direct /api path (no /be prefix)
+  if (env === 'local') {
+    return `${backendUrl}/api/auth/google/callback`;
+  }
+
+  // For dev/pro environments, check if /be is already in the URL
+  return backendUrl.includes('/be')
     ? `${backendUrl}/api/auth/google/callback`
     : `${backendUrl}/be/api/auth/google/callback`;
 };
