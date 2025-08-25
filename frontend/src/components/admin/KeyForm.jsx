@@ -17,38 +17,59 @@ const KeyForm = ({
     description: '',
     category: '',
     block: '',
+    department: '',
     frequentlyUsed: false
   });
 
   const [errors, setErrors] = useState({});
 
-  // Categories for dropdown
+  // Categories for dropdown - matching backend schema
   const categories = [
-    'Classroom',
-    'Laboratory',
-    'Office',
-    'Storage',
-    'Maintenance',
-    'Security',
-    'Other'
+    { value: 'classroom', label: 'Classroom' },
+    { value: 'lab', label: 'Laboratory' },
+    { value: 'office', label: 'Office' },
+    { value: 'storage', label: 'Storage' },
+    { value: 'library', label: 'Library' },
+    { value: 'auditorium', label: 'Auditorium' },
+    { value: 'cafeteria', label: 'Cafeteria' },
+    { value: 'hostel', label: 'Hostel' },
+    { value: 'maintenance', label: 'Maintenance' },
+    { value: 'security', label: 'Security' },
+    { value: 'other', label: 'Other' }
   ];
 
-  // Blocks for dropdown
+  // Blocks for dropdown - matching backend schema
   const blocks = [
-    'A Block',
-    'B Block', 
-    'C Block',
-    'D Block',
-    'E Block',
-    'F Block',
-    'G Block',
-    'H Block',
-    'Main Building',
-    'Library',
-    'Auditorium',
-    'Cafeteria',
-    'Hostel',
-    'Other'
+    { value: 'A', label: 'A Block' },
+    { value: 'B', label: 'B Block' },
+    { value: 'C', label: 'C Block' },
+    { value: 'D', label: 'D Block' },
+    { value: 'E', label: 'E Block' },
+    { value: 'F', label: 'F Block' },
+    { value: 'G', label: 'G Block' },
+    { value: 'H', label: 'H Block' },
+    { value: 'PG', label: 'PG Block' },
+    { value: 'MAIN', label: 'Main Building' },
+    { value: 'LIB', label: 'Library' },
+    { value: 'AUD', label: 'Auditorium' },
+    { value: 'CAF', label: 'Cafeteria' },
+    { value: 'HOSTEL', label: 'Hostel' },
+    { value: 'OTHER', label: 'Other' }
+  ];
+
+  // Departments for dropdown - matching backend schema
+  const departments = [
+    { value: 'CSE', label: 'Computer Science Engineering' },
+    { value: 'EEE', label: 'Electrical and Electronics Engineering' },
+    { value: 'AIML', label: 'Artificial Intelligence and Machine Learning' },
+    { value: 'IoT', label: 'Internet of Things' },
+    { value: 'ECE', label: 'Electronics and Communication Engineering' },
+    { value: 'MECH', label: 'Mechanical Engineering' },
+    { value: 'CIVIL', label: 'Civil Engineering' },
+    { value: 'IT', label: 'Information Technology' },
+    { value: 'ADMIN', label: 'Administration' },
+    { value: 'RESEARCH', label: 'Research Department' },
+    { value: 'COMMON', label: 'Common (All Departments)' }
   ];
 
   useEffect(() => {
@@ -60,6 +81,7 @@ const KeyForm = ({
         description: initialData.description || '',
         category: initialData.category || '',
         block: initialData.block || '',
+        department: initialData.department || 'COMMON',
         frequentlyUsed: initialData.frequentlyUsed || false
       });
     } else {
@@ -70,6 +92,7 @@ const KeyForm = ({
         description: '',
         category: '',
         block: '',
+        department: 'COMMON',
         frequentlyUsed: false
       });
     }
@@ -105,7 +128,12 @@ const KeyForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    // Prevent multiple submissions
+    if (isLoading) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -231,7 +259,7 @@ const KeyForm = ({
               >
                 <option value="">Select Category</option>
                 {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category.value} value={category.value}>{category.label}</option>
                 ))}
               </select>
               {errors.category && (
@@ -254,13 +282,30 @@ const KeyForm = ({
               >
                 <option value="">Select Block</option>
                 {blocks.map(block => (
-                  <option key={block} value={block}>{block}</option>
+                  <option key={block.value} value={block.value}>{block.label}</option>
                 ))}
               </select>
               {errors.block && (
                 <p className="text-red-400 text-sm mt-1">{errors.block}</p>
               )}
             </div>
+          </div>
+
+          {/* Department */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Department
+            </label>
+            <select
+              value={formData.department}
+              onChange={(e) => handleInputChange('department', e.target.value)}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+            >
+              {departments.map(department => (
+                <option key={department.value} value={department.value}>{department.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Description */}

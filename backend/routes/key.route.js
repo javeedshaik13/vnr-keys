@@ -17,6 +17,7 @@ import {
   toggleFrequentlyUsed,
   qrScanReturn,
   qrScanRequest,
+  // cleanupInactiveKeys,
 } from "../controllers/key.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { rolePermissions } from "../middleware/roleAuth.js";
@@ -36,7 +37,8 @@ router.get("/frequently-used", getFrequentlyUsedKeys); // Get frequently used ke
 router.get("/my-frequently-used", getUserFrequentlyUsedKeys); // Get user's frequently used keys
 
 // POST routes - specific routes MUST come before parameterized routes
-router.post("/", rolePermissions.adminOnly, createKey); // Create new key (admin only)
+router.post("/", rolePermissions.adminOrSecurity, createKey); // Create new key (admin or security)
+// router.post("/cleanup", rolePermissions.admin, cleanupInactiveKeys); // Cleanup inactive keys (admin only) - temporarily disabled
 
 // Add debugging middleware for QR scan routes
 router.use("/qr-scan/*", (req, res, next) => {
@@ -74,9 +76,9 @@ router.post("/:keyId/toggle-frequent", toggleFrequentlyUsed); // Toggle frequent
 router.get("/:keyId", getKeyById); // Get single key by ID
 
 // PUT routes with parameters
-router.put("/:keyId", rolePermissions.adminOnly, updateKey); // Update key (admin only)
+router.put("/:keyId", rolePermissions.adminOrSecurity, updateKey); // Update key (admin or security)
 
 // DELETE routes
-router.delete("/:keyId", rolePermissions.adminOnly, deleteKey); // Delete key (admin only)
+router.delete("/:keyId", rolePermissions.adminOrSecurity, deleteKey); // Delete key (admin or security)
 
 export default router;

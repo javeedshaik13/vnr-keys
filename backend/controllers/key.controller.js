@@ -391,7 +391,7 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
 });
 
 /**
- * Create a new key (admin only)
+ * Create a new key (admin or security)
  */
 export const createKey = asyncHandler(async (req, res) => {
   const {
@@ -404,8 +404,8 @@ export const createKey = asyncHandler(async (req, res) => {
     frequentlyUsed,
   } = req.body;
 
-  // Check if key number already exists
-  const existingKey = await Key.findOne({ keyNumber });
+  // Check if key number already exists (only check active keys)
+  const existingKey = await Key.findOne({ keyNumber, isActive: true });
   if (existingKey) {
     throw new ConflictError("Key number already exists");
   }
@@ -444,9 +444,9 @@ export const updateKey = asyncHandler(async (req, res) => {
     throw new NotFoundError("Key not found");
   }
   
-  // If updating key number, check for duplicates
+  // If updating key number, check for duplicates (only check active keys)
   if (updates.keyNumber && updates.keyNumber !== key.keyNumber) {
-    const existingKey = await Key.findOne({ keyNumber: updates.keyNumber });
+    const existingKey = await Key.findOne({ keyNumber: updates.keyNumber, isActive: true });
     if (existingKey) {
       throw new ConflictError("Key number already exists");
     }
@@ -463,24 +463,48 @@ export const updateKey = asyncHandler(async (req, res) => {
 });
 
 /**
- * Delete a key (admin only) - soft delete
+ * Delete a key (admin only) - soft delete by default, hard delete with ?hard=true
  */
 export const deleteKey = asyncHandler(async (req, res) => {
   const { keyId } = req.params;
+  const { hard } = req.query; // Check for hard delete parameter
 
   const key = await Key.findById(keyId);
   if (!key) {
     throw new NotFoundError("Key not found");
   }
 
-  key.isActive = false;
-  await key.save();
+  // Check if key is currently taken
+  if (key.status === 'unavailable') {
+    throw new ConflictError("Cannot delete a key that is currently taken. Please return the key first.");
+  }
 
-  res.status(200).json({
-    success: true,
-    message: "Key deleted successfully",
-    data: { key },
-  });
+  if (hard === 'true') {
+    // Hard delete - completely remove from database
+    await Key.findByIdAndDelete(keyId);
+
+    // Emit real-time update
+    emitKeyDeleted(key, req.userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Key permanently deleted successfully",
+      data: { keyId, deleted: true },
+    });
+  } else {
+    // Soft delete - mark as inactive
+    key.isActive = false;
+    await key.save();
+
+    // Emit real-time update
+    emitKeyDeleted(key, req.userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Key deleted successfully (soft delete)",
+      data: { key },
+    });
+  }
 });
 
 /**
@@ -693,5 +717,42 @@ export const qrScanRequest = asyncHandler(async (req, res) => {
         role: req.userRole
       }
     },
+  });
+});
+
+/**
+ * Cleanup inactive keys (admin only) - permanently delete keys that have been inactive for more than 30 days
+ */
+export const cleanupInactiveKeys = asyncHandler(async (req, res) => {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // Find inactive keys older than 30 days
+  const inactiveKeys = await Key.find({
+    isActive: false,
+    updatedAt: { $lt: thirtyDaysAgo }
+  });
+
+  if (inactiveKeys.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: "No inactive keys found for cleanup",
+      data: { deletedCount: 0 }
+    });
+  }
+
+  // Delete the inactive keys
+  const result = await Key.deleteMany({
+    isActive: false,
+    updatedAt: { $lt: thirtyDaysAgo }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: `Cleanup completed: ${result.deletedCount} inactive keys permanently deleted`,
+    data: {
+      deletedCount: result.deletedCount,
+      deletedKeys: inactiveKeys.map(key => ({ keyNumber: key.keyNumber, keyName: key.keyName }))
+    }
   });
 });

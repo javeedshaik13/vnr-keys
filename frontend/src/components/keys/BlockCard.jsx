@@ -1,16 +1,6 @@
-const BlockCard = ({ block, keyCount, onClick, isSelected = false }) => {
-	const getBlockInfo = (block) => {
-		const blockInfo = {
-			"A": { name: "Block A", description: "Computer Science & Storage" },
-			"B": { name: "Block B", description: "Physics & Chemistry Labs" },
-			"C": { name: "Block C", description: "Biology & Research" },
-			"D": { name: "Block D", description: "Library & Study Rooms" },
-			"E": { name: "Block E", description: "Administration & Faculty" },
-			"PG": { name: "Block PG", description: "Auditorium & Seminar Halls" },
-		};
-		return blockInfo[block] || { name: block, description: "Other Facilities" };
-	};
+import { getBlockInfo } from '../../utils/keyFormatters';
 
+const BlockCard = ({ block, keyCount, onClick, isSelected = false }) => {
 	const { name, description } = getBlockInfo(block);
 
 	return (

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import KeyCard from "./KeyCard";
 import { ChevronRight, ChevronDown } from "lucide-react";
+import { getBlockInfo } from "../../utils/keyFormatters";
 
 // Lightweight accordion implemented inline to avoid dependency wiring
 const AccordionItem = ({ title, isOpen, onToggle, children, count }) => {
@@ -90,19 +91,15 @@ const BlockAccordion = ({
 					// Hide empty blocks when a search is active
 					if (searchQuery.trim() && finalList.length === 0) return null;
 
-					const blockInfo = {
-						"A": "Block A - Computer Science & Storage",
-						"B": "Block B - Physics & Chemistry Labs",
-						"C": "Block C - Biology & Research",
-						"D": "Block D - Library & Study Rooms",
-						"E": "Block E - Administration & Faculty",
-						"PG": "Block PG - Auditorium & Seminar Halls",
-					};
+
+
+					const { name, description } = getBlockInfo(block);
+					const title = `${name} - ${description}`;
 
 					return (
 						<AccordionItem
 							key={block}
-							title={blockInfo[block] || `Block ${block}`}
+							title={title}
 							isOpen={isOpen}
 							onToggle={toggle}
 							count={finalList.length}
