@@ -143,6 +143,119 @@ export const emitQRScanRequest = (keyData, scannerId, requestingUserId) => {
 };
 
 /**
+ * Emit notification to a specific user
+ * @param {string} userId - The user ID to send notification to
+ * @param {Object} notificationData - The notification data
+ */
+export const emitNotificationToUser = (userId, notificationData) => {
+  if (!global.io) {
+    console.warn('Socket.IO not initialized');
+    return;
+  }
+
+  const notificationPayload = {
+    id: notificationData._id || notificationData.id,
+    type: notificationData.type,
+    title: notificationData.title,
+    message: notificationData.message,
+    priority: notificationData.priority,
+    metadata: notificationData.metadata,
+    createdAt: notificationData.createdAt,
+    isRead: notificationData.isRead || false,
+    timestamp: new Date().toISOString()
+  };
+
+  // Send to specific user
+  global.io.to(`user-${userId}`).emit('notification', notificationPayload);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔔 Notification emitted to user ${userId}: ${notificationData.type}`);
+  }
+};
+
+/**
+ * Emit notification to all users with a specific role
+ * @param {string} role - The role to send notification to (security, faculty, admin)
+ * @param {Object} notificationData - The notification data
+ */
+export const emitNotificationToRole = (role, notificationData) => {
+  if (!global.io) {
+    console.warn('Socket.IO not initialized');
+    return;
+  }
+
+  const notificationPayload = {
+    id: notificationData._id || notificationData.id,
+    type: notificationData.type,
+    title: notificationData.title,
+    message: notificationData.message,
+    priority: notificationData.priority,
+    metadata: notificationData.metadata,
+    createdAt: notificationData.createdAt,
+    isRead: notificationData.isRead || false,
+    timestamp: new Date().toISOString()
+  };
+
+  // Send to role-based room
+  global.io.to(`${role}-room`).emit('notification', notificationPayload);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔔 Notification emitted to ${role} role: ${notificationData.type}`);
+  }
+};
+
+/**
+ * Emit notification count update to a user
+ * @param {string} userId - The user ID
+ * @param {number} unreadCount - The unread notification count
+ */
+export const emitNotificationCountUpdate = (userId, unreadCount) => {
+  if (!global.io) {
+    console.warn('Socket.IO not initialized');
+    return;
+  }
+
+  global.io.to(`user-${userId}`).emit('notification-count-update', {
+    unreadCount,
+    timestamp: new Date().toISOString()
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔢 Notification count update emitted to user ${userId}: ${unreadCount}`);
+  }
+};
+
+/**
+ * Emit system-wide notification (to all connected users)
+ * @param {Object} notificationData - The notification data
+ */
+export const emitSystemNotification = (notificationData) => {
+  if (!global.io) {
+    console.warn('Socket.IO not initialized');
+    return;
+  }
+
+  const notificationPayload = {
+    id: notificationData._id || notificationData.id,
+    type: notificationData.type,
+    title: notificationData.title,
+    message: notificationData.message,
+    priority: notificationData.priority,
+    metadata: notificationData.metadata,
+    createdAt: notificationData.createdAt,
+    isRead: false,
+    timestamp: new Date().toISOString()
+  };
+
+  // Send to all connected clients
+  global.io.emit('system-notification', notificationPayload);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📢 System notification emitted: ${notificationData.type}`);
+  }
+};
+
+/**
  * Get connected clients count
  * @returns {number} Number of connected clients
  */
