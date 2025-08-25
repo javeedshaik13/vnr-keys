@@ -18,23 +18,9 @@ import ManageKeysPage from "./pages/admin/ManageKeysPage";
 import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
 import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
+import { useAuthStore } from "./store/authStore";
 import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
-function App() {
-  const { isCheckingAuth, checkAuth } = useAuthStore();
-  const { initializeSocket, disconnectSocket } = useKeyStore();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    initializeSocket();
-    return () => disconnectSocket();
-  }, [initializeSocket, disconnectSocket]);
-
-  if (isCheckingAuth) return <LoadingSpinner />;
-import { useAuthStore } from "./store/authStore";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
 
 // protect routes that require authentication
@@ -98,22 +84,7 @@ function App() {
 		return () => {
 			disconnectSocket();
 		};
-	}, []);
-
-  return (
-    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      <Routes>
-        {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="/dashboard/admin" replace />} />
-
-          {/* Role Dashboards (now open) */}
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="operator" element={<OperatorDashboard />} />
-          <Route path="responder" element={<ResponderDashboard />} />
-          <Route path="security" element={<SecurityDashboard />} />
-          <Route path="faculty" element={<FacultyDashboard />} />
-
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthenticated]); // Only depend on isAuthenticated
 
 	if (isCheckingAuth) return <LoadingSpinner />;
@@ -121,7 +92,7 @@ function App() {
 	return (
 		<div className='min-h-screen bg-gray-900 relative overflow-hidden'>
 			<Routes>
-				{/* Dashboard Layout */}
+				{/* Role-based Dashboard Routes */}
 				<Route
 					path='/dashboard'
 					element={
@@ -135,31 +106,6 @@ function App() {
 						index
 						element={<RoleBasedRedirect />}
 					/>
-
-          {/* Admin Feature Pages */}
-          <Route path="admin/users" element={<ManageUsersPage />} />
-          <Route path="admin/keys" element={<ManageKeysPage />} />
-          <Route path="admin/security" element={<SecuritySettingsPage />} />
-          <Route path="admin/reports" element={<ViewReportsPage />} />
-
-          {/* Common Pages */}
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="about" element={<AboutPage />} />
-        </Route>
-
-        {/* Root route */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-        {/* Auth Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/complete-registration" element={<CompleteRegistrationPage />} />
-
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-      <Toaster />
-    </div>
-  );
 
 					{/* Role-specific dashboard routes */}
 					<Route
@@ -177,6 +123,14 @@ function App() {
 						element={
 							<RoleProtectedRoute allowedRoles={['admin']}>
 								<ManageUsersPage />
+							</RoleProtectedRoute>
+						}
+					/>
+					<Route
+						path='admin/keys'
+						element={
+							<RoleProtectedRoute allowedRoles={['admin']}>
+								<ManageKeysPage />
 							</RoleProtectedRoute>
 						}
 					/>
@@ -237,7 +191,7 @@ function App() {
 							</RoleProtectedRoute>
 						}
 					/>
-
+					{/* Common dashboard routes accessible to all authenticated users */}
 					<Route path='profile' element={<ProfilePage />} />
 					<Route path='about' element={<AboutPage />} />
 				</Route>
@@ -266,7 +220,7 @@ function App() {
 					element={<CompleteRegistrationPage />}
 				/>
 
-				{/* Catch-all redirect */}
+				{/* catch all routes */}
 				<Route path='*' element={<Navigate to='/dashboard' replace />} />
 			</Routes>
 			<Toaster />
