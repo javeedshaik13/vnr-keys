@@ -18,17 +18,28 @@ import {
 
 // Complete user registration after OAuth (for new users)
 export const completeRegistration = asyncHandler(async (req, res) => {
-	const { role, department, facultyId } = req.body;
+	const { department, facultyId } = req.body;
 	const userId = req.userId; // From verifyToken middleware
 
-	// Validate input
-	if (!role || !['faculty', 'security'].includes(role)) {
-		throw new ValidationError('Valid role (faculty or security) is required');
+	// Find the user first to get their email
+	const user = await User.findById(userId);
+	if (!user) {
+		throw new NotFoundError('User not found');
 	}
 
-	// Validate faculty-specific fields
+	// Determine role based on email
+	let role;
+	if (user.email === 'security@vnrvjiet.in') {
+		role = 'security';
+	} else if (user.email === '23071a7228@vnrvjiet.in') {
+		role = 'admin';
+	} else {
+		role = 'faculty';
+	}
+
+	// Validate faculty-specific fields (only for faculty role)
 	if (role === 'faculty') {
-		if (!department || !['CSE', 'CSE-AIML', 'CSE-DS'].includes(department)) {
+		if (!department || !['CSE', 'EEE', 'CSE-AIML', 'IoT', 'ECE', 'MECH', 'CIVIL', 'IT'].includes(department)) {
 			throw new ValidationError('Valid department is required for faculty');
 		}
 		if (!facultyId || facultyId.trim().length === 0) {
@@ -37,24 +48,13 @@ export const completeRegistration = asyncHandler(async (req, res) => {
 
 		// Check if faculty ID already exists
 		const existingFaculty = await User.findOne({ facultyId: facultyId.trim() });
-		if (existingFaculty) {
+		if (existingFaculty && existingFaculty._id.toString() !== userId) {
 			throw new ConflictError('Faculty ID already exists');
 		}
 	}
 
-	// Find the user
-	const user = await User.findById(userId);
-	if (!user) {
-		throw new NotFoundError('User not found');
-	}
-
 	// Check if user already completed registration
-	if (user.role !== 'pending' && user.role !== 'faculty') {
-		throw new ConflictError('User registration already completed');
-	}
-
-	// If user is faculty but already has department and facultyId, registration is complete
-	if (user.role === 'faculty' && user.department && user.facultyId) {
+	if (user.role !== 'pending' && !(user.role === 'faculty' && (!user.department || !user.facultyId))) {
 		throw new ConflictError('User registration already completed');
 	}
 
@@ -64,6 +64,7 @@ export const completeRegistration = asyncHandler(async (req, res) => {
 		user.department = department;
 		user.facultyId = facultyId.trim();
 	}
+	// For security and admin roles, no additional fields needed
 
 	await user.save();
 

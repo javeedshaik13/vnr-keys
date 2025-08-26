@@ -223,11 +223,26 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 	const totalUsers = await User.countDocuments(searchQuery);
 
+	// Transform users to use 'id' instead of '_id' for frontend consistency
+	const transformedUsers = users.map(user => ({
+		id: user._id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+		department: user.department,
+		facultyId: user.facultyId,
+		avatar: user.avatar,
+		isVerified: user.isVerified,
+		lastLogin: user.lastLogin,
+		createdAt: user.createdAt,
+		updatedAt: user.updatedAt
+	}));
+
 	res.status(200).json({
 		success: true,
 		message: "Users retrieved successfully",
 		data: {
-			users,
+			users: transformedUsers,
 			pagination: {
 				currentPage: parseInt(page),
 				totalPages: Math.ceil(totalUsers / limit),
@@ -246,6 +261,14 @@ export const updateUser = asyncHandler(async (req, res) => {
 	const { userId } = req.params;
 	const { name, email, role } = req.body;
 
+	// Validate input
+	if (!name && !email && !role) {
+		return res.status(400).json({
+			success: false,
+			message: "At least one field (name, email, or role) must be provided"
+		});
+	}
+
 	// Validate role
 	const validRoles = ['admin', 'faculty', 'security'];
 	if (role && !validRoles.includes(role)) {
@@ -263,25 +286,57 @@ export const updateUser = asyncHandler(async (req, res) => {
 		});
 	}
 
-	// Update user fields
-	if (name) user.name = name;
-	if (email) user.email = email;
-	if (role) user.role = role;
+	// Prevent admin from changing their own role
+	if (userId === req.userId && role && role !== user.role) {
+		return res.status(400).json({
+			success: false,
+			message: "Cannot change your own role"
+		});
+	}
 
-	await user.save();
+	// Prepare update object
+	const updateData = {};
+	const unsetData = {};
+
+	if (name) updateData.name = name;
+	if (email) updateData.email = email;
+	if (role) {
+		updateData.role = role;
+
+		// Clear faculty-specific fields when changing from faculty to other roles
+		if (role !== 'faculty') {
+			unsetData.department = "";
+			unsetData.facultyId = "";
+		}
+	}
+
+	// Build the update query
+	const updateQuery = { $set: updateData };
+	if (Object.keys(unsetData).length > 0) {
+		updateQuery.$unset = unsetData;
+	}
+
+	// Update the user directly in the database
+	const updatedUser = await User.findByIdAndUpdate(
+		userId,
+		updateQuery,
+		{ new: true, runValidators: false }
+	);
 
 	res.status(200).json({
 		success: true,
 		message: "User updated successfully",
 		data: {
 			user: {
-				id: user._id,
-				name: user.name,
-				email: user.email,
-				role: user.role,
-				isVerified: user.isVerified,
-				lastLogin: user.lastLogin,
-				createdAt: user.createdAt
+				id: updatedUser._id,
+				name: updatedUser.name,
+				email: updatedUser.email,
+				role: updatedUser.role,
+				department: updatedUser.department,
+				facultyId: updatedUser.facultyId,
+				isVerified: updatedUser.isVerified,
+				lastLogin: updatedUser.lastLogin,
+				createdAt: updatedUser.createdAt
 			}
 		}
 	});

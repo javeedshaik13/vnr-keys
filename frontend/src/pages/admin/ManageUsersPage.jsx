@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Shield, 
-  CheckCircle, 
+import {
+  Users,
+  Search,
+  Edit,
+  Trash2,
+  CheckCircle,
   XCircle,
   Filter
 } from 'lucide-react';
@@ -72,15 +71,7 @@ const ManageUsersPage = () => {
     }
   };
 
-  const handleToggleVerification = async (userId) => {
-    try {
-      await axios.patch(`${API_URL}/users/${userId}/verify`);
-      handleSuccess('User verification status updated');
-      fetchUsers();
-    } catch (error) {
-      handleError(error, 'Failed to update verification status');
-    }
-  };
+
 
   const handleUpdateUser = async (userData) => {
     try {
@@ -201,12 +192,6 @@ const ManageUsersPage = () => {
                           className="text-blue-400 hover:text-blue-300 p-1 rounded"
                         >
                           <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleVerification(user.id)}
-                          className="text-yellow-400 hover:text-yellow-300 p-1 rounded"
-                        >
-                          <Shield className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user.id)}

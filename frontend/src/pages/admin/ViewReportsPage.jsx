@@ -269,12 +269,6 @@ const OverviewReport = ({ reports }) => (
   </div>
 );
 
-
-
-
-
-
-
 // Reusable Stat Card Component
 const StatCard = ({ title, value, change, changeLabel, icon: Icon, color }) => {
   const colorClasses = {

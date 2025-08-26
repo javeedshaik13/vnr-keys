@@ -11,6 +11,7 @@
 		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
 		"seed:keys": "node scripts/seedKeys.js",
 		"import:keys": "node scripts/importApiKeys.js",
+		"import:users": "node scripts/importUsers.js",
 		"test:db": "node scripts/testConnection.js",
 		"check-env": "node scripts/check-env-import.js"
 	},
