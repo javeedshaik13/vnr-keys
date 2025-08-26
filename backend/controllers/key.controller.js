@@ -312,6 +312,16 @@ export const returnKey = asyncHandler(async (req, res) => {
 
   await key.returnKey();
 
+  // Send notification if key was returned by someone other than the original taker
+  if (originalUser && returnedBy && originalUser._id.toString() !== returnedBy._id.toString()) {
+    try {
+      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
+      await createKeyReturnedNotification(key, originalUser, returnedBy);
+    } catch (notificationError) {
+      console.error('❌ Error sending key return notification:', notificationError);
+    }
+  }
+
   // Log the return operation
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser);
 
@@ -363,6 +373,16 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
   } : null;
 
   await key.returnKey();
+
+  // Send notification if key was returned by someone other than the original taker
+  if (originalUser && returnedBy && originalUser._id.toString() !== returnedBy._id.toString()) {
+    try {
+      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
+      await createKeyReturnedNotification(key, originalUser, returnedBy);
+    } catch (notificationError) {
+      console.error('❌ Error sending key return notification:', notificationError);
+    }
+  }
 
   // Log the collective return operation with additional metadata
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser, {
@@ -614,6 +634,17 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
 
   // Return the key
   await key.returnKey();
+
+  // Send notification if key was returned by someone other than the original taker
+  if (originalUser && originalUser._id.toString() !== req.userId) {
+    try {
+      const returnedBy = await User.findById(req.userId);
+      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
+      await createKeyReturnedNotification(key, originalUser, returnedBy);
+    } catch (notificationError) {
+      console.error('❌ Error sending key return notification:', notificationError);
+    }
+  }
 
   // Emit real-time update for QR scan return
   emitQRScanReturn(key, req.userId, userId);
