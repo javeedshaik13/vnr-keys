@@ -3,10 +3,10 @@ import {
   getMyNotifications,
   getUnreadCount,
   markAsRead,
+  markAsUnread,
   markMultipleAsRead,
   markAllAsRead,
   deleteNotification,
-  createTestNotification,
   triggerKeyReminders,
   getNotificationStats,
   cleanupNotifications,
@@ -26,11 +26,11 @@ router.get("/unread-count", getUnreadCount); // Get unread notification count
 router.get("/:notificationId", getNotificationById); // Get specific notification by ID
 
 // POST routes - accessible to all authenticated users
-router.post("/test", createTestNotification); // Create a test notification
 router.post("/mark-multiple-read", markMultipleAsRead); // Mark multiple notifications as read
 
 // PUT/PATCH routes - accessible to all authenticated users
 router.patch("/:notificationId/read", markAsRead); // Mark specific notification as read
+router.patch("/:notificationId/unread", markAsUnread); // Mark specific notification as unread
 router.patch("/mark-all-read", markAllAsRead); // Mark all notifications as read
 
 // DELETE routes - accessible to all authenticated users
