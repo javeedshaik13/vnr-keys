@@ -1,6 +1,6 @@
 // src/components/layout/Sidebar.jsx
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, User, Info, Users, Shield, BarChart3, KeyRound } from "lucide-react";
+import { Home, User, Info, Users, Shield, BarChart3, KeyRound, Bell } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
@@ -45,6 +45,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const baseMenuItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
+    { icon: Bell, label: "Notifications", path: "/dashboard/notifications" },
     { icon: User, label: "Profile", path: "/dashboard/profile" },
     { icon: Info, label: "About Us", path: "/dashboard/about" },
   ];

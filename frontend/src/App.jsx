@@ -13,6 +13,7 @@ import FacultyDashboard from "./pages/dashboard/FacultyDashboard";
 import CollectiveKeyReturnPage from "./pages/dashboard/CollectiveKeyReturnPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
+import NotificationsPage from "./pages/dashboard/NotificationsPage";
 import ManageUsersPage from "./pages/admin/ManageUsersPage";
 import ManageKeysPage from "./pages/admin/ManageKeysPage";
 import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
@@ -194,6 +195,7 @@ function App() {
 					{/* Common dashboard routes accessible to all authenticated users */}
 					<Route path='profile' element={<ProfilePage />} />
 					<Route path='about' element={<AboutPage />} />
+					<Route path='notifications' element={<NotificationsPage />} />
 				</Route>
 
 				{/* Root route - redirect to role-based dashboard */}

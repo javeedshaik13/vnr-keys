@@ -1,13 +1,12 @@
 // src/components/layout/Navbar.jsx
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, User, LogOut, Bell } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import NotificationsSlidebar from "../../pages/dashboard/NotificationsSlidebar";
+import NotificationBell from "../notifications/NotificationBell";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuthStore();
-  const [openNotifications, setOpenNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -52,14 +51,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
           {/* Right side - User menu */}
           <div className="flex items-center space-x-4">
-            {/* 🔔 Notifications Button */}
-            <button
-              onClick={() => setOpenNotifications(true)}
-              className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 relative"
-            >
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></span>
-            </button>
+            {/* Notifications */}
+            <NotificationBell />
 
             {/* User dropdown */}
             <div className="relative group">
@@ -94,10 +87,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
       </motion.nav>
 
       {/* 🔔 Notifications Sidebar */}
-      <NotificationsSlidebar
-        isOpen={openNotifications}
-        onClose={() => setOpenNotifications(false)}
-      />
     </>
   );
 };

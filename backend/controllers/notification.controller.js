@@ -14,14 +14,12 @@ import { Notification } from "../models/notification.model.js";
  * Get all notifications for the current user
  */
 export const getMyNotifications = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, isRead, type, priority } = req.query;
+  const { page = 1, limit = 20, isRead } = req.query;
   const userId = req.userId;
 
   const options = {
     limit: parseInt(limit),
-    isRead: isRead !== undefined ? isRead === 'true' : undefined,
-    type,
-    priority
+    isRead: isRead !== undefined ? isRead === 'true' : undefined
   };
 
   const notifications = await getUserNotifications(userId, options);
@@ -72,6 +70,41 @@ export const markAsRead = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Notification marked as read",
+    data: { notification }
+  });
+});
+
+/**
+ * Mark a notification as unread
+ */
+export const markAsUnread = asyncHandler(async (req, res) => {
+  const { notificationId } = req.params;
+  const userId = req.userId;
+
+  if (!notificationId) {
+    throw new ValidationError("Notification ID is required");
+  }
+
+  // Find and update the notification
+  const notification = await Notification.findOneAndUpdate(
+    {
+      _id: notificationId,
+      'recipient.userId': userId
+    },
+    {
+      isRead: false,
+      readAt: null
+    },
+    { new: true }
+  );
+
+  if (!notification) {
+    throw new NotFoundError("Notification not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Notification marked as unread",
     data: { notification }
   });
 });
@@ -159,45 +192,7 @@ export const deleteNotification = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * Create a test notification (for testing purposes)
- */
-export const createTestNotification = asyncHandler(async (req, res) => {
-  const { title, message, type = 'system_alert', priority = 'medium' } = req.body;
-  const userId = req.userId;
-  const user = req.user;
 
-  if (!title || !message) {
-    throw new ValidationError("Title and message are required");
-  }
-
-  const notificationData = {
-    recipient: {
-      userId: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-    type,
-    title,
-    message,
-    priority,
-    metadata: {
-      isTest: true,
-      createdBy: userId
-    }
-  };
-
-  const notification = await createAndSendNotification(notificationData, { 
-    email: priority === 'high' || priority === 'urgent' 
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Test notification created successfully",
-    data: { notification }
-  });
-});
 
 /**
  * Trigger key reminders manually (admin only)
