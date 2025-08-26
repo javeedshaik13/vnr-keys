@@ -17,24 +17,10 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 		}
 	]);
 
-	const recentUsersRaw = await User.find()
+	const recentUsers = await User.find()
 		.select('-password -resetPasswordToken -verificationToken')
 		.sort({ createdAt: -1 })
 		.limit(10);
-
-	// Transform recent users to include id field for frontend consistency
-	const recentUsers = recentUsersRaw.map(user => ({
-		id: user._id,
-		name: user.name,
-		email: user.email,
-		role: user.role,
-		department: user.department,
-		facultyId: user.facultyId,
-		isVerified: user.isVerified,
-		lastLogin: user.lastLogin,
-		createdAt: user.createdAt,
-		avatar: user.avatar
-	}));
 
 	const verifiedUsers = await User.countDocuments({ isVerified: true });
 	const unverifiedUsers = await User.countDocuments({ isVerified: false });
@@ -237,7 +223,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 	const totalUsers = await User.countDocuments(searchQuery);
 
-	// Transform users to include id field for frontend consistency
+	// Transform users to use 'id' instead of '_id' for frontend consistency
 	const transformedUsers = users.map(user => ({
 		id: user._id,
 		name: user.name,
@@ -245,10 +231,11 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 		role: user.role,
 		department: user.department,
 		facultyId: user.facultyId,
+		avatar: user.avatar,
 		isVerified: user.isVerified,
 		lastLogin: user.lastLogin,
 		createdAt: user.createdAt,
-		avatar: user.avatar
+		updatedAt: user.updatedAt
 	}));
 
 	res.status(200).json({
@@ -272,9 +259,15 @@ export const getAllUsers = asyncHandler(async (req, res) => {
  */
 export const updateUser = asyncHandler(async (req, res) => {
 	const { userId } = req.params;
-	const { name, email, role, department, facultyId } = req.body;
+	const { name, email, role } = req.body;
 
-	console.log(`🔄 Updating user ${userId} with data:`, { name, email, role, department, facultyId });
+	// Validate input
+	if (!name && !email && !role) {
+		return res.status(400).json({
+			success: false,
+			message: "At least one field (name, email, or role) must be provided"
+		});
+	}
 
 	// Validate role
 	const validRoles = ['admin', 'faculty', 'security'];
@@ -293,59 +286,60 @@ export const updateUser = asyncHandler(async (req, res) => {
 		});
 	}
 
-	console.log(`👤 Found user: ${user.email}, current role: ${user.role}, new role: ${role}`);
-
-	// Update user fields
-	if (name) user.name = name;
-	if (email) user.email = email;
-	if (role) user.role = role;
-
-	// Handle faculty-specific fields
-	if (role === 'faculty') {
-		// If changing to faculty, require department and facultyId
-		if (department) user.department = department;
-		if (facultyId) user.facultyId = facultyId;
-
-		console.log(`📚 Setting faculty fields - Department: ${department}, Faculty ID: ${facultyId}`);
-	} else if (role && role !== 'faculty') {
-		// If changing from faculty to non-faculty, clear these fields
-		user.department = undefined;
-		user.facultyId = undefined;
-
-		console.log(`🔄 Clearing faculty fields for non-faculty role: ${role}`);
-	}
-
-	try {
-		// Use validateBeforeSave: false to handle validation issues
-		await user.save({ validateBeforeSave: false });
-		console.log(`✅ Successfully updated user ${user.email}`);
-
-		res.status(200).json({
-			success: true,
-			message: "User updated successfully",
-			data: {
-				user: {
-					id: user._id,
-					name: user.name,
-					email: user.email,
-					role: user.role,
-					department: user.department,
-					facultyId: user.facultyId,
-					isVerified: user.isVerified,
-					lastLogin: user.lastLogin,
-					createdAt: user.createdAt
-				}
-			}
-		});
-	} catch (error) {
-		console.error(`❌ Error updating user ${user.email}:`, error);
-
-		res.status(500).json({
+	// Prevent admin from changing their own role
+	if (userId === req.userId && role && role !== user.role) {
+		return res.status(400).json({
 			success: false,
-			message: "Failed to update user",
-			error: error.message
+			message: "Cannot change your own role"
 		});
 	}
+
+	// Prepare update object
+	const updateData = {};
+	const unsetData = {};
+
+	if (name) updateData.name = name;
+	if (email) updateData.email = email;
+	if (role) {
+		updateData.role = role;
+
+		// Clear faculty-specific fields when changing from faculty to other roles
+		if (role !== 'faculty') {
+			unsetData.department = "";
+			unsetData.facultyId = "";
+		}
+	}
+
+	// Build the update query
+	const updateQuery = { $set: updateData };
+	if (Object.keys(unsetData).length > 0) {
+		updateQuery.$unset = unsetData;
+	}
+
+	// Update the user directly in the database
+	const updatedUser = await User.findByIdAndUpdate(
+		userId,
+		updateQuery,
+		{ new: true, runValidators: false }
+	);
+
+	res.status(200).json({
+		success: true,
+		message: "User updated successfully",
+		data: {
+			user: {
+				id: updatedUser._id,
+				name: updatedUser.name,
+				email: updatedUser.email,
+				role: updatedUser.role,
+				department: updatedUser.department,
+				facultyId: updatedUser.facultyId,
+				isVerified: updatedUser.isVerified,
+				lastLogin: updatedUser.lastLogin,
+				createdAt: updatedUser.createdAt
+			}
+		}
+	});
 });
 
 /**
@@ -378,7 +372,39 @@ export const deleteUser = asyncHandler(async (req, res) => {
 	});
 });
 
+/**
+ * Toggle user verification status
+ */
+export const toggleUserVerification = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
 
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).json({
+			success: false,
+			message: "User not found"
+		});
+	}
+
+	user.isVerified = !user.isVerified;
+	await user.save();
+
+	res.status(200).json({
+		success: true,
+		message: `User ${user.isVerified ? 'verified' : 'unverified'} successfully`,
+		data: {
+			user: {
+				id: user._id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				isVerified: user.isVerified,
+				lastLogin: user.lastLogin,
+				createdAt: user.createdAt
+			}
+		}
+	});
+});
 
 /**
  * Get security settings

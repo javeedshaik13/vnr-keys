@@ -7,6 +7,7 @@ import {
 	getAllUsers,
 	updateUser,
 	deleteUser,
+	toggleUserVerification,
 	getSecuritySettings,
 	updateSecuritySettings,
 	getSystemReports
@@ -28,6 +29,7 @@ router.get("/security", rolePermissions.adminOrSecurity, getSecurityDashboard);
 router.get("/users", rolePermissions.adminOnly, getAllUsers);
 router.put("/users/:userId", rolePermissions.adminOnly, updateUser);
 router.delete("/users/:userId", rolePermissions.adminOnly, deleteUser);
+router.patch("/users/:userId/verify", rolePermissions.adminOnly, toggleUserVerification);
 
 // Admin-only security settings endpoints
 router.get("/security-settings", rolePermissions.adminOnly, getSecuritySettings);
