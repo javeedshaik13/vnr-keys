@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Shield, 
-  CheckCircle, 
+import {
+  Users,
+  Search,
+  Edit,
+  Trash2,
+  CheckCircle,
   XCircle,
   Filter
 } from 'lucide-react';
@@ -43,7 +42,8 @@ const ManageUsersPage = () => {
           limit: 10,
           search: searchTerm,
           role: roleFilter
-        }
+        },
+        withCredentials: true
       });
       
       setUsers(response.data.data.users);
@@ -64,7 +64,9 @@ const ManageUsersPage = () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await axios.delete(`${API_URL}/users/${userId}`);
+      await axios.delete(`${API_URL}/users/${userId}`, {
+        withCredentials: true
+      });
       handleSuccess('User deleted successfully');
       fetchUsers();
     } catch (error) {
@@ -72,19 +74,13 @@ const ManageUsersPage = () => {
     }
   };
 
-  const handleToggleVerification = async (userId) => {
-    try {
-      await axios.patch(`${API_URL}/users/${userId}/verify`);
-      handleSuccess('User verification status updated');
-      fetchUsers();
-    } catch (error) {
-      handleError(error, 'Failed to update verification status');
-    }
-  };
+
 
   const handleUpdateUser = async (userData) => {
     try {
-      await axios.put(`${API_URL}/users/${editingUser.id}`, userData);
+      await axios.put(`${API_URL}/users/${editingUser.id}`, userData, {
+        withCredentials: true
+      });
       handleSuccess('User updated successfully');
       setShowEditModal(false);
       setEditingUser(null);
@@ -203,12 +199,6 @@ const ManageUsersPage = () => {
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleToggleVerification(user.id)}
-                          className="text-yellow-400 hover:text-yellow-300 p-1 rounded"
-                        >
-                          <Shield className="h-4 w-4" />
-                        </button>
-                        <button
                           onClick={() => handleDeleteUser(user.id)}
                           className="text-red-400 hover:text-red-300 p-1 rounded"
                         >
@@ -268,12 +258,28 @@ const EditUserModal = ({ user, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    role: user?.role || 'faculty'
+    role: user?.role || 'faculty',
+    department: user?.department || '',
+    facultyId: user?.facultyId || ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+
+    // Prepare data based on role
+    const submitData = {
+      name: formData.name,
+      email: formData.email,
+      role: formData.role
+    };
+
+    // Only include department and facultyId for faculty users
+    if (formData.role === 'faculty') {
+      submitData.department = formData.department;
+      submitData.facultyId = formData.facultyId;
+    }
+
+    onSave(submitData);
   };
 
   return (
@@ -317,6 +323,42 @@ const EditUserModal = ({ user, onClose, onSave }) => {
               <option value="admin">Admin</option>
             </select>
           </div>
+
+          {/* Faculty-specific fields */}
+          {formData.role === 'faculty' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Department</label>
+                <select
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select Department</option>
+                  <option value="CSE">Computer Science Engineering (CSE)</option>
+                  <option value="EEE">Electrical & Electronics Engineering (EEE)</option>
+                  <option value="CSE-AIML">CSE - Artificial Intelligence & Machine Learning (CSE-AIML)</option>
+                  <option value="IoT">Internet of Things (IoT)</option>
+                  <option value="ECE">Electronics & Communication Engineering (ECE)</option>
+                  <option value="MECH">Mechanical Engineering (MECH)</option>
+                  <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                  <option value="IT">Information Technology (IT)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Faculty ID</label>
+                <input
+                  type="text"
+                  value={formData.facultyId}
+                  onChange={(e) => setFormData({ ...formData, facultyId: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Enter Faculty ID"
+                  required
+                />
+              </div>
+            </>
+          )}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"

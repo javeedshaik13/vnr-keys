@@ -14,11 +14,11 @@ import { useAuthStore } from "../../store/authStore";
 
 const CompleteRegistrationPage = () => {
   const [step, setStep] = useState(1);
-  const [role, setRole] = useState("");
   const [department, setDepartment] = useState("");
   const [facultyId, setFacultyId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [forceShowForm, setForceShowForm] = useState(false);
+  const [userRole, setUserRole] = useState(""); // Determined by email
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {
@@ -65,6 +65,17 @@ const CompleteRegistrationPage = () => {
 
   useEffect(() => {
     if (user) {
+      // Determine user role based on email
+      let determinedRole;
+      if (user.email === 'security@vnrvjiet.in') {
+        determinedRole = 'security';
+      } else if (user.email === '23071a7228@vnrvjiet.in') {
+        determinedRole = 'admin';
+      } else {
+        determinedRole = 'faculty';
+      }
+      setUserRole(determinedRole);
+
       const isRegistrationComplete =
         user.role !== "pending" &&
         (user.role !== "faculty" || (user.department && user.facultyId));
@@ -73,14 +84,24 @@ const CompleteRegistrationPage = () => {
         toast.success("Welcome back! Redirecting to your dashboard...");
         const route = getRoleBasedRoute();
         navigate(route, { replace: true });
+      } else {
+        // For security and admin users, skip to final step
+        if (determinedRole === 'security' || determinedRole === 'admin') {
+          setStep(2); // Skip department selection
+        }
       }
     }
   }, [user, navigate, getRoleBasedRoute]);
 
   const departments = [
     { value: "CSE", label: "Computer Science Engineering" },
+    { value: "EEE", label: "Electrical & Electronics Engineering" },
     { value: "CSE-AIML", label: "CSE - Artificial Intelligence & Machine Learning" },
-    { value: "CSE-DS", label: "CSE - Data Science" },
+    { value: "IoT", label: "Internet of Things" },
+    { value: "ECE", label: "Electronics & Communication Engineering" },
+    { value: "MECH", label: "Mechanical Engineering" },
+    { value: "CIVIL", label: "Civil Engineering" },
+    { value: "IT", label: "Information Technology" },
   ];
 
   return (
@@ -92,61 +113,55 @@ const CompleteRegistrationPage = () => {
             <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-transparent bg-clip-text">
               Complete Registration
             </h2>
-            <p className="text-gray-300">Step {step} of 3</p>
+            <p className="text-gray-300">
+              Step {step} of {userRole === 'faculty' ? 2 : 1}
+            </p>
           </div>
 
           {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex justify-between mb-2">
-              {[1, 2, 3].map((stepNum) => (
+          {userRole === 'faculty' && (
+            <div className="mb-8">
+              <div className="flex justify-between mb-2">
+                {[1, 2].map((stepNum) => (
+                  <div
+                    key={stepNum}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      stepNum <= step
+                        ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    {stepNum < step ? <CheckCircle size={16} /> : stepNum}
+                  </div>
+                ))}
+              </div>
+              <div className="w-full bg-gray-600 rounded-full h-2">
                 <div
-                  key={stepNum}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    stepNum <= step
-                      ? "bg-gradient-to-r from-blue-400 to-indigo-500 text-white"
-                      : "bg-gray-600 text-gray-400"
-                  }`}
-                >
-                  {stepNum < step ? <CheckCircle size={16} /> : stepNum}
-                </div>
-              ))}
+                  className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(step / 2) * 100}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="w-full bg-gray-600 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / 3) * 100}%` }}
-              ></div>
-            </div>
-          </div>
+          )}
 
           {/* Step Content */}
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
+          {step === 1 && renderDepartmentSelection()}
+          {step === 2 && renderFinalStep()}
         </div>
   </div>
     </div>
   );
 
-  function handleRoleSelect(selectedRole) {
-    setRole(selectedRole);
-    if (selectedRole === "security" || selectedRole === "adim") {
-      setStep(3);
-    } else {
-      setStep(2);
-    }
-  }
-
   function handleDepartmentSelect() {
-    if (!department) {
+    if (userRole === 'faculty' && !department) {
       toast.error("Please select a department");
       return;
     }
-    setStep(3);
+    setStep(2);
   }
 
   async function handleCompleteRegistration() {
-    if (role === "faculty" && (!department || !facultyId.trim())) {
+    if (userRole === "faculty" && (!department || !facultyId.trim())) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -163,9 +178,8 @@ const CompleteRegistrationPage = () => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          role,
-          department: role === "faculty" ? department : undefined,
-          facultyId: role === "faculty" ? facultyId.trim() : undefined,
+          department: userRole === "faculty" ? department : undefined,
+          facultyId: userRole === "faculty" ? facultyId.trim() : undefined,
         }),
       });
 
@@ -205,121 +219,96 @@ const CompleteRegistrationPage = () => {
   }
   /* eslint-enable no-unused-vars */
 
-  function renderStep1() {
+  function renderDepartmentSelection() {
+    // For security and admin users, show a welcome message instead
+    if (userRole === 'security' || userRole === 'admin') {
+      return (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">
+          <h3 className="text-xl font-semibold text-white mb-2">
+            Welcome, {userRole === 'admin' ? 'Administrator' : 'Security Personnel'}!
+          </h3>
+          <p className="text-gray-300 mb-6">
+            Your role has been automatically assigned based on your email address.
+          </p>
+
+          <div className="bg-gray-700 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-center mb-4">
+              {userRole === 'admin' ? (
+                <Shield className="w-12 h-12 text-pink-400" />
+              ) : (
+                <Shield className="w-12 h-12 text-green-400" />
+              )}
+            </div>
+            <h4 className="text-lg font-semibold text-white mb-2">
+              {userRole === 'admin' ? 'Administrator' : 'Security Personnel'}
+            </h4>
+            <p className="text-gray-300">
+              {userRole === 'admin'
+                ? 'You have full administrative access to the system.'
+                : 'You have access to security features and key management.'
+              }
+            </p>
+          </div>
+
+          <button
+            onClick={handleDepartmentSelect}
+            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg font-medium"
+          >
+            Continue
+          </button>
+        </motion.div>
+      );
+    }
+
+    // For faculty users, show department selection
     return (
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">
-        <h3 className="text-xl font-semibold text-white mb-2">Select Your Role</h3>
-        <p className="text-gray-300 mb-6">Are you a Faculty member or Security personnel?</p>
+        <h3 className="text-xl font-semibold text-white mb-2">Select Your Department</h3>
+        <p className="text-gray-300 mb-6">Please choose your department from the list below.</p>
 
-        <div className="space-y-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleRoleSelect("faculty")}
-            className="w-full p-6 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-semibold flex items-center justify-center gap-4 border-2 border-transparent hover:border-blue-500"
-          >
-            <GraduationCap className="w-8 h-8 text-blue-400" />
-            <div className="text-left">
-              <div className="text-lg">Faculty</div>
-              <div className="text-sm text-gray-300">Teaching staff member</div>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleRoleSelect("security")}
-            className="w-full p-6 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-semibold flex items-center justify-center gap-4 border-2 border-transparent hover:border-indigo-500"
-          >
-            <Shield className="w-8 h-8 text-indigo-400" />
-            <div className="text-left">
-              <div className="text-lg">Security</div>
-              <div className="text-sm text-gray-300">Security personnel</div>
-            </div>
-          </motion.button>
-
-          {/* AD,IM Role Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleRoleSelect("adim")}
-            className="w-full p-6 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-semibold flex items-center justify-center gap-4 border-2 border-transparent hover:border-pink-500"
-          >
-            <Shield className="w-8 h-8 text-pink-400" />
-            <div className="text-left">
-              <div className="text-lg">AD,IM</div>
-              <div className="text-sm text-gray-300">AD,IM personnel</div>
-            </div>
-          </motion.button>
-        </div>
-      </motion.div>
-    );
-  }
-
-  function renderStep2() {
-    return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">
-        <h3 className="text-xl font-semibold text-white mb-2">Select Department</h3>
-        <p className="text-gray-300 mb-6">Choose your department</p>
-
-        <div className="space-y-3 mb-8 max-h-60 overflow-y-auto">
+        <div className="space-y-3 mb-6">
           {departments.map((dept) => (
             <motion.button
               key={dept.value}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setDepartment(dept.value)}
-              className={`w-full p-4 rounded-lg font-medium text-left ${
+              className={`w-full p-4 rounded-xl text-white font-medium flex items-center justify-between border-2 transition-all ${
                 department === dept.value
-                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-blue-600 border-blue-500"
+                  : "bg-gray-700 hover:bg-gray-600 border-transparent hover:border-blue-500"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Building className="w-5 h-5" />
-                {dept.label}
-              </div>
+              <span>{dept.label}</span>
+              {department === dept.value && <CheckCircle className="w-5 h-5" />}
             </motion.button>
           ))}
         </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => setStep(1)}
-            className="flex-1 py-3 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium"
-          >
-            Back
-          </button>
-          <button
-            onClick={handleDepartmentSelect}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg font-medium"
-          >
-            Continue
-          </button>
-        </div>
+        <button
+          onClick={handleDepartmentSelect}
+          disabled={!department}
+          className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-blue-600/50 disabled:to-indigo-600/50 text-white rounded-lg font-medium"
+        >
+          Continue
+        </button>
       </motion.div>
     );
   }
 
-  function renderStep3() {
+  function renderFinalStep() {
     return (
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="text-center">
         <h3 className="text-xl font-semibold text-white mb-2">
-          {role === "faculty"
-            ? "Faculty Details"
-            : role === "adim"
-            ? "ADMIN Details"
-            : "Complete Registration"}
+          {userRole === "faculty" ? "Faculty Details" : "Complete Registration"}
         </h3>
         <p className="text-gray-300 mb-6">
-          {role === "faculty"
+          {userRole === "faculty"
             ? "Please enter your faculty ID"
-            : role === "adim"
-            ? "You're all set as AD,IM! Click continue to complete registration."
             : "You're all set! Click continue to complete registration."}
         </p>
 
-        {role === "faculty" && (
+        {userRole === "faculty" && (
           <div className="mb-6">
             <div className="relative">
               <IdCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -342,9 +331,11 @@ const CompleteRegistrationPage = () => {
           <div className="space-y-2 text-gray-300">
             <div className="flex justify-between">
               <span>Role:</span>
-              <span className="text-white capitalize">{role === "adim" ? "AD,IM" : role}</span>
+              <span className="text-white capitalize">
+                {userRole === "admin" ? "Administrator" : userRole}
+              </span>
             </div>
-            {role === "faculty" && (
+            {userRole === "faculty" && (
               <>
                 <div className="flex justify-between">
                   <span>Department:</span>
@@ -363,7 +354,7 @@ const CompleteRegistrationPage = () => {
 
         <div className="flex gap-3">
           <button
-            onClick={() => setStep(role === "faculty" ? 2 : 1)}
+            onClick={() => setStep(1)}
             disabled={isLoading}
             className="flex-1 py-3 px-4 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600/50 text-white rounded-lg font-medium"
           >

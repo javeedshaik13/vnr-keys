@@ -14,7 +14,7 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { useKeyStore } from "../../store/keyStore";
 import { useSidebar } from "../../components/layout/DashboardLayout";
-import AuditLogViewer from "../../components/audit/AuditLogViewer";
+
 
 const CollectiveKeyReturnPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,7 +24,7 @@ const CollectiveKeyReturnPage = () => {
   const [isReturning, setIsReturning] = useState(false);
   const [takenKeys, setTakenKeys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("keys");
+
 
   const { user } = useAuthStore();
   const { sidebarOpen } = useSidebar();
@@ -147,30 +147,6 @@ const CollectiveKeyReturnPage = () => {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            {/* Tab Navigation */}
-            <div className="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
-              <button
-                onClick={() => setActiveTab("keys")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "keys"
-                    ? "bg-orange-600 text-white"
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                }`}
-              >
-                Keys
-              </button>
-              <button
-                onClick={() => setActiveTab("audit")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "audit"
-                    ? "bg-orange-600 text-white"
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                }`}
-              >
-                Audit Trail
-              </button>
-            </div>
-
             <button
               onClick={fetchAllTakenKeys}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -260,11 +236,8 @@ const CollectiveKeyReturnPage = () => {
         </div>
       </motion.div>
 
-      {/* Tab Content */}
-      {activeTab === "keys" ? (
-        <>
-          {/* Keys List */}
-          <motion.div
+      {/* Keys List */}
+      <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -349,17 +322,6 @@ const CollectiveKeyReturnPage = () => {
           </div>
         )}
       </motion.div>
-        </>
-      ) : (
-        /* Audit Trail Tab */
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <AuditLogViewer showCollectiveOnly={true} />
-        </motion.div>
-      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
