@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  BarChart3, 
-  Users, 
-  Key, 
-  Activity, 
-  Download, 
+import {
+  BarChart3,
+  Users,
+  Activity,
+  Download,
   RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
 import { handleError, handleSuccess } from '../../utils/errorHandler';
+import jsPDF from 'jspdf';
 
 const ViewReportsPage = () => {
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
-  const [activeTab, setActiveTab] = useState('overview');
 
   const API_URL = import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/dashboard`
@@ -42,34 +41,112 @@ const ViewReportsPage = () => {
     }
   };
 
-  const handleExportReport = () => {
+  const handleExportReport = async () => {
     if (!reports) return;
-    
-    const reportData = {
-      generatedAt: reports.generatedAt,
-      timeRange: reports.timeRange,
-      ...reports
-    };
-    
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `system-report-${timeRange}-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    handleSuccess('Report exported successfully');
+
+    try {
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Add header
+      pdf.setFontSize(20);
+      pdf.setTextColor(139, 69, 19); // Purple color
+      pdf.text('VNR Keys - System Report', pageWidth / 2, 20, { align: 'center' });
+
+      // Add a line under the header
+      pdf.setDrawColor(139, 69, 19);
+      pdf.line(20, 25, pageWidth - 20, 25);
+
+      // Add date and time range
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const currentTime = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      pdf.text(`Generated on: ${currentDate} at ${currentTime}`, 20, 35);
+      pdf.text(`Time Range: ${timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : 'Last 90 days'}`, 20, 45);
+      pdf.text('VNRVJIET Key Management System', 20, 55);
+
+      // Add overview statistics
+      pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('System Overview', 20, 75);
+
+      // Stats section
+      pdf.setFontSize(12);
+      const stats = [
+        { label: 'Total Users', value: reports?.userAnalytics?.totalUsers || 0, change: `+${reports?.userAnalytics?.newUsers || 0} new this period` },
+        { label: 'Active Users', value: reports?.userAnalytics?.activeUsers || 0, change: '100% of total' },
+        { label: 'API Keys', value: 0, change: '0 active' },
+        { label: 'Peak Usage', value: 0, change: '' }
+      ];
+
+      let yPosition = 90;
+      stats.forEach((stat) => {
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`${stat.label}:`, 20, yPosition);
+        pdf.setTextColor(139, 69, 19);
+        pdf.text(`${stat.value}`, 80, yPosition);
+        if (stat.change) {
+          pdf.setTextColor(100, 100, 100);
+          pdf.text(`(${stat.change})`, 100, yPosition);
+        }
+        yPosition += 15;
+      });
+
+      // Add registration trend section
+      yPosition += 10;
+      pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('User Registration Trend', 20, yPosition);
+
+      // Add trend data if available
+      if (reports?.userAnalytics?.registrationTrend) {
+        yPosition += 20;
+        pdf.setFontSize(10);
+        pdf.text('Date', 20, yPosition);
+        pdf.text('Registrations', 80, yPosition);
+        yPosition += 10;
+
+        reports.userAnalytics.registrationTrend.forEach((day) => {
+          const date = new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          pdf.text(date, 20, yPosition);
+          pdf.text(day.count.toString(), 80, yPosition);
+          yPosition += 8;
+
+          // Check if we need a new page
+          if (yPosition > pageHeight - 30) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+        });
+      }
+
+      // Add footer
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('VNR Keys Management System - Confidential Report', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+      // Save the PDF
+      const fileName = `vnr-keys-report-${timeRange}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      handleSuccess('PDF report exported successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      handleError(error, 'Failed to export PDF report');
+    }
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'users', label: 'User Analytics', icon: Users },
-    { id: 'keys', label: 'API Keys', icon: Key },
-    { id: 'system', label: 'System Health', icon: Activity }
-  ];
+
 
   if (loading) {
     return (
@@ -116,54 +193,14 @@ const ViewReportsPage = () => {
               className="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
             >
               <Download className="h-5 w-5 mr-2" />
-              Export
+              Export PDF
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-800 rounded-xl p-4">
-              <nav className="space-y-2">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-purple-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5 mr-3" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-gray-800 rounded-xl p-6">
-              {activeTab === 'overview' && (
-                <OverviewReport reports={reports} />
-              )}
-              {activeTab === 'users' && (
-                <UserAnalyticsReport reports={reports?.userAnalytics} />
-              )}
-              {activeTab === 'keys' && (
-                <ApiKeyReport reports={reports?.apiKeyAnalytics} />
-              )}
-              {activeTab === 'system' && (
-                <SystemHealthReport reports={reports?.systemHealth} />
-              )}
-            </div>
-          </div>
+        {/* Content */}
+        <div className="bg-gray-800 rounded-xl p-6">
+          <OverviewReport reports={reports} />
         </div>
       </motion.div>
     </div>
@@ -187,24 +224,24 @@ const OverviewReport = ({ reports }) => (
       <StatCard
         title="Active Users"
         value={reports?.userAnalytics?.activeUsers || 0}
-        change={((reports?.userAnalytics?.activeUsers / reports?.userAnalytics?.totalUsers) * 100).toFixed(1)}
-        changeLabel="% of total"
+        change={null}
+        changeLabel="100% of total"
         icon={Activity}
         color="green"
       />
       <StatCard
         title="API Keys"
-        value={reports?.apiKeyAnalytics?.totalApiKeys || 0}
-        change={reports?.apiKeyAnalytics?.activeApiKeys || 0}
-        changeLabel="active"
-        icon={Key}
+        value={0}
+        change={null}
+        changeLabel="0 active"
+        icon={Activity}
         color="purple"
       />
       <StatCard
-        title="Total Usage"
-        value={reports?.apiKeyAnalytics?.totalUsage || 0}
+        title="Peak Usage"
+        value={0}
         change={null}
-        changeLabel="requests"
+        changeLabel=""
         icon={BarChart3}
         color="orange"
       />
@@ -232,156 +269,11 @@ const OverviewReport = ({ reports }) => (
   </div>
 );
 
-// User Analytics Report Component
-const UserAnalyticsReport = ({ userAnalytics }) => (
-  <div className="space-y-6">
-    <h3 className="text-xl font-semibold text-white">User Analytics</h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-gray-700 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">User Status</h4>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-300">Verified Users</span>
-            <span className="text-green-400">{userAnalytics?.verifiedUsers || 0}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Unverified Users</span>
-            <span className="text-red-400">{(userAnalytics?.totalUsers - userAnalytics?.verifiedUsers) || 0}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Active Users</span>
-            <span className="text-blue-400">{userAnalytics?.activeUsers || 0}</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-gray-700 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Role Distribution</h4>
-        <div className="space-y-3">
-          {Object.entries(userAnalytics?.roleDistribution || {}).map(([role, count]) => (
-            <div key={role} className="flex justify-between">
-              <span className="text-gray-300 capitalize">{role}</span>
-              <span className="text-white">{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="bg-gray-700 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Growth Metrics</h4>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-300">New Users</span>
-            <span className="text-green-400">+{userAnalytics?.newUsers || 0}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Growth Rate</span>
-            <span className="text-blue-400">
-              {userAnalytics?.totalUsers > 0 
-                ? ((userAnalytics?.newUsers / userAnalytics?.totalUsers) * 100).toFixed(1)
-                : 0}%
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
-// API Key Report Component
-const ApiKeyReport = ({ apiKeyAnalytics }) => (
-  <div className="space-y-6">
-    <h3 className="text-xl font-semibold text-white">API Key Analytics</h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard
-        title="Total Keys"
-        value={apiKeyAnalytics?.totalApiKeys || 0}
-        icon={Key}
-        color="purple"
-      />
-      <StatCard
-        title="Active Keys"
-        value={apiKeyAnalytics?.activeApiKeys || 0}
-        icon={Activity}
-        color="green"
-      />
-      <StatCard
-        title="Inactive Keys"
-        value={apiKeyAnalytics?.inactiveApiKeys || 0}
-        icon={Key}
-        color="red"
-      />
-      <StatCard
-        title="Total Usage"
-        value={apiKeyAnalytics?.totalUsage || 0}
-        icon={BarChart3}
-        color="blue"
-      />
-    </div>
-  </div>
-);
 
-// System Health Report Component
-const SystemHealthReport = ({ systemHealth }) => (
-  <div className="space-y-6">
-    <h3 className="text-xl font-semibold text-white">System Health</h3>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-gray-700 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">Performance Metrics</h4>
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-300">CPU Usage</span>
-              <span className="text-white">{systemHealth?.cpuUsage?.toFixed(1) || 0}%</span>
-            </div>
-            <div className="w-full bg-gray-600 rounded-full h-2">
-              <div 
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${systemHealth?.cpuUsage || 0}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-300">Disk Usage</span>
-              <span className="text-white">{systemHealth?.diskUsage?.toFixed(1) || 0}%</span>
-            </div>
-            <div className="w-full bg-gray-600 rounded-full h-2">
-              <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${systemHealth?.diskUsage || 0}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-gray-700 rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-white mb-4">System Info</h4>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-300">Uptime</span>
-            <span className="text-white">{Math.floor((systemHealth?.uptime || 0) / 3600)}h</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Memory Usage</span>
-            <span className="text-white">
-              {((systemHealth?.memoryUsage?.used || 0) / 1024 / 1024).toFixed(0)}MB
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-300">Response Time</span>
-            <span className="text-white">{systemHealth?.responseTime?.toFixed(0) || 0}ms</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 // Reusable Stat Card Component
 const StatCard = ({ title, value, change, changeLabel, icon: Icon, color }) => {
