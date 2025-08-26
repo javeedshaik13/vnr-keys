@@ -17,13 +17,8 @@ export const createNotification = async (notificationData) => {
   try {
     const notification = new Notification(notificationData);
     await notification.save();
-    
-    // Mark in-app delivery as sent
-    notification.delivery.inApp.sent = true;
-    notification.delivery.inApp.sentAt = new Date();
-    await notification.save();
-    
-    console.log(`📢 Notification created: ${notification.type} for user ${notification.recipient.name}`);
+
+    console.log(`📢 Notification created: ${notification.title} for user ${notification.recipient.name}`);
     return notification;
   } catch (error) {
     console.error("❌ Error creating notification:", error);
@@ -44,27 +39,19 @@ export const sendRealTimeNotification = async (notification) => {
 
     const notificationData = {
       id: notification._id,
-      type: notification.type,
       title: notification.title,
       message: notification.message,
-      priority: notification.priority,
-      metadata: notification.metadata,
       createdAt: notification.createdAt,
       isRead: notification.isRead
     };
 
     // Send to specific user
     global.io.to(`user-${notification.recipient.userId}`).emit('notification', notificationData);
-    
+
     // Send to role-based rooms (for security notifications)
-    if (notification.recipient.role === 'security' || notification.type === 'security_alert') {
+    if (notification.recipient.role === 'security') {
       global.io.to('security-room').emit('notification', notificationData);
     }
-    
-    // Mark real-time delivery as sent
-    notification.delivery.realTime.sent = true;
-    notification.delivery.realTime.sentAt = new Date();
-    await notification.save();
     
     console.log(`🔄 Real-time notification sent to user ${notification.recipient.name}`);
   } catch (error) {
@@ -82,23 +69,12 @@ export const sendEmailNotification = async (notification) => {
       notification.recipient.email,
       notification.recipient.name,
       notification.title,
-      notification.message,
-      notification.type,
-      notification.metadata
+      notification.message
     );
-    
-    // Mark email delivery as sent
-    notification.delivery.email.sent = true;
-    notification.delivery.email.sentAt = new Date();
-    await notification.save();
-    
+
     console.log(`📧 Email notification sent to ${notification.recipient.email}`);
   } catch (error) {
     console.error("❌ Error sending email notification:", error);
-    
-    // Mark email delivery error
-    notification.delivery.email.error = error.message;
-    await notification.save();
   }
 };
 
@@ -118,11 +94,8 @@ export const createAndSendNotification = async (notificationData, options = {}) 
       await sendRealTimeNotification(notification);
     }
     
-    // Send email notification for high priority or specific types
-    if (options.email === true || 
-        notification.priority === 'high' || 
-        notification.priority === 'urgent' ||
-        notification.type === 'key_reminder') {
+    // Send email notification only if explicitly enabled
+    if (options.email === true) {
       await sendEmailNotification(notification);
     }
     
@@ -150,22 +123,8 @@ export const createKeyReminderNotification = async (user, unreturnedKeys) => {
         email: user.email,
         role: user.role,
       },
-      type: 'key_reminder',
       title: `Key Return Reminder - ${keyCount} Key${keyCount > 1 ? 's' : ''} Pending`,
-      message: `You have ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please return ${keyCount > 1 ? 'them' : 'it'} as soon as possible.`,
-      priority: 'high',
-      metadata: {
-        keyCount,
-        keys: unreturnedKeys.map(key => ({
-          keyId: key._id,
-          keyNumber: key.keyNumber,
-          keyName: key.keyName,
-          location: key.location,
-          takenAt: key.takenAt,
-          hoursOverdue: Math.floor((new Date() - new Date(key.takenAt)) / (1000 * 60 * 60))
-        })),
-        securityLevel: 'warning'
-      }
+      message: `You have ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please return ${keyCount > 1 ? 'them' : 'it'} as soon as possible.`
     };
     
     return await createAndSendNotification(notificationData, { email: true });
@@ -176,7 +135,7 @@ export const createKeyReminderNotification = async (user, unreturnedKeys) => {
 };
 
 /**
- * Create security alert notification for watchman
+ * Create security alert notification for watchman (in-app only, no email)
  * @param {Object} facultyUser - The faculty user with unreturned keys
  * @param {Array} unreturnedKeys - Array of unreturned keys
  */
@@ -184,17 +143,17 @@ export const createSecurityAlertNotification = async (facultyUser, unreturnedKey
   try {
     // Get all security users
     const securityUsers = await User.find({ role: 'security', isVerified: true });
-    
+
     if (securityUsers.length === 0) {
       console.warn('No security users found to send alert');
       return [];
     }
-    
+
     const keyCount = unreturnedKeys.length;
     const keyList = unreturnedKeys.map(key => `${key.keyNumber} (${key.keyName})`).join(', ');
-    
+
     const notifications = [];
-    
+
     for (const securityUser of securityUsers) {
       const notificationData = {
         recipient: {
@@ -203,35 +162,47 @@ export const createSecurityAlertNotification = async (facultyUser, unreturnedKey
           email: securityUser.email,
           role: securityUser.role,
         },
-        type: 'security_alert',
-        title: `Security Alert - Unreturned Keys`,
-        message: `Faculty ${facultyUser.name} (${facultyUser.email}) has ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please follow up for key return.`,
-        priority: 'high',
-        metadata: {
-          facultyId: facultyUser._id,
-          facultyName: facultyUser.name,
-          facultyEmail: facultyUser.email,
-          facultyDepartment: facultyUser.department,
-          keyCount,
-          keys: unreturnedKeys.map(key => ({
-            keyId: key._id,
-            keyNumber: key.keyNumber,
-            keyName: key.keyName,
-            location: key.location,
-            takenAt: key.takenAt,
-            hoursOverdue: Math.floor((new Date() - new Date(key.takenAt)) / (1000 * 60 * 60))
-          })),
-          securityLevel: 'warning'
-        }
+        title: `Unreturned Keys Alert`,
+        message: `Faculty ${facultyUser.name} has ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please follow up for key return.`
       };
-      
-      const notification = await createAndSendNotification(notificationData, { email: true });
+
+      // Create notification but do NOT send email to security (email: false)
+      const notification = await createAndSendNotification(notificationData, {
+        email: false,  // No email for security
+        realTime: true // Only in-app notification
+      });
       notifications.push(notification);
     }
-    
+
     return notifications;
   } catch (error) {
     console.error("❌ Error creating security alert notification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create notification when a key assigned to faculty is returned by someone else
+ * @param {Object} key - The returned key
+ * @param {Object} originalFaculty - The faculty who originally took the key
+ * @param {Object} returnedBy - The user who returned the key
+ */
+export const createKeyReturnedNotification = async (key, originalFaculty, returnedBy) => {
+  try {
+    const notificationData = {
+      recipient: {
+        userId: originalFaculty._id,
+        name: originalFaculty.name,
+        email: originalFaculty.email,
+        role: originalFaculty.role,
+      },
+      title: `Key Returned`,
+      message: `Key ${key.keyNumber} (${key.keyName}) that was assigned to you has been returned by ${returnedBy.name}.`
+    };
+
+    return await createAndSendNotification(notificationData, { email: false });
+  } catch (error) {
+    console.error("❌ Error creating key returned notification:", error);
     throw error;
   }
 };
