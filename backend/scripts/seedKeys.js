@@ -4,7 +4,7 @@ import { Key } from "../models/key.model.js";
 
 dotenv.config();
 
-const sampleKeys =[
+const sampleKeys = [
   {
     "keyNumber": "1",
     "keyName": ["A001"],
@@ -988,7 +988,7 @@ const sampleKeys =[
   },
   {
     "keyNumber": "1",
-    "极Name": ["A310"],
+    "keyName": ["A310"],
     "location": "Third Floor - Block A",
     "description": "Ems Lab",
     "category": "lab",
@@ -1009,7 +1009,7 @@ const sampleKeys =[
     "keyName": ["A313"],
     "location": "Third Floor - Block A",
     "description": "PE Lab",
-    "极ategory": "lab",
+    "category": "lab",
     "department": "EEE",
     "frequentlyUsed": false
   },
@@ -1047,7 +1047,7 @@ const sampleKeys =[
     "description": "faculty Room",
     "category": "classroom",
     "department": "EEE",
-    "极requentlyUsed": false
+    "frequentlyUsed": false
   },
   {
     "keyNumber": "1",
@@ -1099,7 +1099,7 @@ const sampleKeys =[
     "keyName": ["B309"],
     "location": "Third Floor - Block B",
     "description": "Chemistry Lab",
-    "category": "极ab",
+    "category": "lab",
     "department": "H&S",
     "frequentlyUsed": false
   },
@@ -1133,7 +1133,7 @@ const sampleKeys =[
   {
     "keyNumber": "1",
     "keyName": ["B318"],
-    "极ocation": "Third Floor - Block B",
+    "location": "Third Floor - Block B",
     "description": "Discussion Room",
     "category": "classroom",
     "department": "H&S",
@@ -1149,7 +1149,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B320"],
     "location": "3th Floor - Block B",
     "description": "faculty Room",
@@ -1158,7 +1158,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B321"],
     "location": "3th Floor - Block B",
     "description": "IC Applian Lab",
@@ -1167,7 +1167,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B322"],
     "location": "3th Floor - Block B",
     "description": "Libarary",
@@ -1176,7 +1176,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B401"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1185,7 +1185,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B402"],
     "location": "4th Floor - Block B",
     "description": "Staff Room",
@@ -1194,7 +1194,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B403"],
     "location": "4th Floor - Block B",
     "description": "AECS Lab",
@@ -1203,7 +1203,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B404"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1212,7 +1212,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B405"],
     "location": "4th Floor - Block B",
     "description": "AECS Lab",
@@ -1221,7 +1221,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B406"],
     "location": "4th Floor - Block B",
     "description": "Staff Room",
@@ -1230,7 +1230,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B407"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1239,7 +1239,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B408"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1248,7 +1248,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B409/410"],
     "location": "4th Floor - Block B",
     "description": "wash Room",
@@ -1257,7 +1257,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B411"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1266,7 +1266,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B412"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1275,7 +1275,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B413"],
     "location": "4th Floor - Block B",
     "description": "Reching LLP",
@@ -1284,7 +1284,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B414"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1293,7 +1293,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B415"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1302,7 +1302,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B416"],
     "location": "4th Floor - Block B",
     "description": "class Room",
@@ -1311,7 +1311,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B417"],
     "location": "4th Floor - Block B",
     "description": "Physics HOD",
@@ -1320,7 +1320,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B418"],
     "location": "4th Floor - Block B",
     "description": "Staff Room",
@@ -1329,7 +1329,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B419"],
     "location": "4th Floor - Block B",
     "description": "mathes HOD",
@@ -1338,7 +1338,7 @@ const sampleKeys =[
     "frequentlyUsed": false
   },
   {
-    "KeyNumber": "1",
+    "keyNumber": "1",
     "keyName": ["B420"],
     "location": "4th Floor - Block B",
     "description": "Staff Room",
@@ -1347,6 +1347,32 @@ const sampleKeys =[
     "frequentlyUsed": false
   }
 ]
+
+// Transform the data to fix keyName arrays and department values
+const transformedKeys = sampleKeys.map((key, index) => ({
+  ...key,
+  keyNumber: Array.isArray(key.keyName) ? `${key.keyName[0]}_${index}` : `${key.keyName}_${index}`,
+  keyName: Array.isArray(key.keyName) ? key.keyName.join('/') : key.keyName,
+  department: key.department === 'class' ? 'COMMON' : 
+              key.department === 'Students' ? 'COMMON' :
+              key.department === 'SSC' ? 'ADMIN' :
+              key.department === 'Transport' ? 'ADMIN' :
+              key.department === 'KS' ? 'ADMIN' :
+              key.department === 'ENG' ? 'COMMON' :
+              key.department === 'Staff' ? 'ADMIN' :
+              key.department === 'H&S' ? 'COMMON' :
+              key.department === 'maths' ? 'COMMON' :
+              key.department === 'physics' ? 'COMMON' :
+              key.department === 'ALFago' ? 'COMMON' :
+              key.department === '.' ? 'COMMON' :
+              key.department === '-' ? 'COMMON' :
+              key.department === 'No' ? 'COMMON' :
+              key.department === null ? 'COMMON' :
+              key.department === 'EIE' ? 'EEE' :
+              key.department === 'ME' ? 'MECH' :
+              key.department || 'COMMON',
+  category: key.category === 'facility' ? 'other' : key.category
+}));
 
 const seedKeys = async () => {
   try {
@@ -1360,8 +1386,8 @@ const seedKeys = async () => {
     console.log("Existing keys cleared");
 
     // Insert sample keys
-    console.log("Inserting sample keys...");
-    const insertedKeys = await Key.insertMany(sampleKeys);
+    console.log("Inserting transformed keys...");
+    const insertedKeys = await Key.insertMany(transformedKeys);
     console.log(`${insertedKeys.length} keys inserted successfully`);
 
     // Display inserted keys
