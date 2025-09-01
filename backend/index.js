@@ -25,6 +25,7 @@ import {
 import authRoutes from "./routes/auth.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import keyRoutes from "./routes/key.route.js";
+import apiKeyRoutes from "./routes/apiKey.route.js";
 import auditRoutes from "./routes/audit.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
@@ -129,6 +130,7 @@ app.get("/", (req, res) => {
 			auth: "/api/auth",
 			dashboard: "/api/dashboard",
 			keys: "/api/keys",
+			apiKeys: "/api/api-keys",
 			audit: "/api/audit"
 		}
 	});
@@ -137,6 +139,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/keys", keyRoutes);
+app.use("/api/api-keys", apiKeyRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/about",about);
@@ -146,6 +149,7 @@ if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local
 	app.use("/be/api/auth", authRoutes);
 	app.use("/be/api/dashboard", dashboardRoutes);
 	app.use("/be/api/keys", keyRoutes);
+	app.use("/be/api/api-keys", apiKeyRoutes);
 	app.use("/be/api/notifications", notificationRoutes);
 	app.use("/be/api/about", about);
 }

@@ -15,7 +15,7 @@ import ProfilePage from "./pages/dashboard/ProfilePage";
 import AboutPage from "./pages/dashboard/AboutPage";
 import NotificationsPage from "./pages/dashboard/NotificationsPage";
 import ManageUsersPage from "./pages/admin/ManageUsersPage";
-import ManageKeysPage from "./pages/admin/ManageKeysPage";
+import ManageApiKeysPage from "./pages/admin/ManageApiKeysPage";
 import SecuritySettingsPage from "./pages/admin/SecuritySettingsPage";
 import ViewReportsPage from "./pages/admin/ViewReportsPage";
 import { Toaster } from "react-hot-toast";
@@ -131,7 +131,7 @@ function App() {
 						path='admin/keys'
 						element={
 							<RoleProtectedRoute allowedRoles={['admin']}>
-								<ManageKeysPage />
+								<ManageApiKeysPage />
 							</RoleProtectedRoute>
 						}
 					/>
