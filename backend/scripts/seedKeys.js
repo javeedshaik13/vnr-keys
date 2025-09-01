@@ -4,143 +4,1349 @@ import { Key } from "../models/key.model.js";
 
 dotenv.config();
 
-const sampleKeys = [
+const sampleKeys =[
   {
-    keyNumber: "101",
-    keyName: "Computer Lab 1",
-    location: "Block A - Floor 1",
-    description: "Main computer laboratory with 30 workstations",
-    category: "lab",
-    department: "CSE",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["A001"],
+    "location": "Ground Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "102",
-    keyName: "Computer Lab 2",
-    location: "Block A - Floor 1",
-    description: "Secondary computer laboratory with 25 workstations",
-    category: "lab",
-    department: "CSE",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["A002"],
+    "location": "Ground Floor - Block A",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "IT",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "201",
-    keyName: "Physics Lab",
-    location: "Block B - Floor 2",
-    description: "Physics laboratory with experimental equipment",
-    category: "lab",
-    department: "EEE",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A003"],
+    "location": "Ground Floor - Block A",
+    "description": "SSC",
+    "category": "facility",
+    "department": "SSC",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "202",
-    keyName: "Chemistry Lab",
-    location: "Block B - Floor 2",
-    description: "Chemistry laboratory with fume hoods and safety equipment",
-    category: "lab",
-    department: "CIVIL",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["A004"],
+    "location": "Ground Floor - Block A",
+    "description": "Library",
+    "category": "facility",
+    "department": "IT",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "301",
-    keyName: "Biology Lab",
-    location: "Block C - Floor 3",
-    description: "Biology laboratory with microscopes and specimens",
-    category: "lab",
-    department: "RESEARCH",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A005"],
+    "location": "Ground Floor - Block A",
+    "description": "Students Gores",
+    "category": "facility",
+    "department": "Students",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "401",
-    keyName: "Library Study Room 1",
-    location: "Library - Floor 4",
-    description: "Private study room for group discussions",
-    category: "classroom",
-    department: "COMMON",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["A006", "A009"],
+    "location": "Ground Floor - Block A",
+    "description": "MT Lab Workshop",
+    "category": "lab",
+    "department": "ME",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "402",
-    keyName: "Library Study Room 2",
-    location: "Library - Floor 4",
-    description: "Private study room with presentation equipment",
-    category: "classroom",
-    department: "COMMON",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A007", "A008"],
+    "location": "Ground Floor - Block A",
+    "description": "Workshop-1",
+    "category": "lab",
+    "department": "ME",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "501",
-    keyName: "Conference Room A",
-    location: "Administration Block - Floor 5",
-    description: "Large conference room with video conferencing setup",
-    category: "office",
-    department: "ADMIN",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["A010"],
+    "location": "Ground Floor - Block A",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "ME",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "502",
-    keyName: "Conference Room B",
-    location: "Administration Block - Floor 5",
-    description: "Medium conference room for departmental meetings",
-    category: "office",
-    department: "ADMIN",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A011"],
+    "location": "Ground Floor - Block A",
+    "description": "Washroom",
+    "category": "facility",
+    "department": "No",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "601",
-    keyName: "Storage Room 1",
-    location: "Basement - Block A",
-    description: "General storage for office supplies",
-    category: "storage",
-    department: "ADMIN",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A012"],
+    "location": "Ground Floor - Block A",
+    "description": "FM Lab Workshop-2",
+    "category": "lab",
+    "department": "ME",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "602",
-    keyName: "IT Equipment Storage",
-    location: "Basement - Block B",
-    description: "Secure storage for IT equipment and servers",
-    category: "storage",
-    department: "IT",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["A013"],
+    "location": "Ground Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "701",
-    keyName: "Auditorium",
-    location: "Main Building - Ground Floor",
-    description: "Main auditorium with 200 seating capacity",
-    category: "classroom",
-    department: "COMMON",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["B001"],
+    "location": "Ground Floor - Block B",
+    "description": "",
+    "category": "facility",
+    "department": ".",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "702",
-    keyName: "Seminar Hall 1",
-    location: "Main Building - Floor 1",
-    description: "Seminar hall with 50 seating capacity",
-    category: "classroom",
-    department: "COMMON",
-    frequentlyUsed: true,
+    "keyNumber": "1",
+    "keyName": ["B002"],
+    "location": "Ground Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "ENG",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "703",
-    keyName: "Seminar Hall 2",
-    location: "Main Building - Floor 1",
-    description: "Seminar hall with 30 seating capacity",
-    category: "classroom",
-    department: "COMMON",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["B003"],
+    "location": "Ground Floor - Block B",
+    "description": "HOD Room",
+    "category": "classroom",
+    "department": "ENG",
+    "frequentlyUsed": false
   },
   {
-    keyNumber: "801",
-    keyName: "Faculty Lounge",
-    location: "Faculty Block - Floor 2",
-    description: "Common area for faculty members",
-    category: "office",
-    department: "COMMON",
-    frequentlyUsed: false,
+    "keyNumber": "1",
+    "keyName": ["B004"],
+    "location": "Ground Floor - Block B",
+    "description": "BEE Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
   },
-];
+  {
+    "keyNumber": "1",
+    "keyName": ["B005", "B006"],
+    "location": "Ground Floor - Block B",
+    "description": "EM Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B007", "B008"],
+    "location": "Ground Floor - Block B",
+    "description": "TE Lab",
+    "category": "lab",
+    "department": "ME",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B009", "B010"],
+    "location": "Ground Floor - Block B",
+    "description": "Washroom",
+    "category": "facility",
+    "department": "-",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B011"],
+    "location": "Ground Floor - Block B",
+    "description": "Seminar Hall",
+    "category": "facility",
+    "department": "-",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C001"],
+    "location": "Ground Floor - Block C",
+    "description": "KS' Audioum",
+    "category": "facility",
+    "department": "KS",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C002"],
+    "location": "Ground Floor - Block C",
+    "description": "Penal Room",
+    "category": "facility",
+    "department": "-",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C003"],
+    "location": "Ground Floor - Block C",
+    "description": "Transport Office",
+    "category": "facility",
+    "department": "Transport",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C004"],
+    "location": "Ground Floor - Block C",
+    "description": "Lunch Room",
+    "category": "facility",
+    "department": "-",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C005", "C006"],
+    "location": "Ground Floor - Block C",
+    "description": "Washroom",
+    "category": "facility",
+    "department": "-",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C007", "C008"],
+    "location": "Ground Floor - Block C",
+    "description": "Engineering Lab Workshop-II",
+    "category": "lab",
+    "department": "ME",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A101"],
+    "location": "First Floor - Block A",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A102"],
+    "location": "First Floor - Block A",
+    "description": "COE Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A103"],
+    "location": "First Floor - Block A",
+    "description": "Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A104", "A105"],
+    "location": "First Floor - Block A",
+    "description": "Washroom",
+    "category": "facility",
+    "department": "COMMON",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A106"],
+    "location": "First Floor - Block A",
+    "description": "Control Room",
+    "category": "classroom",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A107"],
+    "location": "First Floor - Block A",
+    "description": "Panel Room",
+    "category": "classroom",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A108"],
+    "location": "First Floor - Block A",
+    "description": "OOP Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A109", "A110"],
+    "location": "First Floor - Block A",
+    "description": "Computer Graphics Lab",
+    "category": "lab",
+    "department": "CSE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A111"],
+    "location": "First Floor - Block A",
+    "description": "ITWS Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A112"],
+    "location": "First Floor - Block A",
+    "description": "SE Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A113"],
+    "location": "First Floor - Block A",
+    "description": "TP Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A114"],
+    "location": "First Floor - Block A",
+    "description": "ML Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A115", "A116"],
+    "location": "First Floor - Block A",
+    "description": "Washroom",
+    "category": "facility",
+    "department": "COMMON",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A117"],
+    "location": "First Floor - Block A",
+    "description": "ECS Lab",
+    "category": "lab",
+    "department": "ENG",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A118"],
+    "location": "First Floor - Block A",
+    "description": "ECS Lab",
+    "category": "lab",
+    "department": "ENG",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C105"],
+    "location": "First Floor - Block C",
+    "description": "ED & EN Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C106"],
+    "location": "First Floor - Block C",
+    "description": "DM Lab",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B107"],
+    "location": "First Floor - Block B",
+    "description": "CNCC",
+    "category": "lab",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A001"],
+    "location": "Second Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A002"],
+    "location": "Second Floor - Block A",
+    "description": "EDE Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A003"],
+    "location": "Second Floor - Block A",
+    "description": "ADC Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A004", "A005"],
+    "location": "Second Floor - Block A",
+    "description": "Washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A006"],
+    "location": "Second Floor - Block A",
+    "description": "empmc Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A007"],
+    "location": "Second Floor - Block A",
+    "description": "ADC Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A008"],
+    "location": "Second Floor - Block A",
+    "description": "VLSI Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A009"],
+    "location": "Second Floor - Block A",
+    "description": "CN Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A010", "A011"],
+    "location": "Second Floor - Block A",
+    "description": "Washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A012"],
+    "location": "Second Floor - Block A",
+    "description": "Fainloing Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A013"],
+    "location": "Second Floor - Block A",
+    "description": "PGI Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B201"],
+    "location": "Second Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B202"],
+    "location": "Second Floor - Block B",
+    "description": "HOD Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B203"],
+    "location": "Second Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B204"],
+    "location": "Second Floor - Block B",
+    "description": "pendal Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B205"],
+    "location": "Second Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B206"],
+    "location": "Second Floor - Block B",
+    "description": "Transfor Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B207"],
+    "location": "Second Floor - Block B",
+    "description": "PCA Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B208"],
+    "location": "Second Floor - Block B",
+    "description": "AI Lab",
+    "category": "lab",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B209"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B210", "B211"],
+    "location": "Second Floor - Block B",
+    "description": "Washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B212"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B213"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B214"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B215"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B216"],
+    "location": "Second Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B217"],
+    "location": "Second Floor - Block B",
+    "description": "Staf Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B218"],
+    "location": "Second Floor - Block B",
+    "description": "HOD Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B219"],
+    "location": "Second Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B220"],
+    "location": "Second Floor - Block B",
+    "description": "Libary Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B221"],
+    "location": "Second Floor - Block B",
+    "description": "IQAC",
+    "category": "facility",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B222"],
+    "location": "Second Floor - Block B",
+    "description": "Libirary Room",
+    "category": "classroom",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C201"],
+    "location": "Second Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C202"],
+    "location": "Second Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C203"],
+    "location": "Second Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C204"],
+    "location": "Second Floor - Block C",
+    "description": "NI Academy Lab",
+    "category": "lab",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C205"],
+    "location": "Second Floor - Block C",
+    "description": "MPMC Lab",
+    "category": "lab",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C206"],
+    "location": "Second Floor - Block C",
+    "description": "EVC/PDC Lab",
+    "category": "lab",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C207"],
+    "location": "Second Floor - Block C",
+    "description": "MICROware",
+    "category": "facility",
+    "department": "ECE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C208"],
+    "location": "Second Floor - Block C",
+    "description": "DSP Lab",
+    "category": "lab",
+    "department": "EIE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C209"],
+    "location": "Second Floor - Block C",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C210"],
+    "location": "Second Floor - Block C",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C211", "C212"],
+    "location": "Second Floor - Block C",
+    "description": "Washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C213"],
+    "location": "Second Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C214"],
+    "location": "Second Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C301"],
+    "location": "Third Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C302"],
+    "location": "Third Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C303"],
+    "location": "Third Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C304"],
+    "location": "Third Floor - Block C",
+    "description": "AP E&Pcs physics Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C305"],
+    "location": "Third Floor - Block C",
+    "description": "Applied Eng Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C306"],
+    "location": "Third Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C307"],
+    "location": "Third Floor - Block C",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C308"],
+    "location": "Third Floor - Block C",
+    "description": "Applied physics Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C309"],
+    "location": "Third Floor - Block C",
+    "description": "Chemistry Staff Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C310"],
+    "location": "Third Floor - Block C",
+    "description": "mathes Staff Room",
+    "category": "classroom",
+    "department": "maths",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C311", "C312"],
+    "location": "Third Floor - Block C",
+    "description": "washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C313"],
+    "location": "Third Floor - Block C",
+    "description": "Chemistry lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["C314"],
+    "location": "Third Floor - Block C",
+    "description": "Class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A301"],
+    "location": "Third Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A302"],
+    "location": "Third Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A303"],
+    "location": "Third Floor - Block A",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A304", "A305"],
+    "location": "Third Floor - Block A",
+    "description": "washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A306"],
+    "location": "Third Floor - Block A",
+    "description": "MPMC Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A307"],
+    "location": "Third Floor - Block A",
+    "description": "PS Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A308"],
+    "location": "Third Floor - Block A",
+    "description": "NT Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A309"],
+    "location": "Third Floor - Block A",
+    "description": "cs Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "极Name": ["A310"],
+    "location": "Third Floor - Block A",
+    "description": "Ems Lab",
+    "category": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A311", "A312"],
+    "location": "Third Floor - Block A",
+    "description": "WasRoom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A313"],
+    "location": "Third Floor - Block A",
+    "description": "PE Lab",
+    "极ategory": "lab",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["A314"],
+    "location": "Third Floor - Block A",
+    "description": "Physics Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B301"],
+    "location": "Third Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B302"],
+    "location": "Third Floor - Block B",
+    "description": "HOD Room",
+    "category": "classroom",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B303"],
+    "location": "Third Floor - Block B",
+    "description": "faculty Room",
+    "category": "classroom",
+    "department": "EEE",
+    "极requentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B304"],
+    "location": "Third Floor - Block B",
+    "description": "Penal Room",
+    "category": "classroom",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B305"],
+    "location": "Third Floor - Block B",
+    "description": "faculty Room",
+    "category": "classroom",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B306"],
+    "location": "Third Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B307"],
+    "location": "Third Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B308"],
+    "location": "Third Floor - Block B",
+    "description": "Chemistry Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B309"],
+    "location": "Third Floor - Block B",
+    "description": "Chemistry Lab",
+    "category": "极ab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B310", "B311"],
+    "location": "Third Floor - Block B",
+    "description": "washroom",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B313"],
+    "location": "Third Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B314", "B315", "B316", "B317"],
+    "location": "Third Floor - Block B",
+    "description": "oneling Lab",
+    "category": "lab",
+    "department": "CSE",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B318"],
+    "极ocation": "Third Floor - Block B",
+    "description": "Discussion Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "keyNumber": "1",
+    "keyName": ["B319"],
+    "location": "Third Floor - Block B",
+    "description": "HOD Chemistry",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B320"],
+    "location": "3th Floor - Block B",
+    "description": "faculty Room",
+    "category": "classroom",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B321"],
+    "location": "3th Floor - Block B",
+    "description": "IC Applian Lab",
+    "category": "lab",
+    "department": "H&S",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B322"],
+    "location": "3th Floor - Block B",
+    "description": "Libarary",
+    "category": "facility",
+    "department": "EEE",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B401"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B402"],
+    "location": "4th Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "Staff",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B403"],
+    "location": "4th Floor - Block B",
+    "description": "AECS Lab",
+    "category": "lab",
+    "department": "ENG",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B404"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B405"],
+    "location": "4th Floor - Block B",
+    "description": "AECS Lab",
+    "category": "lab",
+    "department": "ENG",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B406"],
+    "location": "4th Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "IT",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B407"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B408"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B409/410"],
+    "location": "4th Floor - Block B",
+    "description": "wash Room",
+    "category": "facility",
+    "department": null,
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B411"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B412"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B413"],
+    "location": "4th Floor - Block B",
+    "description": "Reching LLP",
+    "category": "facility",
+    "department": "ALFago",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B414"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B415"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B416"],
+    "location": "4th Floor - Block B",
+    "description": "class Room",
+    "category": "classroom",
+    "department": "class",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B417"],
+    "location": "4th Floor - Block B",
+    "description": "Physics HOD",
+    "category": "classroom",
+    "department": "physics",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B418"],
+    "location": "4th Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "physics",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B419"],
+    "location": "4th Floor - Block B",
+    "description": "mathes HOD",
+    "category": "classroom",
+    "department": "maths",
+    "frequentlyUsed": false
+  },
+  {
+    "KeyNumber": "1",
+    "keyName": ["B420"],
+    "location": "4th Floor - Block B",
+    "description": "Staff Room",
+    "category": "classroom",
+    "department": "maths",
+    "frequentlyUsed": false
+  }
+]
 
 const seedKeys = async () => {
   try {
