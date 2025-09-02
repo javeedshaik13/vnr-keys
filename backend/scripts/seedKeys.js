@@ -1349,11 +1349,14 @@ const sampleKeys = [
 ]
 
 // Transform the data to fix keyName arrays and department values
-const transformedKeys = sampleKeys.map((key, index) => ({
-  ...key,
-  keyNumber: Array.isArray(key.keyName) ? `${key.keyName[0]}_${index}` : `${key.keyName}_${index}`,
-  keyName: Array.isArray(key.keyName) ? key.keyName.join('/') : key.keyName,
-  department: key.department === 'class' ? 'COMMON' : 
+const transformedKeys = sampleKeys.map((key, index) => {
+  const keyName = Array.isArray(key.keyName) ? key.keyName.join('/') : key.keyName;
+  const location = key.location.replace(/\s+/g, '_').replace(/-/g, '_');
+  return {
+    ...key,
+    keyNumber: `${keyName}_${location}_${index}`, // Make unique with location and index
+    keyName: keyName,
+    department: key.department === 'class' ? 'COMMON' : 
               key.department === 'Students' ? 'COMMON' :
               key.department === 'SSC' ? 'ADMIN' :
               key.department === 'Transport' ? 'ADMIN' :
@@ -1371,8 +1374,9 @@ const transformedKeys = sampleKeys.map((key, index) => ({
               key.department === 'EIE' ? 'EEE' :
               key.department === 'ME' ? 'MECH' :
               key.department || 'COMMON',
-  category: key.category === 'facility' ? 'other' : key.category
-}));
+    category: key.category === 'facility' ? 'other' : key.category
+  };
+});
 
 const seedKeys = async () => {
   try {
