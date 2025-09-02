@@ -237,4 +237,7 @@ This project is licensed under the ISC License - see the [LICENSE](backend/LICEN
 
 ---
 
-**Built with ❤️ by the VNR Keys Team** 
+## License
+
+This project is licensed under the MLT License. See the [LICENSE](./LICENSE) file for more details.
+
