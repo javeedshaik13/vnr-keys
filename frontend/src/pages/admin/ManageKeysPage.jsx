@@ -6,7 +6,6 @@ import {
   Search, 
   Edit, 
   Trash2, 
-  Filter,
   MoreVertical,
   CheckCircle,
   XCircle,
@@ -16,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useKeyStore } from '../../store/keyStore';
 import KeyForm from '../../components/admin/KeyForm';
-import { handleError, handleSuccess } from '../../utils/errorHandler';
 
 const ManageKeysPage = () => {
   const {

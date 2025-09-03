@@ -163,7 +163,7 @@ const KeyCard = ({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-bold text-white">
-                Key #{keyData.keyNumber}
+                {keyData.keyName}
               </h3>
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${getStatusColor()}`}
@@ -172,7 +172,6 @@ const KeyCard = ({
                 <span className="capitalize">{keyData.status}</span>
               </span>
             </div>
-            <p className="text-indigo-300 font-medium">{keyData.keyName}</p>
             {usageCount && (
               <div className="flex items-center gap-1 mt-1">
                 <TrendingUp className="w-3 h-3 text-blue-400" />
@@ -281,7 +280,7 @@ const KeyCard = ({
             className="bg-gray-900/95 rounded-2xl p-6 max-w-sm w-full border border-blue-500/40 shadow-[0_0_25px_rgba(59,130,246,0.5)]"
           >
             <h3 className="text-xl font-bold text-blue-400 mb-4 text-center">
-              Return Key #{keyData.keyNumber}
+              Return Key {keyData.keyName}
             </h3>
 
             {/* QR */}

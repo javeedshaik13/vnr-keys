@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { 
   Clock, 
@@ -7,9 +7,7 @@ import {
   AlertTriangle, 
   CheckCircle, 
   RefreshCw,
-  Filter,
-  Calendar,
-  Search
+  Filter
 } from "lucide-react";
 import axios from "axios";
 
@@ -24,11 +22,7 @@ const AuditLogViewer = ({ keyId = null, userId = null, showCollectiveOnly = fals
     limit: 50
   });
 
-  useEffect(() => {
-    fetchAuditLogs();
-  }, [keyId, userId, showCollectiveOnly, filters]);
-
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -59,7 +53,11 @@ const AuditLogViewer = ({ keyId = null, userId = null, showCollectiveOnly = fals
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [keyId, userId, showCollectiveOnly, filters]);
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
   const getActionIcon = (action) => {
     switch (action) {
