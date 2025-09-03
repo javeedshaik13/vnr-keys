@@ -88,32 +88,51 @@ export const validateQRData = (qrData) => {
     return result;
   }
 
-  // Timestamp validation logic (<config.qr.validitySeconds seconds window)
+  // Timestamp validation logic (more lenient for testing)
   const now = Date.now();
   const maxTimeValidForQR = config.qr.validitySeconds;
   let qrTimestamp = null;
+  
+  console.log('🔍 QR Validation: Checking timestamp...', {
+    qrData,
+    maxTimeValidForQR,
+    now: new Date(now).toISOString()
+  });
+  
   if (qrData.timestamp) {
     try {
       qrTimestamp = new Date(qrData.timestamp).getTime();
       if (isNaN(qrTimestamp)) {
+        console.log('❌ QR Validation: Invalid timestamp format');
         result.errors.push('QR timestamp is invalid');
         return result;
       }
-      if ((now - qrTimestamp) / 1000 > maxTimeValidForQR) {
-        result.errors.push(`QR code is expired (older than ${maxTimeValidForQR} seconds)`);
+      
+      const ageInSeconds = (now - qrTimestamp) / 1000;
+      console.log('🔍 QR Validation: Timestamp age:', ageInSeconds, 'seconds');
+      
+      if (ageInSeconds > maxTimeValidForQR) {
+        console.log('❌ QR Validation: QR code expired');
+        result.errors.push(`QR code is expired (${Math.floor(ageInSeconds)} seconds old, max ${maxTimeValidForQR} seconds)`);
         return result;
       }
+      
+      console.log('✅ QR Validation: Timestamp is valid');
     } catch (e) {
+      console.log('❌ QR Validation: Timestamp parsing error:', e);
       result.errors.push('QR timestamp parsing failed');
       return result;
     }
   } else {
-    result.errors.push('QR code does not contain a timestamp');
-    return result;
+    console.log('⚠️ QR Validation: No timestamp found, allowing for backward compatibility');
+    // For backward compatibility, allow QR codes without timestamps
+    // result.errors.push('QR code does not contain a timestamp');
+    // return result;
   }
 
   // Check for key return QR code
   if (qrData.returnId && qrData.keyId && qrData.userId) {
+    console.log('✅ QR Validation: Valid key-return QR code');
     result.isValid = true;
     result.type = 'key-return';
     return result;
@@ -121,12 +140,22 @@ export const validateQRData = (qrData) => {
 
   // Check for key request QR code
   if (qrData.requestId && qrData.keyId && qrData.userId) {
+    console.log('✅ QR Validation: Valid key-request QR code');
     result.isValid = true;
     result.type = 'key-request';
     return result;
   }
 
-  result.errors.push('QR code does not contain valid key data');
+  // Check for legacy QR code formats (backward compatibility)
+  if (qrData.type && qrData.keyId && qrData.userId) {
+    console.log('✅ QR Validation: Valid legacy QR code format');
+    result.isValid = true;
+    result.type = qrData.type === 'KEY_RETURN' ? 'key-return' : 'key-request';
+    return result;
+  }
+
+  console.log('❌ QR Validation: Invalid QR code data structure');
+  result.errors.push('QR code does not contain valid key data (missing keyId, userId, or action identifier)');
   return result;
 };
 

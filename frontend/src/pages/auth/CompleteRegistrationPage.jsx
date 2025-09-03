@@ -3,10 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import {
-  GraduationCap,
   Shield,
   User,
-  Building,
   IdCard,
   CheckCircle,
 } from "lucide-react";

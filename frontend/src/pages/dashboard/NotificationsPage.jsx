@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bell, 
-  Filter, 
   Search, 
-  CheckCircle, 
   Eye, 
   EyeOff, 
   Trash2, 

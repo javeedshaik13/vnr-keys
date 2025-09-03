@@ -17,13 +17,13 @@ import { config } from "../../utils/config";
 const SecurityDashboard = () => {
   const [activeTab, setActiveTab] = useState("scanner");
   const [showScanner, setShowScanner] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
   const [showScanResult, setShowScanResult] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
   const [showReturnConfirmation, setShowReturnConfirmation] = useState(false);
   const [pendingReturnData, setPendingReturnData] = useState(null);
-  // Removed unused isProcessing state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [scannerKey, setScannerKey] = useState(0); // Force re-mount of scanner
 
   const { user } = useAuthStore();
   const {
@@ -31,18 +31,49 @@ const SecurityDashboard = () => {
     getAvailableKeys,
     getUnavailableKeys,
     fetchKeys,
-    returnKeyAPI
+    returnKeyAPI,
+    initializeSocket,
+    disconnectSocket
   } = useKeyStore();
 
   // Fetch keys on component mount
   useEffect(() => {
-    if (user) {
-      fetchKeys().catch(console.error);
-    }
-  }, [user, fetchKeys]);
+    const loadKeys = async () => {
+      try {
+        console.log('🔄 SecurityDashboard: Fetching keys...');
+        await fetchKeys();
+        console.log('✅ SecurityDashboard: Keys fetched successfully');
+      } catch (error) {
+        console.error('❌ SecurityDashboard: Failed to fetch keys:', error);
+        // Show error to user
+        setScanResult({
+          success: false,
+          message: 'Failed to load keys. Please refresh the page.',
+          type: 'error'
+        });
+      }
+    };
+
+    loadKeys();
+    
+    // Initialize socket connection for real-time updates
+    initializeSocket();
+
+    // Cleanup on unmount
+    return () => {
+      disconnectSocket();
+    };
+  }, [fetchKeys, initializeSocket, disconnectSocket]);
 
   const availableKeys = getAvailableKeys();
   const unavailableKeys = getUnavailableKeys();
+
+  // Debug logging
+  console.log('🔍 SecurityDashboard render:', {
+    totalKeys: keys.length,
+    availableCount: availableKeys.length,
+    unavailableCount: unavailableKeys.length,
+  });
 
   const handleDepartmentClick = (department) => {
     setSelectedDepartment(department);
@@ -73,21 +104,24 @@ const SecurityDashboard = () => {
   ];
 
   const handleQRScan = async (qrData) => {
-    // Keep parsedData accessible in catch for additional context (e.g., expired QR)
+    console.log('🔍 SecurityDashboard: QR scan initiated with data:', qrData);
     let parsedData = qrData;
+    
     try {
-      console.log('QR scan received:', qrData);
-
-      // Parse QR data if it's a string
       if (typeof qrData === 'string') {
+        console.log('🔄 SecurityDashboard: Parsing QR string...');
         parsedData = parseQRString(qrData);
       }
 
-      // Validate QR data
+      console.log('🔍 SecurityDashboard: Validating QR data:', parsedData);
       const validation = validateQRData(parsedData);
+      
       if (!validation.isValid) {
+        console.log('❌ SecurityDashboard: QR validation failed:', validation.errors);
         throw new Error(validation.errors.join(', '));
       }
+      
+      console.log('✅ SecurityDashboard: QR validation passed, type:', validation.type);
 
       // Handle different QR code types
       if (validation.type === 'key-return') {
@@ -374,9 +408,13 @@ const SecurityDashboard = () => {
       {/* QR Scanner Modal */}
       {showScanner && (
         <QRScanner
-          onScan={handleQRScan}
-          onClose={() => setShowScanner(false)}
+          key={scannerKey}
           isOpen={showScanner}
+          onScan={handleQRScan}
+          onClose={() => {
+            setShowScanner(false);
+            setScannerKey(prev => prev + 1); // Force re-mount next time
+          }}
         />
       )}
 

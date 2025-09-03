@@ -1,5 +1,4 @@
 // src/components/layout/Navbar.jsx
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";

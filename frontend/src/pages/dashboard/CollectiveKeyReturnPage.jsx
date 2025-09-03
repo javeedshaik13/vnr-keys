@@ -5,7 +5,6 @@ import {
   Search, 
   AlertTriangle, 
   CheckCircle, 
-  X, 
   User, 
   Clock, 
   MapPin,
@@ -26,14 +25,13 @@ const CollectiveKeyReturnPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
 
-  const { user } = useAuthStore();
   const { sidebarOpen } = useSidebar();
   const { collectiveReturnKeyAPI, getAllTakenKeysAPI } = useKeyStore();
 
   // Fetch all taken keys on component mount
   useEffect(() => {
     fetchAllTakenKeys();
-  }, []);
+  }, [fetchAllTakenKeys]);
 
   const fetchAllTakenKeys = async () => {
     setIsLoading(true);

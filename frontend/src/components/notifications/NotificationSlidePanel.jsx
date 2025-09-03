@@ -14,7 +14,6 @@ import { formatDistanceToNow } from 'date-fns';
 const NotificationSlidePanel = ({ isOpen, onClose }) => {
   const {
     notifications,
-    unreadCount,
     loading,
     error,
     fetchNotifications,

@@ -1,24 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Key, 
   Plus, 
   Search, 
   Edit, 
   Trash2, 
-  Filter,
   MoreVertical,
-  CheckCircle,
-  XCircle,
   Shield,
-  MapPin,
   Building,
   Copy,
   Eye,
   EyeOff
 } from 'lucide-react';
 import { useApiKeyStore } from '../../store/apiKeyStore';
-import { handleError, handleSuccess } from '../../utils/errorHandler';
+import { handleSuccess } from '../../utils/errorHandler';
 
 const ManageApiKeysPage = () => {
   const {
@@ -33,7 +28,6 @@ const ManageApiKeysPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [showApiKeyForm, setShowApiKeyForm] = useState(false);
   const [editingKey, setEditingKey] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState(null);
@@ -63,30 +57,6 @@ const ManageApiKeysPage = () => {
   // Get unique departments for filter
   const departments = [...new Set(apiKeys.map(key => key.department).filter(Boolean))];
 
-  const handleCreateKey = async (keyData) => {
-    try {
-      setIsSubmitting(true);
-      await createApiKey(keyData);
-      setShowApiKeyForm(false);
-    } catch (error) {
-      console.error('Error creating API key:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUpdateKey = async (keyData) => {
-    try {
-      setIsSubmitting(true);
-      await updateApiKey(editingKey.keyId, keyData);
-      setShowApiKeyForm(false);
-      setEditingKey(null);
-    } catch (error) {
-      console.error('Error updating API key:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteKey = async () => {
     if (!keyToDelete) return;
@@ -105,7 +75,6 @@ const ManageApiKeysPage = () => {
 
   const openEditModal = (key) => {
     setEditingKey(key);
-    setShowApiKeyForm(true);
   };
 
   const openDeleteModal = (key) => {
@@ -114,7 +83,6 @@ const ManageApiKeysPage = () => {
   };
 
   const closeModals = () => {
-    setShowApiKeyForm(false);
     setEditingKey(null);
     setShowDeleteModal(false);
     setKeyToDelete(null);
@@ -186,7 +154,6 @@ const ManageApiKeysPage = () => {
 
             {/* Add Key Button */}
             <button
-              onClick={() => setShowApiKeyForm(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
