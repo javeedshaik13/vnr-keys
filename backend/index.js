@@ -16,7 +16,6 @@ import { globalErrorHandler } from "./utils/errorHandler.js";
 import { config } from "./utils/config.js";
 import { initializeScheduledJobs } from "./services/scheduledJobs.js";
 import {
-	generalLimiter,
 	helmetConfig,
 	sanitizeRequest,
 	requestLogger
@@ -41,7 +40,7 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmetConfig);
 app.use(requestLogger);
-app.use(generalLimiter);
+
 app.use(sanitizeRequest);
 
 // CORS configuration

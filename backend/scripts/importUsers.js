@@ -52,7 +52,7 @@ const usersToImport = [
     description: "Administrative user for system management"
   },
   {
-    email: "security@vnrvjiet.in", 
+    email: "23071a7251@vnrvjiet.in", 
     name: "Security Officer",
     role: "security",
     description: "Security personnel for access control and monitoring"
@@ -211,7 +211,7 @@ const importUsers = async () => {
     
     // Connect to MongoDB
     console.log("🔌 Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect("mongodb+srv://hackergkn:karthik@hackathon.xkjyqhh.mongodb.net/?retryWrites=true&w=majority&appName=hackathon");
     console.log("✅ Connected to MongoDB successfully");
     
     // Validate all user data first

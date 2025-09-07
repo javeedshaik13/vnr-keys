@@ -8,11 +8,7 @@ import {
 	updateProfile,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
-import {
-	authLimiter,
-	passwordResetLimiter,
-	emailVerificationLimiter
-} from "../middleware/security.js";
+
 import passport from "../config/passport.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import { config } from "../utils/config.js";
@@ -25,10 +21,10 @@ router.get("/user/:userId", verifyToken, getUserById);
 
 // Registration endpoints
 router.get("/registration-status", verifyToken, checkRegistrationStatus);
-router.post("/complete-registration", verifyToken, authLimiter, completeRegistration);
+router.post("/complete-registration", verifyToken, completeRegistration);
 
 // Profile endpoints
-router.put("/update-profile", verifyToken, authLimiter, updateProfile);
+router.put("/update-profile", verifyToken, updateProfile);
 
 // Logout (no rate limiting for logout)
 router.post("/logout", logout);
