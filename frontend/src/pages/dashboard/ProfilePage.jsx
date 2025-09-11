@@ -90,17 +90,7 @@ const ProfilePage = () => {
               )}
               {user?.role !== "faculty" && <div className="mb-4"></div>}
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">12</p>
-                  <p className="text-gray-400 text-sm">Projects</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">48</p>
-                  <p className="text-gray-400 text-sm">Tasks</p>
-                </div>
-              </div>
+
 
               {/* Account Info */}
               <div className="space-y-3 text-left">
@@ -238,57 +228,11 @@ const ProfilePage = () => {
                     />
                   </div>
                 </div>
+                
+                
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-300 mb-2">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="City, Country"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
 
-                <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-300 mb-2">
-                    Website
-                  </label>
-                  <input
-                    type="url"
-                    id="website"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="https://yourwebsite.com"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-300 mb-2">
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  rows={4}
-                  placeholder="Tell us about yourself..."
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                />
-              </div>
             </form>
           </div>
         </motion.div>

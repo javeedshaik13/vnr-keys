@@ -245,7 +245,6 @@ const FacultyDashboard = () => {
             />
 
             {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
-            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {!selectedDepartment && searchQuery.trim() && (
               <SearchResults
                 searchQuery={searchQuery}

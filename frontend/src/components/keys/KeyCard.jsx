@@ -11,6 +11,7 @@ import QRCode from "react-qr-code";
 import { useState, useEffect } from "react";
 import socketService from "../../services/socketService.js";
 import { config } from "../../utils/config.js";
+import { useAuthStore } from "../../store/authStore";
 
 const KeyCard = ({
   keyData,
@@ -22,6 +23,7 @@ const KeyCard = ({
   qrData = null,
   usageCount,
 }) => {
+  const { user } = useAuthStore();
   const [showQRModal, setShowQRModal] = useState(false);
   const [localQRData, setLocalQRData] = useState(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
@@ -223,24 +225,23 @@ const KeyCard = ({
         )}
 
         {/* Action Buttons */}
+        {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
-          {variant === "default" && keyData.status === "available" && (
-            <button
-              onClick={handleRequestKey}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <QrCode className="w-4 h-4" />
-              Generate QR
-            </button>
-          )}
+          {/* Faculty: Generate QR when available */}
+          {user?.role === "faculty" &&
+            variant === "default" &&
+            keyData.status === "available" && (
+              <button
+                onClick={handleRequestKey}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <QrCode className="w-4 h-4" />
+                Generate QR
+              </button>
+            )}
 
-          {variant === "default" && keyData.status === "unavailable" && (
-            <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
-              Not Available
-            </div>
-          )}
-
-          {variant === "taken" && (
+          {/* Faculty: Return QR when taken */}
+          {user?.role === "faculty" && variant === "taken" && (
             <button
               onClick={handleReturnKeyClick}
               disabled={isGeneratingQR}
@@ -260,7 +261,8 @@ const KeyCard = ({
             </button>
           )}
 
-          {variant === "unavailable" && (
+          {/* Security: Collect when unavailable */}
+          {user?.role === "security" && variant === "unavailable" && (
             <button
               onClick={handleCollectKey}
               className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
@@ -268,7 +270,15 @@ const KeyCard = ({
               Collect
             </button>
           )}
+
+          {/* Common: Not Available for both when unavailable */}
+          {variant === "default" && keyData.status === "unavailable" && (
+            <div className="flex-1 bg-red-600/20 text-red-300 py-2 px-4 rounded-lg font-medium text-center border border-red-600/30">
+              Not Available
+            </div>
+          )}
         </div>
+
       </motion.div>
 
       {/* QR Modal */}
