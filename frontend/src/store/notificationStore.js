@@ -19,8 +19,8 @@ const useNotificationStore = create(
 
       // Actions
       setNotifications: (notifications) => {
-        const unreadCount = notifications.filter(n => !n.isRead).length;
-        set({ 
+        const unreadCount = notifications.filter(n => !n.read).length;
+        set({
           notifications, 
           unreadCount,
           lastFetch: new Date().toISOString()
@@ -65,17 +65,22 @@ const useNotificationStore = create(
         const { notifications, setNotifications } = get();
         
         try {
-          await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/read`);
+          console.log('Marking notification as read:', notificationId);
+          console.log('API URL:', `${API_BASE_URL}/notifications/${notificationId}/read`);
+          
+          const response = await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/read`);
+          console.log('Mark as read response:', response.data);
 
           // Update local state
           const updatedNotifications = notifications.map(notification =>
             notification._id === notificationId
-              ? { ...notification, isRead: true, readAt: new Date().toISOString() }
+              ? { ...notification, read: true, readAt: new Date().toISOString() }
               : notification
           );
           setNotifications(updatedNotifications);
         } catch (error) {
           console.error('Error marking notification as read:', error);
+          console.error('Error details:', error.response?.data || error.message);
         }
       },
 
@@ -84,17 +89,22 @@ const useNotificationStore = create(
         const { notifications, setNotifications } = get();
         
         try {
-          await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/unread`);
+          console.log('Marking notification as unread:', notificationId);
+          console.log('API URL:', `${API_BASE_URL}/notifications/${notificationId}/unread`);
+          
+          const response = await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/unread`);
+          console.log('Mark as unread response:', response.data);
 
           // Update local state
           const updatedNotifications = notifications.map(notification =>
             notification._id === notificationId
-              ? { ...notification, isRead: false, readAt: null }
+              ? { ...notification, read: false, readAt: null }
               : notification
           );
           setNotifications(updatedNotifications);
         } catch (error) {
           console.error('Error marking notification as unread:', error);
+          console.error('Error details:', error.response?.data || error.message);
         }
       },
 
@@ -108,7 +118,7 @@ const useNotificationStore = create(
           // Update local state
           const updatedNotifications = notifications.map(notification => ({
             ...notification,
-            isRead: true,
+            read: true,
             readAt: new Date().toISOString()
           }));
           setNotifications(updatedNotifications);
@@ -117,22 +127,6 @@ const useNotificationStore = create(
         }
       },
 
-      // Delete notification
-      deleteNotification: async (notificationId) => {
-        const { notifications, setNotifications } = get();
-        
-        try {
-          await axios.delete(`${API_BASE_URL}/notifications/${notificationId}`);
-
-          // Update local state
-          const updatedNotifications = notifications.filter(
-            notification => notification._id !== notificationId
-          );
-          setNotifications(updatedNotifications);
-        } catch (error) {
-          console.error('Error deleting notification:', error);
-        }
-      },
 
       // Add new notification (for real-time updates)
       addNotification: (notification) => {
@@ -171,7 +165,7 @@ const useNotificationStore = create(
       // Get unread notifications
       getUnreadNotifications: () => {
         const { notifications } = get();
-        return notifications.filter(notification => !notification.isRead);
+        return notifications.filter(notification => !notification.read);
       },
 
       // Get notifications by priority

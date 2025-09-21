@@ -394,7 +394,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A001"],
+    "keyName": ["A201"],
     "location": "Second Floor - Block A",
     "description": "class Room",
     "category": "classroom",
@@ -403,7 +403,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A002"],
+    "keyName": ["A202"],
     "location": "Second Floor - Block A",
     "description": "EDE Lab",
     "category": "lab",
@@ -412,7 +412,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A003"],
+    "keyName": ["A203"],
     "location": "Second Floor - Block A",
     "description": "ADC Lab",
     "category": "lab",
@@ -421,7 +421,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A004", "A005"],
+    "keyName": ["A204", "A205"],
     "location": "Second Floor - Block A",
     "description": "Washroom",
     "category": "facility",
@@ -430,7 +430,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A006"],
+    "keyName": ["A206"],
     "location": "Second Floor - Block A",
     "description": "empmc Lab",
     "category": "lab",
@@ -439,7 +439,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A007"],
+    "keyName": ["A207"],
     "location": "Second Floor - Block A",
     "description": "ADC Lab",
     "category": "lab",
@@ -448,7 +448,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A008"],
+    "keyName": ["A208"],
     "location": "Second Floor - Block A",
     "description": "VLSI Lab",
     "category": "lab",
@@ -457,7 +457,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A009"],
+    "keyName": ["A209"],
     "location": "Second Floor - Block A",
     "description": "CN Lab",
     "category": "lab",
@@ -466,7 +466,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A010", "A011"],
+    "keyName": ["A210", "A211"],
     "location": "Second Floor - Block A",
     "description": "Washroom",
     "category": "facility",
@@ -475,7 +475,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A012"],
+    "keyName": ["A212"],
     "location": "Second Floor - Block A",
     "description": "Fainloing Lab",
     "category": "lab",
@@ -484,7 +484,7 @@ const sampleKeys = [
   },
   {
     "keyNumber": "1",
-    "keyName": ["A013"],
+    "keyName": ["A213"],
     "location": "Second Floor - Block A",
     "description": "PGI Lab",
     "category": "lab",
@@ -1388,7 +1388,7 @@ const seedKeys = async () => {
     console.log("Clearing existing keys...");
     await Key.deleteMany({});
     console.log("Existing keys cleared");
-
+    console.log(process.env.MONGO_URI)
     // Insert sample keys
     console.log("Inserting transformed keys...");
     const insertedKeys = await Key.insertMany(transformedKeys);

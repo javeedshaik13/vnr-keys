@@ -42,7 +42,7 @@ export const sendRealTimeNotification = async (notification) => {
       title: notification.title,
       message: notification.message,
       createdAt: notification.createdAt,
-      isRead: notification.isRead
+      read: notification.read
     };
 
     // Send to specific user

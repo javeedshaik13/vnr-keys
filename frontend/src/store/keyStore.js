@@ -56,7 +56,15 @@ export const useKeyStore = create((set, get) => ({
   // Get unavailable keys
   getUnavailableKeys: () => {
     const { keys } = get();
-    return keys.filter(key => key.status === "unavailable");
+    return keys
+      .filter(key => key.status === "unavailable")
+      .sort((a, b) => {
+        // Sort by takenAt in descending order (most recent first)
+        if (!a.takenAt && !b.takenAt) return 0;
+        if (!a.takenAt) return 1;
+        if (!b.takenAt) return -1;
+        return new Date(b.takenAt) - new Date(a.takenAt);
+      });
   },
 
   // Get keys taken by current user
