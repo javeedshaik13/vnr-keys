@@ -3,6 +3,15 @@ import LoginPage from "./pages/auth/LoginPage";
 import CompleteRegistrationPage from "./pages/auth/CompleteRegistrationPage";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 
+// Security Dashboard Pages
+import QRScannerPage from "./pages/dashboard/security/QRScannerPage";
+import AvailableKeysPage from "./pages/dashboard/security/AvailableKeysPage";
+import UnavailableKeysPage from "./pages/dashboard/security/UnavailableKeysPage";
+
+// Faculty Dashboard Pages
+import MyKeysPage from "./pages/dashboard/faculty/MyKeysPage";
+import AllKeysPage from "./pages/dashboard/faculty/AllKeysPage";
+
 // Dashboard Layout and Pages
 import DashboardLayout from "./components/layout/DashboardLayout";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
@@ -174,7 +183,13 @@ function App() {
 								<SecurityDashboard />
 							</RoleProtectedRoute>
 						}
-					/>
+					>
+						{/* Nested routes for Security Dashboard */}
+						<Route index element={<Navigate to="scanner" replace />} />
+						<Route path="scanner" element={<QRScannerPage />} />
+						<Route path="available" element={<AvailableKeysPage />} />
+						<Route path="unavailable" element={<UnavailableKeysPage />} />
+					</Route>
 					<Route
 						path='faculty'
 						element={
@@ -182,7 +197,12 @@ function App() {
 								<FacultyDashboard />
 							</RoleProtectedRoute>
 						}
-					/>
+					>
+						{/* Nested routes for Faculty Dashboard */}
+						<Route index element={<Navigate to="taken" replace />} />
+						<Route path="taken" element={<MyKeysPage />} />
+						<Route path="keylist" element={<AllKeysPage />} />
+					</Route>
 					{/* Collective Key Return - accessible to Security and Faculty */}
 					<Route
 						path='collective-return'
