@@ -58,7 +58,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                   }}
                 />
               </div>
-              <h1 className="text-xl font-bold text-white hidden sm:block">
+              <h1 className="text-xl font-bold text-white">
                 Vnr Keys
               </h1>
             </div>
