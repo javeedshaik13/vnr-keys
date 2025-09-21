@@ -1,21 +1,29 @@
 import { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Key, KeyRound, List, RefreshCw } from "lucide-react";
+import { KeyRound, List } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
-import KeyCard from "../../components/keys/KeyCard";
 import QRCode from "react-qr-code";
-import SearchBar from "../../components/keys/SearchBar";
-import SearchResults from "../../components/keys/SearchResults";
-import FrequentlyUsedSection from "../../components/keys/FrequentlyUsedSection";
-import DepartmentsSection from "../../components/keys/DepartmentsSection";
-import DepartmentView from "../../components/keys/DepartmentView";
 import socketService from "../../services/socketService";
 import { config } from "../../utils/config";
 
 const FacultyDashboard = () => {
-  const [activeTab, setActiveTab] = useState("taken");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getActiveTabFromPath = () => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    const validTabs = ['taken', 'keylist'];
+    if (validTabs.includes(lastPart)) {
+      return lastPart;
+    }
+    return 'taken'; // Default tab
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTabFromPath());
   const [searchQuery, setSearchQuery] = useState("");
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
@@ -38,8 +46,14 @@ const FacultyDashboard = () => {
     isLoadingTakenKeys,
   } = useKeyStore();
 
+  // Effect to sync active tab with URL changes
+  useEffect(() => {
+    setActiveTab(getActiveTabFromPath());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
+    navigate(`/dashboard/faculty/${tabId}`);
     if (tabId === "taken" && user) {
       fetchTakenKeys(user.id).catch(console.error);
     }
@@ -173,119 +187,25 @@ const FacultyDashboard = () => {
     console.log('Toggle frequent for key:', keyId);
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "taken":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-            {searchQuery.trim() && (
-              <SearchResults
-                searchQuery={searchQuery}
-                keys={keys}
-                onRequestKey={handleRequestKey}
-                onReturnKey={handleReturnKey}
-                userRole="faculty"
-              />
-            )}
-            {!searchQuery.trim() && (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">My Keys</h2>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-r from-blue-600 to-cyan-400/40 text-white px-3 py-1 rounded-full text-sm font-medium border border-blue-600/30 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
-                      {takenKeys.length} Taken
-                    </div>
-                    <button
-                      onClick={() => fetchTakenKeys(user?.id)}
-                      disabled={isLoadingTakenKeys}
-                      className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 rounded-lg border border-blue-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Refresh taken keys"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingTakenKeys ? 'animate-spin' : ''}`} />
-                    </button>
-                  </div>
-                </div>
-                {isLoadingTakenKeys ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400 text-lg">Loading taken keys...</p>
-                  </div>
-                ) : takenKeys.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Key className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400 text-lg">No keys taken</p>
-                    <p className="text-gray-500 text-sm mt-2">Go to Key List to request keys</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {takenKeys.map((key) => (
-                      <KeyCard
-                        key={key.id}
-                        keyData={key}
-                        variant="taken"
-                        onReturnKey={handleReturnKey}
-                        showQR={false}
-                        userRole="faculty"
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        );
-
-      case "keylist":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            {/* Global Search Bar */}
-            <SearchBar 
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-            />
-
-            {/* Global Search Results Section - Only show when outside departments/blocks and search is active */}
-            {!selectedDepartment && searchQuery.trim() && (
-              <SearchResults
-                searchQuery={searchQuery}
-                keys={keys}
-                onRequestKey={handleRequestKey}
-                onReturnKey={handleReturnKey}
-                userRole="faculty"
-              />
-            )}
-
-            {/* Department View */}
-            {selectedDepartment ? (
-              <DepartmentView
-                department={selectedDepartment}
-                keys={keys}
-                searchQuery={searchQuery}
-                onRequestKey={handleRequestKey}
-                onToggleFrequent={handleToggleFrequent}
-                onBack={handleBackToDepartments}
-              />
-            ) : (
-              <>
-                <FrequentlyUsedSection
-                  keys={frequentlyUsedKeys}
-                  availabilityFilter="all"
-                  onRequestKey={handleRequestKey}
-                  usageCounts={usageCounts}
-                />
-                <DepartmentsSection
-                  keys={keys}
-                  onDepartmentClick={handleDepartmentClick}
-                  selectedDepartment={selectedDepartment}
-                />
-              </>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
-    }
+  const outletContext = {
+    // Common props for all pages
+    searchQuery,
+    setSearchQuery,
+    selectedDepartment,
+    keys,
+    handleRequestKey,
+    handleReturnKey,
+    handleDepartmentClick,
+    handleBackToDepartments: handleBackToDepartments,
+    handleToggleFrequent,
+    user,
+    // My Keys page specific
+    takenKeys,
+    fetchTakenKeys,
+    isLoadingTakenKeys,
+    // All Keys page specific
+    frequentlyUsedKeys,
+    usageCounts,
   };
 
   return (
@@ -299,8 +219,8 @@ const FacultyDashboard = () => {
           </div>        </div>
       </div>
 
-      {/* Content */}
-      {renderTabContent()}
+      {/* Render nested route content */}
+      <Outlet context={outletContext} />
 
       {/* Bottom Navigation */}
       <BottomNavigation tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />

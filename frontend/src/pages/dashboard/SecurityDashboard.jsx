@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { QrCode, Key, KeyRound, CheckCircle, XCircle } from "lucide-react";
@@ -7,16 +8,25 @@ import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRScanner from "../../components/keys/QRScanner";
-import SearchBar from "../../components/keys/SearchBar";
-import SearchResults from "../../components/keys/SearchResults";
-import DepartmentsSection from "../../components/keys/DepartmentsSection";
-import DepartmentView from "../../components/keys/DepartmentView";
 import { processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
 import { handleSuccess } from "../../utils/errorHandler";
 
 const SecurityDashboard = () => {
-  const [activeTab, setActiveTab] = useState("scanner");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getActiveTabFromPath = () => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    const validTabs = ['scanner', 'available', 'unavailable'];
+    if (validTabs.includes(lastPart)) {
+      return lastPart;
+    }
+    return 'scanner'; // Default tab
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTabFromPath());
   const [showScanner, setShowScanner] = useState(false);
   const [showScanResult, setShowScanResult] = useState(false);
   const [scanResult, setScanResult] = useState(null);
@@ -37,7 +47,12 @@ const SecurityDashboard = () => {
     disconnectSocket
   } = useKeyStore();
 
-  // Fetch keys on component mount
+    // Effect to sync active tab with URL changes
+  useEffect(() => {
+    setActiveTab(getActiveTabFromPath());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   useEffect(() => {
     const loadKeys = async () => {
       try {
@@ -64,7 +79,8 @@ const SecurityDashboard = () => {
     return () => {
       disconnectSocket();
     };
-  }, [fetchKeys, initializeSocket, disconnectSocket]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const availableKeys = getAvailableKeys();
   const unavailableKeys = getUnavailableKeys();
@@ -84,20 +100,20 @@ const SecurityDashboard = () => {
     setSelectedDepartment(null);
   };
 
-  const tabs = [
+      const tabs = [
     {
-      id: "scanner",
+                  id: "scanner",
       label: "QR Scanner",
       icon: <QrCode className="w-6 h-6" />,
     },
     {
-      id: "available",
+                  id: "available",
       label: "Available",
       icon: <Key className="w-6 h-6" />,
       badge: availableKeys.length,
     },
     {
-      id: "unavailable",
+                  id: "unavailable",
       label: "Unavailable",
       icon: <KeyRound className="w-6 h-6" />,
       badge: unavailableKeys.length,
@@ -305,108 +321,24 @@ const SecurityDashboard = () => {
     }
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "scanner":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            {/* QR Scanner Section - Focused solely on scanning functionality */}
-            <div className="text-center max-w-sm mx-auto mt-8 mb-8">
-              <QrCode className="w-24 h-24 text-blue-400 mx-auto mb-6" />
-
-              <h2 className="text-2xl font-bold text-white mb-4">QR Scanner</h2>
-              <p className="text-gray-300 mb-8">
-                Scan QR codes from faculty to approve key requests or returns
-              </p>
-              <button
-  onClick={() => setShowScanner(true)}
-  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center gap-3 mx-auto shadow-lg shadow-blue-500/30"
->
-  <QrCode className="w-6 h-6 text-blue-200" />
-  Start Scanning
-</button>
-
-            </div>
-          </div>
-        );
-
-      case "available":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            {/* Global Search Bar */}
-            <SearchBar 
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-            />
-
-            {/* Global Search Results Section - Only show when outside departments and search is active */}
-            {!selectedDepartment && searchQuery.trim() && (
-              <SearchResults
-                searchQuery={searchQuery}
-                keys={keys}
-                onCollectKey={handleCollectKey}
-                userRole="security"
-              />
-            )}
-
-            {/* Department View or Main Content */}
-            {selectedDepartment ? (
-              <DepartmentView
-                department={selectedDepartment}
-                keys={keys}
-                searchQuery={searchQuery} // Pass search query to filter department keys
-                onRequestKey={() => {}} // Security doesn't request keys
-                onToggleFrequent={() => {}} // Not applicable for security
-                onBack={handleBackToListing}
-                userRole="security"
-              />
-            ) : (
-              <>
-                {/* Departments Section */}
-                <DepartmentsSection
-                  keys={keys}
-                  onDepartmentClick={handleDepartmentClick}
-                  selectedDepartment={selectedDepartment}
-                />
-              </>
-            )}
-          </div>
-        );
-
-      case "unavailable":
-        return (
-          <div className="flex-1 p-4 pb-20">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Unavailable Keys</h2>
-              <div className="bg-red-600/20 text-red-300 px-3 py-1 rounded-full text-sm font-medium border border-red-600/30">
-                {unavailableKeys.length} Unavailable
-              </div>
-            </div>
-
-            {unavailableKeys.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg">All keys are available!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {unavailableKeys.map((key) => (
-                  <KeyCard
-                    key={key.id}
-                    keyData={key}
-                    variant="unavailable"
-                    onCollectKey={handleCollectKey}
-                    userRole="security"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
-    }
+      const outletContext = {
+    // Page props
+    setShowScanner,
+    searchQuery,
+    setSearchQuery,
+    selectedDepartment,
+    keys,
+    handleCollectKey,
+    handleDepartmentClick,
+    handleBackToListing,
+    unavailableKeys,
+    getAvailableKeys,
+    // Modals and handlers
+    showScanner,
+    scannerKey,
+    handleQRScan,
+    setShowScanResult,
+    setScannerKey,
   };
 
   return (
@@ -424,14 +356,14 @@ const SecurityDashboard = () => {
         </div>
       </div>
 
-      {/* Content */}
-      {renderTabContent()}
+                  {/* Render nested route content */}
+      <Outlet context={outletContext} />
 
       {/* Bottom Navigation */}
-      <BottomNavigation
+                  <BottomNavigation
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tabId) => navigate(`/dashboard/security/${tabId}`)}
       />
 
       {/* QR Scanner Modal */}
