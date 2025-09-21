@@ -56,7 +56,15 @@ export const useKeyStore = create((set, get) => ({
   // Get unavailable keys
   getUnavailableKeys: () => {
     const { keys } = get();
-    return keys.filter(key => key.status === "unavailable");
+    return keys
+      .filter(key => key.status === "unavailable")
+      .sort((a, b) => {
+        // Sort by takenAt in descending order (most recent first)
+        if (!a.takenAt && !b.takenAt) return 0;
+        if (!a.takenAt) return 1;
+        if (!b.takenAt) return -1;
+        return new Date(b.takenAt) - new Date(a.takenAt);
+      });
   },
 
   // Get keys taken by current user
@@ -476,7 +484,11 @@ export const useKeyStore = create((set, get) => ({
             break;
           }
           case 'return': {
-            handleSuccess(`Key ${data.key.keyNumber} has been returned`);
+            // Skip notification for regular returns to avoid duplicates with API calls
+            // Only show for manual/collective returns not triggered by QR
+            if (data.returnType === 'collective' || data.returnType === 'manual') {
+              handleSuccess(`Key ${data.key.keyNumber} has been returned`);
+            }
             break;
           }
           case 'qr-return': {
@@ -612,7 +624,7 @@ export const useKeyStore = create((set, get) => ({
   },
 
   // Return a key via API
-  returnKeyAPI: async (keyId) => {
+  returnKeyAPI: async (keyId, skipNotification = false) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -627,7 +639,12 @@ export const useKeyStore = create((set, get) => ({
       );
 
       set({ keys: updatedKeys, isLoading: false });
-      handleSuccess(response.data.message);
+      
+      // Only show notification if not skipped (e.g., when called from QR scan)
+      if (!skipNotification) {
+        handleSuccess(response.data.message);
+      }
+      
       return updatedKey;
     } catch (error) {
       console.error("Error returning key:", error);

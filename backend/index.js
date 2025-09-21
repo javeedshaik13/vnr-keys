@@ -69,7 +69,7 @@ const corsOptions = {
 	},
 	credentials: true, // This is crucial for cookies to work cross-origin
 	optionsSuccessStatus: 200,
-	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 	allowedHeaders: [
 		'Content-Type',
 		'Authorization',

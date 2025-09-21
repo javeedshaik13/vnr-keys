@@ -42,7 +42,7 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
   };
 
   const handleNotificationClick = (notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
       markAsRead(notification._id);
     }
   };
@@ -116,7 +116,7 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
-                          notification.isRead
+                          notification.read
                             ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800'
                             : 'bg-slate-800 border-slate-600 hover:bg-slate-700'
                         }`}
@@ -131,13 +131,13 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <h4 className={`font-medium mb-1 ${
-                              notification.isRead ? 'text-gray-300' : 'text-white'
+                              notification.read ? 'text-gray-300' : 'text-white'
                             }`}>
                               {notification.title}
                             </h4>
 
                             <p className={`text-sm mb-2 ${
-                              notification.isRead ? 'text-gray-400' : 'text-gray-300'
+                              notification.read ? 'text-gray-400' : 'text-gray-300'
                             }`}>
                               {notification.message}
                             </p>
@@ -148,7 +148,7 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                           </div>
 
                           {/* Unread Indicator */}
-                          {!notification.isRead && (
+                          {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                           )}
                         </div>

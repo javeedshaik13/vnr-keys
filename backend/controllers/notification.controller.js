@@ -14,15 +14,9 @@ import { Notification } from "../models/notification.model.js";
  * Get all notifications for the current user
  */
 export const getMyNotifications = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, isRead } = req.query;
   const userId = req.userId;
 
-  const options = {
-    limit: parseInt(limit),
-    isRead: isRead !== undefined ? isRead === 'true' : undefined
-  };
-
-  const notifications = await getUserNotifications(userId, options);
+  const notifications = await getUserNotifications(userId);
   const unreadCount = await getUnreadNotificationCount(userId);
 
   res.status(200).json({
@@ -30,12 +24,7 @@ export const getMyNotifications = asyncHandler(async (req, res) => {
     message: "Notifications retrieved successfully",
     data: {
       notifications,
-      unreadCount,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: notifications.length
-      }
+      unreadCount
     }
   });
 });
@@ -61,11 +50,15 @@ export const markAsRead = asyncHandler(async (req, res) => {
   const { notificationId } = req.params;
   const userId = req.userId;
 
+  console.log('Mark as read request:', { notificationId, userId });
+
   if (!notificationId) {
     throw new ValidationError("Notification ID is required");
   }
 
   const notification = await markNotificationAsRead(notificationId, userId);
+
+  console.log('Notification marked as read:', notification._id);
 
   res.status(200).json({
     success: true,
@@ -81,6 +74,8 @@ export const markAsUnread = asyncHandler(async (req, res) => {
   const { notificationId } = req.params;
   const userId = req.userId;
 
+  console.log('Mark as unread request:', { notificationId, userId });
+
   if (!notificationId) {
     throw new ValidationError("Notification ID is required");
   }
@@ -92,7 +87,7 @@ export const markAsUnread = asyncHandler(async (req, res) => {
       'recipient.userId': userId
     },
     {
-      isRead: false,
+      read: false,
       readAt: null
     },
     { new: true }
@@ -101,6 +96,8 @@ export const markAsUnread = asyncHandler(async (req, res) => {
   if (!notification) {
     throw new NotFoundError("Notification not found");
   }
+
+  console.log('Notification marked as unread:', notification._id);
 
   res.status(200).json({
     success: true,
@@ -147,11 +144,10 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
   const result = await Notification.updateMany(
     { 
       'recipient.userId': userId, 
-      isRead: false,
-      isActive: true 
+      read: false
     },
     { 
-      isRead: true, 
+      read: true, 
       readAt: new Date() 
     }
   );
@@ -162,36 +158,6 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
     data: { modifiedCount: result.modifiedCount }
   });
 });
-
-/**
- * Delete a notification (soft delete by marking as inactive)
- */
-export const deleteNotification = asyncHandler(async (req, res) => {
-  const { notificationId } = req.params;
-  const userId = req.userId;
-
-  if (!notificationId) {
-    throw new ValidationError("Notification ID is required");
-  }
-
-  const notification = await Notification.findOne({
-    _id: notificationId,
-    'recipient.userId': userId
-  });
-
-  if (!notification) {
-    throw new NotFoundError("Notification not found");
-  }
-
-  notification.isActive = false;
-  await notification.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Notification deleted successfully"
-  });
-});
-
 
 
 /**

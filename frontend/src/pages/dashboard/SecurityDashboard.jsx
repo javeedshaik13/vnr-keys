@@ -13,6 +13,7 @@ import DepartmentsSection from "../../components/keys/DepartmentsSection";
 import DepartmentView from "../../components/keys/DepartmentView";
 import { processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
+import { handleSuccess } from "../../utils/errorHandler";
 
 const SecurityDashboard = () => {
   const [activeTab, setActiveTab] = useState("scanner");
@@ -69,11 +70,11 @@ const SecurityDashboard = () => {
   const unavailableKeys = getUnavailableKeys();
 
   // Debug logging
-  console.log('🔍 SecurityDashboard render:', {
-    totalKeys: keys.length,
-    availableCount: availableKeys.length,
-    unavailableCount: unavailableKeys.length,
-  });
+  // console.log('🔍 SecurityDashboard render:', {
+  //   totalKeys: keys.length,
+  //   availableCount: availableKeys.length,
+  //   unavailableCount: unavailableKeys.length,
+  // });
 
   const handleDepartmentClick = (department) => {
     setSelectedDepartment(department);
@@ -270,9 +271,37 @@ const SecurityDashboard = () => {
 
   const handleCollectKey = async (keyId) => {
     try {
-      await returnKeyAPI(keyId);
+      // Skip API notification since we'll show our own
+      const updatedKey = await returnKeyAPI(keyId, true);
+      
+      // Show success toast notification
+      handleSuccess(`Key ${updatedKey.keyNumber} (${updatedKey.keyName}) collected successfully`);
     } catch (error) {
       console.error("Collect key error:", error);
+    }
+  };
+
+  const handleConfirmReturn = async () => {
+    if (!pendingReturnData) return;
+    
+    try {
+      // Perform the actual key return
+      const updatedKey = await returnKeyAPI(pendingReturnData.keyId, true);
+      
+      // Show success toast notification
+      handleSuccess(`Key ${pendingReturnData.keyNumber} (${pendingReturnData.keyName}) returned successfully`);
+      
+      // Close the confirmation modal
+      setShowReturnConfirmation(false);
+      setPendingReturnData(null);
+      
+      // Re-open scanner for next scan
+      setShowScanner(true);
+    } catch (error) {
+      console.error("Return key error:", error);
+      // Close modal even on error
+      setShowReturnConfirmation(false);
+      setPendingReturnData(null);
     }
   };
 
@@ -463,59 +492,47 @@ const SecurityDashboard = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`rounded-xl p-6 max-w-sm w-full ${(!scanResult.success || scanResult.type === 'error') ? 'bg-red-50' : 'bg-white'}`}
+            className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
             <div className="text-center">
-              {console.log('🔍 Scan Result Data:', scanResult)}
-              {console.log('🔍 Key Data:', scanResult.keyData)}
-              {console.log('🔍 Returned By:', scanResult.keyData?.returnedBy)}
-              {scanResult.type === 'rejected' ? (
-                <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              ) : (
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              )}
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Key {scanResult.keyData?.keyNumber || scanResult.key?.keyNumber || 'Unknown'}
+                Confirm Key Return
               </h3>
               <h4 className="text-lg font-semibold text-gray-700 mb-2">
-                ({scanResult.keyData?.keyName || scanResult.key?.keyName || 'Unknown Key'})
+                Key {pendingReturnData.keyNumber}
               </h4>
-
-              {/* User details section with dynamic text */}
-              {/* <div className="bg-gray-50 rounded-lg p-4 mb-4"> */}
-                {/* <p className="font-medium text-gray-900 mb-1">
-                  {scanResult.type === 'return' ? 'Returned By:' :
-                   scanResult.type === 'request' ? 'Collected By:' :
-                   'Processed By:'}
-                </p> */}
-                {/* <p className="text-gray-600">
-                  {scanResult.type === 'return' ?
-                    (scanResult.keyData?.returnedBy?.name || 'Unknown User') :
-                   scanResult.type === 'request' ?
-                    (scanResult.keyData?.takenBy?.name || scanResult.key?.takenBy?.name || 'Unknown User') :
-                   'Security Personnel'}
-                </p> */}
-                {/* <p className="text-gray-500 text-sm">
-                  {scanResult.type === 'return' ?
-                    (scanResult.keyData?.returnedBy?.email || 'N/A') :
-                   scanResult.type === 'request' ?
-                    (scanResult.keyData?.takenBy?.email || scanResult.key?.takenBy?.email || 'N/A') :
-                   'N/A'}
-                </p> */}
-                {/* <p className="text-gray-400 text-xs mt-1">
-                  {new Date().toLocaleString()}
-                </p> */}
-              {/* </div> */}
-
-              <p className="text-gray-600 mb-6">
-                {scanResult.message}    
+              <p className="text-gray-600 mb-2">
+                ({pendingReturnData.keyName})
               </p>
-              <button
-                onClick={handleCloseScanResult}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
-              >
-                Continue
-              </button>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="font-medium text-gray-900 mb-1">Returned By:</p>
+                <p className="text-gray-600">{pendingReturnData.userName}</p>
+                <p className="text-gray-500 text-sm">{pendingReturnData.userEmail}</p>
+                <p className="text-gray-400 text-xs mt-1">
+                  {new Date().toLocaleString()}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowReturnConfirmation(false);
+                    setPendingReturnData(null);
+                    setShowScanner(true);
+                  }}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmReturn}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Confirm Return
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>

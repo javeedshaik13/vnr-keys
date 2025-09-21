@@ -6,7 +6,6 @@ import {
   markAsUnread,
   markMultipleAsRead,
   markAllAsRead,
-  deleteNotification,
   triggerKeyReminders,
   getNotificationStats,
   cleanupNotifications,
@@ -33,8 +32,6 @@ router.patch("/:notificationId/read", markAsRead); // Mark specific notification
 router.patch("/:notificationId/unread", markAsUnread); // Mark specific notification as unread
 router.patch("/mark-all-read", markAllAsRead); // Mark all notifications as read
 
-// DELETE routes - accessible to all authenticated users
-router.delete("/:notificationId", deleteNotification); // Delete (deactivate) a notification
 
 // Admin-only routes
 router.post("/trigger-reminders", rolePermissions.adminOnly, triggerKeyReminders); // Manually trigger key reminders

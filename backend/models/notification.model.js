@@ -36,7 +36,7 @@ const notificationSchema = new mongoose.Schema(
       maxlength: 1000,
     },
 
-    isRead: {
+    read: {
       type: Boolean,
       default: false,
     },
@@ -64,21 +64,21 @@ const notificationSchema = new mongoose.Schema(
 // Indexes for better performance
 notificationSchema.index({ "recipient.userId": 1, createdAt: -1 });
 notificationSchema.index({ "recipient.role": 1 });
-notificationSchema.index({ isRead: 1 });
+notificationSchema.index({ read: 1 });
 notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-deletion
 
 
 
 // Method to mark notification as read
 notificationSchema.methods.markAsRead = function() {
-  this.isRead = true;
+  this.read = true;
   this.readAt = new Date();
   return this.save();
 };
 
 // Method to mark notification as unread
 notificationSchema.methods.markAsUnread = function() {
-  this.isRead = false;
+  this.read = false;
   this.readAt = null;
   return this.save();
 };
@@ -87,7 +87,7 @@ notificationSchema.methods.markAsUnread = function() {
 notificationSchema.statics.findUnreadForUser = function(userId) {
   return this.find({
     "recipient.userId": userId,
-    isRead: false
+    read: false
   }).sort({ createdAt: -1 });
 };
 
@@ -97,8 +97,8 @@ notificationSchema.statics.findForUser = function(userId, options = {}) {
     "recipient.userId": userId
   };
 
-  if (options.isRead !== undefined) {
-    query.isRead = options.isRead;
+  if (options.read !== undefined) {
+    query.read = options.read;
   }
 
   return this.find(query)
@@ -110,7 +110,7 @@ notificationSchema.statics.findForUser = function(userId, options = {}) {
 notificationSchema.statics.countUnreadForUser = function(userId) {
   return this.countDocuments({
     "recipient.userId": userId,
-    isRead: false
+    read: false
   });
 };
 
