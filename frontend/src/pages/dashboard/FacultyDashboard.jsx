@@ -17,6 +17,19 @@ const FacultyDashboard = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
     const validTabs = ['taken', 'keylist'];
+    
+    // Check localStorage first if we're on the root faculty path
+    if (location.pathname === '/dashboard/faculty') {
+      const lastRoute = localStorage.getItem('lastFacultyRoute');
+      if (lastRoute) {
+        const lastParts = lastRoute.split('/');
+        const lastTab = lastParts[lastParts.length - 1];
+        if (validTabs.includes(lastTab)) {
+          return lastTab;
+        }
+      }
+    }
+    
     if (validTabs.includes(lastPart)) {
       return lastPart;
     }
@@ -53,7 +66,10 @@ const FacultyDashboard = () => {
   }, [location.pathname]);
 
   const handleTabChange = (tabId) => {
-    navigate(`/dashboard/faculty/${tabId}`);
+    const newPath = tabId === "taken" ? "/dashboard/faculty" : `/dashboard/faculty/${tabId}`;
+    // Store the current route in localStorage
+    localStorage.setItem('lastFacultyRoute', newPath);
+    navigate(newPath);
     if (tabId === "taken" && user) {
       fetchTakenKeys(user.id).catch(console.error);
     }
@@ -64,8 +80,14 @@ const FacultyDashboard = () => {
       fetchKeys().catch(console.error);
       fetchTakenKeys(user.id).catch(console.error);
       fetchUserFrequentlyUsedKeys().catch(console.error);
+      
+      // Restore last visited route from localStorage if available
+      const lastRoute = localStorage.getItem('lastFacultyRoute');
+      if (lastRoute && location.pathname === '/dashboard/faculty') {
+        navigate(lastRoute);
+      }
     }
-  }, [user, fetchKeys, fetchTakenKeys, fetchUserFrequentlyUsedKeys]);
+  }, [user, fetchKeys, fetchTakenKeys, fetchUserFrequentlyUsedKeys, navigate, location.pathname]);
 
   const takenKeys = getTakenKeys(user?.id);
 

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom'; // Changed from Navigate to useNavigate
 
 const NotificationSlidePanel = ({ isOpen, onClose }) => {
   const {
@@ -19,13 +20,19 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
     fetchNotifications,
     markAsRead
   } = useNotificationStore();
-
+  const navigate = useNavigate(); // Changed from Navigate() to useNavigate()
+  
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
     }
   }, [isOpen, fetchNotifications]);
 
+  const handleNotificationClicks = () => {
+    navigate('/dashboard/notifications');
+    onClose(); // Optional: close the panel after navigation
+  }
+  
   const getNotificationIcon = (title) => {
     // Key-specific icon logic
     if (title.toLowerCase().includes('reminder')) {
@@ -163,17 +170,12 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1 }}
                         className="pt-2"
                       >
-                        <a
-                          href="/dashboard/notifications"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onClose();
-                            window.location.href = '/dashboard/notifications';
-                          }}
-                          className="block w-full text-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        <button 
+                          onClick={handleNotificationClicks}
+                          className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
                         >
                           See More ({notifications.length - 5} more)
-                        </a>
+                        </button>
                       </motion.div>
                     )}
                   </div>

@@ -32,6 +32,7 @@ import { useAuthStore } from "./store/authStore";
 import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
+import RouteObserver from "./components/RouteObserver";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -49,7 +50,7 @@ const ProtectedRoute = ({ children }) => {
 	return children;
 };
 
-// redirect authenticated users to the appropriate dashboard
+// redirect authenticated users to the appropriate dashboard or last visited route
 const RedirectAuthenticatedUser = ({ children }) => {
 	const { isAuthenticated, user, getRoleBasedRoute } = useAuthStore();
 
@@ -57,6 +58,12 @@ const RedirectAuthenticatedUser = ({ children }) => {
 		// Check if user needs to complete registration
 		if (user.role === 'pending' || (user.role === 'faculty' && (!user.department || !user.facultyId))) {
 			return <Navigate to='/complete-registration' replace />;
+		}
+
+		// Check for last visited route
+		const lastVisitedRoute = localStorage.getItem('lastVisitedRoute');
+		if (lastVisitedRoute) {
+			return <Navigate to={lastVisitedRoute} replace />;
 		}
 
 		const dashboardRoute = getRoleBasedRoute();
@@ -101,6 +108,7 @@ function App() {
 
 	return (
 		<div className='min-h-screen bg-gray-900 relative overflow-hidden'>
+			<RouteObserver />
 			<Routes>
 				{/* Role-based Dashboard Routes */}
 				<Route
