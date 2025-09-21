@@ -12,10 +12,10 @@ import { checkAndSendKeyReminders, cleanupExpiredNotifications } from './notific
 export const initializeScheduledJobs = () => {
   console.log('🕐 Initializing scheduled jobs...');
 
-  // Job 1: Daily key reminders at 5:00 PM (17:00)
-  // Cron expression: '0 17 * * *' means "at 17:00 (5 PM) every day"
-  const keyReminderJob = cron.schedule('0 17 * * *', async () => {
-    console.log('🔔 Running daily key reminder job at 5:00 PM...');
+  // Job 1: Daily key reminders at 5:20 PM (17:20)
+  // Cron expression: '20 17 * * *' means "at 17:20 (5:20 PM) every day"
+  const keyReminderJob = cron.schedule('20 17 * * *', async () => {
+    console.log('🔔 Running daily key reminder job at 5:20 PM...');
     try {
       const result = await checkAndSendKeyReminders();
       console.log(`✅ Key reminder job completed:`, result);
@@ -64,7 +64,7 @@ export const initializeScheduledJobs = () => {
   });
 
   console.log('✅ Scheduled jobs initialized:');
-  console.log('   📅 Daily key reminders: 5:00 PM IST');
+  console.log('   📅 Daily key reminders: 5:20 PM IST');
   console.log('   🧹 Daily cleanup: 12:00 AM IST');
   if (process.env.NODE_ENV === 'development') {
     console.log('   🧪 Test job: Every minute (dev only)');

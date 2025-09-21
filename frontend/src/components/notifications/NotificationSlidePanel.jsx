@@ -109,7 +109,8 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                   </div>
                 ) : (
                   <div className="p-4 space-y-3 pb-6">
-                    {notifications.map((notification, index) => (
+                    {/* Show only last 5 notifications */}
+                    {notifications.slice(0, 5).map((notification, index) => (
                       <motion.div
                         key={notification._id}
                         initial={{ opacity: 0, y: 20 }}
@@ -154,6 +155,27 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                         </div>
                       </motion.div>
                     ))}
+
+                    {/* See More button - only show if there are more than 5 notifications */}
+                    {notifications.length > 5 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="pt-2"
+                      >
+                        <a
+                          href="/dashboard/notifications"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onClose();
+                            window.location.href = '/dashboard/notifications';
+                          }}
+                          className="block w-full text-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        >
+                          See More ({notifications.length - 5} more)
+                        </a>
+                      </motion.div>
+                    )}
                   </div>
                 )}
               </AnimatePresence>

@@ -79,6 +79,102 @@ export const sendEmailNotification = async (notification) => {
 };
 
 /**
+ * Create notification when faculty takes a key
+ * @param {Object} key - The taken key
+ * @param {Object} faculty - The faculty who took the key
+ */
+export const createKeyTakenNotification = async (key, faculty) => {
+  try {
+    const notificationData = {
+      recipient: {
+        userId: faculty._id,
+        name: faculty.name,
+        email: faculty.email,
+        role: faculty.role,
+      },
+      title: 'Key Taken',
+      message: `You have taken the key for ${key.keyName}`,
+      type: 'key_taken',
+      priority: 'low',
+      metadata: {
+        keyId: key._id,
+        keyNumber: key.keyNumber,
+        keyName: key.keyName,
+      }
+    };
+
+    return await createAndSendNotification(notificationData, { email: false });
+  } catch (error) {
+    console.error("❌ Error creating key taken notification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create notification when faculty returns a key themselves
+ * @param {Object} key - The returned key
+ * @param {Object} faculty - The faculty who returned the key
+ */
+export const createKeySelfReturnedNotification = async (key, faculty) => {
+  try {
+    const notificationData = {
+      recipient: {
+        userId: faculty._id,
+        name: faculty.name,
+        email: faculty.email,
+        role: faculty.role,
+      },
+      title: 'Key Returned',
+      message: `You have returned key successfully ${key.keyName}`,
+      type: 'key_self_returned',
+      priority: 'low',
+      metadata: {
+        keyId: key._id,
+        keyNumber: key.keyNumber,
+        keyName: key.keyName,
+      }
+    };
+
+    return await createAndSendNotification(notificationData, { email: false });
+  } catch (error) {
+    console.error("❌ Error creating key self-returned notification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create notification for unreturned key after 5 PM
+ * @param {Object} key - The unreturned key
+ * @param {Object} faculty - The faculty who has the key
+ */
+export const createKeyPendingReturnNotification = async (key, faculty) => {
+  try {
+    const notificationData = {
+      recipient: {
+        userId: faculty._id,
+        name: faculty.name,
+        email: faculty.email,
+        role: faculty.role,
+      },
+      title: 'Key Return Pending',
+      message: `You have not returned the key ${key.keyName} yet make sure inform to security office.`,
+      type: 'key_pending_return',
+      priority: 'high',
+      metadata: {
+        keyId: key._id,
+        keyNumber: key.keyNumber,
+        keyName: key.keyName,
+      }
+    };
+
+    return await createAndSendNotification(notificationData, { email: true });
+  } catch (error) {
+    console.error("❌ Error creating key pending return notification:", error);
+    throw error;
+  }
+};
+
+/**
  * Create and send a complete notification (in-app + real-time + email)
  * @param {Object} notificationData - The notification data
  * @param {Object} options - Delivery options
@@ -272,9 +368,11 @@ export const checkAndSendKeyReminders = async () => {
     for (const [userId, data] of Object.entries(keysByFaculty)) {
       const { user, keys } = data;
       
-      // Send reminder to faculty
-      await createKeyReminderNotification(user, keys);
-      facultyNotificationCount++;
+      // Send individual pending return notifications for each key
+      for (const key of keys) {
+        await createKeyPendingReturnNotification(key, user);
+        facultyNotificationCount++;
+      }
       
       // Send alert to security
       const securityNotifications = await createSecurityAlertNotification(user, keys);

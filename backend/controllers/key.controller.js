@@ -264,6 +264,14 @@ export const takeKey = asyncHandler(async (req, res) => {
   // Log the take operation
   await AuditService.logKeyTaken(key, user, req);
 
+  // Create notification for key taken
+  try {
+    const { createKeyTakenNotification } = await import('../services/notificationService.js');
+    await createKeyTakenNotification(key, user);
+  } catch (notificationError) {
+    console.error('❌ Error sending key taken notification:', notificationError);
+  }
+
   // Increment usage count for the user
   if (!user.keyUsage) {
     user.keyUsage = new Map();
@@ -312,14 +320,21 @@ export const returnKey = asyncHandler(async (req, res) => {
 
   await key.returnKey();
 
-  // Send notification if key was returned by someone other than the original taker
-  if (originalUser && returnedBy && originalUser._id.toString() !== returnedBy._id.toString()) {
-    try {
-      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
-      await createKeyReturnedNotification(key, originalUser, returnedBy);
-    } catch (notificationError) {
-      console.error('❌ Error sending key return notification:', notificationError);
+  // Create notifications
+  try {
+    const { createKeyReturnedNotification, createKeySelfReturnedNotification } = await import('../services/notificationService.js');
+    
+    if (originalUser && returnedBy) {
+      if (originalUser._id.toString() === returnedBy._id.toString()) {
+        // Key returned by original taker
+        await createKeySelfReturnedNotification(key, originalUser);
+      } else {
+        // Key returned by someone else
+        await createKeyReturnedNotification(key, originalUser, returnedBy);
+      }
     }
+  } catch (notificationError) {
+    console.error('❌ Error sending key return notification:', notificationError);
   }
 
   // Log the return operation
