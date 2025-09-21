@@ -61,7 +61,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const collectiveKeyReturnItem = {
     icon: KeyRound,
     label: "Collective Key Return",
-    path: "/dashboard"
+    path: "/dashboard/collective-return"
   };
 
   // Slide variants (same for mobile/desktop; desktop typically kept open by parent)
@@ -170,8 +170,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                           `flex items-center space-x-3 p-3 rounded-2xl transition-all duration-300 border border-gray-700 text-gray-300
                           ${
                             isActive
-                              ? "text-white border-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.7)]"
-                              : "hover:text-white hover:border-orange-400 hover:shadow-[0_0_15px_rgba(251,146,60,0.5)]"
+                              ? "text-white border-blue-400 bg-blue-500/10"
+                              : "hover:text-white hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                           }`
                         }
                       >

@@ -92,13 +92,13 @@ const SecurityDashboard = () => {
     },
     {
       id: "available",
-      label: "Available Keys",
+      label: "Available",
       icon: <Key className="w-6 h-6" />,
       badge: availableKeys.length,
     },
     {
       id: "unavailable",
-      label: "Unavailable Keys",
+      label: "Unavailable",
       icon: <KeyRound className="w-6 h-6" />,
       badge: unavailableKeys.length,
     },
