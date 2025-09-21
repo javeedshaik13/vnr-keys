@@ -3,13 +3,29 @@ import { motion } from "framer-motion";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import NotificationBell from "../notifications/NotificationBell";
+import { useState, useEffect, useRef } from 'react';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuthStore();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     logout();
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   return (
     <>
@@ -54,8 +70,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             <NotificationBell />
 
             {/* User dropdown */}
-            <div className="relative group">
-              <button className="flex items-center space-x-2 p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200">
+            <div className="relative" ref={dropdownRef}>
+              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center space-x-2 p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <User size={16} className="text-white" />
                 </div>
@@ -65,7 +81,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               </button>
 
               {/* Dropdown menu */}
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className={`absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 transition-all duration-200 z-50 ${isDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
                 <div className="p-3 border-b border-gray-700">
                   <p className="text-sm font-medium text-white">{user?.name}</p>
                   <p className="text-xs text-gray-400">{user?.email}</p>
