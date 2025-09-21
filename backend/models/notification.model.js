@@ -36,6 +36,18 @@ const notificationSchema = new mongoose.Schema(
       maxlength: 1000,
     },
 
+    type: {
+      type: String,
+      enum: ["key_reminder", "key_returned", "security_alert", "system", "general"],
+      default: "general",
+    },
+
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high", "urgent"],
+      default: "medium",
+    },
+
     read: {
       type: Boolean,
       default: false,
@@ -44,15 +56,25 @@ const notificationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    // Auto-delete after 1 day
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Auto-delete after 7 days (extended from 1 day)
     expiresAt: {
       type: Date,
       default: function() {
-        return new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day from now
+        return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
       }
     },
 
-
+    // Additional metadata
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
 
   },
   { 
@@ -87,14 +109,16 @@ notificationSchema.methods.markAsUnread = function() {
 notificationSchema.statics.findUnreadForUser = function(userId) {
   return this.find({
     "recipient.userId": userId,
-    read: false
+    read: false,
+    isActive: true
   }).sort({ createdAt: -1 });
 };
 
 // Static method to find all notifications for a user
 notificationSchema.statics.findForUser = function(userId, options = {}) {
   const query = {
-    "recipient.userId": userId
+    "recipient.userId": userId,
+    isActive: true
   };
 
   if (options.read !== undefined) {
@@ -110,8 +134,28 @@ notificationSchema.statics.findForUser = function(userId, options = {}) {
 notificationSchema.statics.countUnreadForUser = function(userId) {
   return this.countDocuments({
     "recipient.userId": userId,
-    read: false
+    read: false,
+    isActive: true
   });
+};
+
+// Static method to clean up expired notifications
+notificationSchema.statics.cleanupExpired = function() {
+  return this.deleteMany({
+    $or: [
+      { expiresAt: { $lt: new Date() } },
+      { isActive: false }
+    ]
+  });
+};
+
+// Static method to deactivate notification instead of deleting
+notificationSchema.statics.deactivateNotification = function(notificationId) {
+  return this.findByIdAndUpdate(
+    notificationId,
+    { isActive: false },
+    { new: true }
+  );
 };
 
 

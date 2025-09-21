@@ -283,35 +283,39 @@ const KeyCard = ({
 
       {/* QR Modal */}
       {showQRModal && (localQRData || qrData) && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-900/95 rounded-2xl p-6 max-w-sm w-full border border-blue-500/40 shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+            className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
-            <h3 className="text-xl font-bold text-blue-400 mb-4 text-center">
-              Return Key {keyData.keyName}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 m-auto">
+                Return Key {keyData.keyNumber ? `#${keyData.keyNumber}` : keyData.keyName}
+              </h3>
+              <button
+                onClick={() => { setShowQRModal(false); setQrCollected(false); }}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+              ></button>
+            </div>
 
             {/* QR */}
             <div className="flex justify-center mb-4">
               <QRCode
                 value={JSON.stringify(localQRData || qrData)}
                 size={200}
-                bgColor="#0f172a"
-                fgColor="#ffffff"   // 🔵 white QR code here too
               />
             </div>
 
             {/* Instructions */}
-            <p className="text-center text-sm text-blue-200 mb-2">
+            <p className="text-gray-600 text-center mb-2">
               Show this QR code to security to return the key
             </p>
 
             {/* Expiry Timer */}
             <p
               className={`text-center mb-4 text-sm font-bold ${
-                qrExpired ? "text-red-500" : "text-blue-300"
+                qrExpired ? "text-red-600" : "text-gray-900"
               }`}
             >
               {qrExpired
@@ -348,7 +352,7 @@ const KeyCard = ({
                     setLocalQRData(null);
                     setQrCollected(false);
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
                 >
                   Close
                 </button>
@@ -360,9 +364,9 @@ const KeyCard = ({
                   setLocalQRData(null);
                   setQrCollected(false);
                 }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                {qrCollected ? 'Done' : 'Close'}
+                Close
               </button>
             )}
           </motion.div>

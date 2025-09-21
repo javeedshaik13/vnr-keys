@@ -40,10 +40,10 @@ export const getApiUrl = () => {
   }
 
   // Debug logging in development
-  if (env === 'local' || import.meta.env.DEV) {
-    console.log(`🔧 CONFIG: Environment = ${env}`);
-    console.log(`🔧 CONFIG: API URL = ${apiUrl}`);
-  }
+  // if (env === 'local' || import.meta.env.DEV) {
+  //   console.log(`🔧 CONFIG: Environment = ${env}`);
+  //   console.log(`🔧 CONFIG: API URL = ${apiUrl}`);
+  // }
 
   return apiUrl;
 };

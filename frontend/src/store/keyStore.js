@@ -56,23 +56,15 @@ export const useKeyStore = create((set, get) => ({
   // Get unavailable keys
   getUnavailableKeys: () => {
     const { keys } = get();
-    return keys
-      .filter(key => key.status === "unavailable")
-      .sort((a, b) => {
-        // Sort by takenAt in descending order (most recent first)
-        if (!a.takenAt && !b.takenAt) return 0;
-        if (!a.takenAt) return 1;
-        if (!b.takenAt) return -1;
-        return new Date(b.takenAt) - new Date(a.takenAt);
-      });
+    return keys.filter(key => key.status === "unavailable");
   },
 
   // Get keys taken by current user
   getTakenKeys: (userId) => {
     const { takenKeys, keys } = get();
-    console.log('🔍 getTakenKeys called with userId:', userId);
-    console.log('🔍 Taken keys from separate state:', takenKeys.length);
-    console.log('🔍 Total keys in main array:', keys.length);
+    // console.log('🔍 getTakenKeys called with userId:', userId);
+    // console.log('🔍 Taken keys from separate state:', takenKeys.length);
+    // console.log('🔍 Total keys in main array:', keys.length);
     
     if (!userId) {
       console.log('❌ getTakenKeys: No userId provided');
@@ -102,7 +94,7 @@ export const useKeyStore = create((set, get) => ({
       }
       
       const keyUserId = key.takenBy.id;
-      console.log(`🔍 Key ${key.keyNumber}: takenBy.id=${keyUserId}, type=${typeof keyUserId}`);
+      // console.log(`🔍 Key ${key.keyNumber}: takenBy.id=${keyUserId}, type=${typeof keyUserId}`);
       
       // Try exact string match first
       if (String(keyUserId) === userIdStr) {
@@ -131,13 +123,13 @@ export const useKeyStore = create((set, get) => ({
       return false;
     });
     
-    console.log('🔍 getTakenKeys fallback result:', filteredTakenKeys.length, 'keys found');
+    // console.log('🔍 getTakenKeys fallback result:', filteredTakenKeys.length, 'keys found');
     return filteredTakenKeys;
   },
 
   // Fetch keys taken by current user from API
   fetchTakenKeys: async (userId) => {
-    console.log('🚀 fetchTakenKeys called with userId:', userId);
+    // console.log('🚀 fetchTakenKeys called with userId:', userId);
     if (!userId) {
       console.log('❌ fetchTakenKeys: No userId provided');
       return [];
@@ -146,21 +138,21 @@ export const useKeyStore = create((set, get) => ({
     set({ isLoadingTakenKeys: true, error: null });
 
     try {
-      console.log('🌐 fetchTakenKeys: Making API request to:', `${API_URL}/my-taken`);
+      // console.log('🌐 fetchTakenKeys: Making API request to:', `${API_URL}/my-taken`);
       const response = await axios.get(`${API_URL}/my-taken`, {
         withCredentials: true,
       });
 
-      console.log('✅ fetchTakenKeys: API response received:', response.data);
+      // console.log('✅ fetchTakenKeys: API response received:', response.data);
       const backendKeys = response.data.data.keys || [];
-      console.log('🔑 fetchTakenKeys: Backend keys count:', backendKeys.length);
+      // console.log('🔑 fetchTakenKeys: Backend keys count:', backendKeys.length);
       
       const takenKeys = backendKeys.map(transformKeyData);
-      console.log('🔑 fetchTakenKeys: Transformed keys count:', takenKeys.length);
+      // console.log('🔑 fetchTakenKeys: Transformed keys count:', takenKeys.length);
 
       // Store taken keys in separate state
       set({ takenKeys, isLoadingTakenKeys: false });
-      console.log('✅ fetchTakenKeys: Taken keys stored in separate state');
+      // console.log('✅ fetchTakenKeys: Taken keys stored in separate state');
 
       // Also update the main keys array with the taken keys
       const { keys } = get();
@@ -176,7 +168,7 @@ export const useKeyStore = create((set, get) => ({
       });
 
       set({ keys: updatedKeys });
-      console.log('✅ fetchTakenKeys: Main keys array also updated');
+      // console.log('✅ fetchTakenKeys: Main keys array also updated');
       return takenKeys;
     } catch (error) {
       console.error("❌ fetchTakenKeys: API error:", error);

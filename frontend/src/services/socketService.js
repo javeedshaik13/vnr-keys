@@ -52,6 +52,12 @@ class SocketService {
 
       // Join the keys updates room
       this.socket.emit('join-user-room', this.getCurrentUserId());
+      
+      // Join role-based room for notifications
+      const userRole = this.getCurrentUserRole();
+      if (userRole) {
+        this.socket.emit('join-role-room', userRole);
+      }
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -106,31 +112,29 @@ class SocketService {
   }
 
   /**
-   * Get current user ID from auth store or localStorage
+   * Get current user ID from auth store
    */
   getCurrentUserId() {
-    // Prefer live Zustand store (reliable during active session)
     try {
-      const userFromStore = useAuthStore.getState()?.user;
-      if (userFromStore?.id) {
-        return userFromStore.id;
-      }
+      const { user } = useAuthStore.getState();
+      return user?.id || null;
     } catch (error) {
-      // ignore
+      console.warn('Could not get current user ID:', error);
+      return null;
     }
+  }
 
-    // Fallback: try persisted state if any
+  /**
+   * Get current user role from auth store
+   */
+  getCurrentUserRole() {
     try {
-      const authStore = JSON.parse(localStorage.getItem('auth-store') || '{}');
-      if (authStore.state?.user?.id) {
-        return authStore.state.user.id;
-      }
-    } catch (_) {
-      // intentionally ignore errors when reading localStorage
+      const { user } = useAuthStore.getState();
+      return user?.role || null;
+    } catch (error) {
+      console.warn('Could not get current user role:', error);
+      return null;
     }
-
-    // Last resort
-    return 'anonymous-' + Date.now();
   }
 
   /**

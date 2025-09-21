@@ -124,7 +124,14 @@ export const createKeyReminderNotification = async (user, unreturnedKeys) => {
         role: user.role,
       },
       title: `Key Return Reminder - ${keyCount} Key${keyCount > 1 ? 's' : ''} Pending`,
-      message: `You have ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please return ${keyCount > 1 ? 'them' : 'it'} as soon as possible.`
+      message: `You have ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please return ${keyCount > 1 ? 'them' : 'it'} as soon as possible.`,
+      type: 'key_reminder',
+      priority: 'high',
+      metadata: {
+        keyCount,
+        keyIds: unreturnedKeys.map(key => key._id),
+        reminderType: 'daily_5pm'
+      }
     };
     
     return await createAndSendNotification(notificationData, { email: true });
@@ -163,7 +170,15 @@ export const createSecurityAlertNotification = async (facultyUser, unreturnedKey
           role: securityUser.role,
         },
         title: `Unreturned Keys Alert`,
-        message: `Faculty ${facultyUser.name} has ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please follow up for key return.`
+        message: `Faculty ${facultyUser.name} has ${keyCount} unreturned key${keyCount > 1 ? 's' : ''}: ${keyList}. Please follow up for key return.`,
+        type: 'security_alert',
+        priority: 'medium',
+        metadata: {
+          facultyId: facultyUser._id,
+          facultyName: facultyUser.name,
+          keyCount,
+          keyIds: unreturnedKeys.map(key => key._id)
+        }
       };
 
       // Create notification but do NOT send email to security (email: false)
@@ -197,7 +212,16 @@ export const createKeyReturnedNotification = async (key, originalFaculty, return
         role: originalFaculty.role,
       },
       title: `Key Returned`,
-      message: `Key ${key.keyNumber} (${key.keyName}) that was assigned to you has been returned by ${returnedBy.name}.`
+      message: `Key ${key.keyNumber} (${key.keyName}) that was assigned to you has been returned by ${returnedBy.name}.`,
+      type: 'key_returned',
+      priority: 'low',
+      metadata: {
+        keyId: key._id,
+        keyNumber: key.keyNumber,
+        keyName: key.keyName,
+        returnedById: returnedBy._id,
+        returnedByName: returnedBy.name
+      }
     };
 
     return await createAndSendNotification(notificationData, { email: false });
