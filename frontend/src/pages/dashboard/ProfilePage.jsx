@@ -1,67 +1,43 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { formatDate } from "../../utils/date";
-import { User, Calendar, Edit3, Save, X, Camera } from "lucide-react";
+import { User, Calendar, Camera } from "lucide-react";
 import { useSidebar } from "../../components/layout/DashboardLayout";
 
 const ProfilePage = () => {
-  const { user, updateProfile, isLoading } = useAuthStore();
+  const { user } = useAuthStore();
   const { sidebarOpen } = useSidebar();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    department: user?.department || "",
-    facultyId: user?.facultyId || "",
-    bio: user?.bio || "",
-    location: user?.location || "",
-    website: user?.website || "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await updateProfile(formData);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Profile update failed:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setFormData({
-      name: user?.name || "",
-      email: user?.email || "",
-      department: user?.department || "",
-      facultyId: user?.facultyId || "",
-      bio: user?.bio || "",
-      location: user?.location || "",
-      website: user?.website || "",
-    });
-    setIsEditing(false);
-  };
 
   return (
-  <div className={`space-y-6 ${sidebarOpen ? "p-4 lg:p-6" : "p-4 lg:p-8 xl:px-12"}`} style={{background: "radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)"}}>
+    <div
+      className={`space-y-6 ${sidebarOpen ? "p-4 lg:p-6" : "p-4 lg:p-8 xl:px-12"}`}
+      style={{
+        background:
+          "radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%)",
+      }}
+    >
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+      >
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 text-transparent bg-clip-text mb-2">
           Profile Settings
         </h1>
-        <p className="text-gray-300">Manage your account information and preferences</p>
+        <p className="text-gray-300">
+          Manage your account information and preferences
+        </p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-1">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-1"
+        >
           <div className="bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
             <div className="text-center">
               {/* Profile Picture */}
@@ -79,18 +55,14 @@ const ProfilePage = () => {
               {user?.role === "faculty" && (
                 <>
                   <p className="text-blue-400 font-medium mb-1">
-                    {user?.department === "CSE-AIML"
-                      ? "CSE - AI & ML"
-                      : user?.department === "CSE-DS"
-                      ? "CSE - Data Science"
-                      : user?.department || "Department"}
+                    {user?.department}
                   </p>
-                  <p className="text-gray-500 text-sm mb-4">Faculty ID: {user?.facultyId}</p>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Faculty ID: {user?.facultyId}
+                  </p>
                 </>
               )}
               {user?.role !== "faculty" && <div className="mb-4"></div>}
-
-
 
               {/* Account Info */}
               <div className="space-y-3 text-left">
@@ -115,125 +87,44 @@ const ProfilePage = () => {
           </div>
         </motion.div>
 
-        {/* Profile Form */}
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
+        {/* Profile Info (Read-only) */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="lg:col-span-2"
+        >
           <div className="bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Personal Information</h2>
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg hover:from-blue-600 hover:to-cyan-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-200"
-                >
-                  <Edit3 size={16} />
-                  <span>Edit Profile</span>
-                </button>
-              ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 text-white rounded-lg hover:from-blue-600 hover:to-cyan-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save size={16} />
-                        <span>Save</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all duration-200"
-                  >
-                    <X size={16} />
-                    <span>Cancel</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <h2 className="text-xl font-bold text-white mb-6">Personal Information</h2>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                  <p className="text-sm font-medium text-gray-300 mb-1">Full Name</p>
+                  <p className="text-white bg-gray-800/50 p-3 rounded-lg border border-gray-700">{user?.name}</p>
                 </div>
-
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                  <p className="text-sm font-medium text-gray-300 mb-1">Email Address</p>
+                  <p className="text-white bg-gray-800/50 p-3 rounded-lg border border-gray-700">{user?.email}</p>
                 </div>
               </div>
 
               {user?.role === "faculty" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-300 mb-2">
-                      Department
-                    </label>
-                    <select
-                      id="department"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select Department</option>
-                      <option value="CSE">Computer Science Engineering</option>
-                      <option value="CSE-AIML">CSE - Artificial Intelligence & Machine Learning</option>
-                      <option value="CSE-DS">CSE - Data Science</option>
-                    </select>
+                    <p className="text-sm font-medium text-gray-300 mb-1">Department</p>
+                    <p className="text-white bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                      {user?.department}
+                    </p>
                   </div>
-
                   <div>
-                    <label htmlFor="facultyId" className="block text-sm font-medium text-gray-300 mb-2">
-                      Faculty ID
-                    </label>
-                    <input
-                      type="text"
-                      id="facultyId"
-                      name="facultyId"
-                      value={formData.facultyId}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      placeholder="Enter your faculty ID"
-                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
+                    <p className="text-sm font-medium text-gray-300 mb-1">Faculty ID</p>
+                    <p className="text-white bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                      {user?.facultyId}
+                    </p>
                   </div>
                 </div>
-                
-                
               )}
-
-
-            </form>
+            </div>
           </div>
         </motion.div>
       </div>

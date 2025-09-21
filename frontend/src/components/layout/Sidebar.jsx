@@ -61,7 +61,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const collectiveKeyReturnItem = {
     icon: KeyRound,
     label: "Collective Key Return",
-    path: "/dashboard/collective-return"
+    path: "/dashboard"
   };
 
   // Slide variants (same for mobile/desktop; desktop typically kept open by parent)
