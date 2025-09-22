@@ -57,10 +57,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { icon: BarChart3, label: "View Reports", path: "/dashboard/admin/reports" },
   ];
 
-  // Collective Key Return menu item for Security and Faculty
+  // Volunteer Key Return menu item for Security and Faculty
   const collectiveKeyReturnItem = {
     icon: KeyRound,
-    label: "Collective Key Return",
+    label: "Volunteer Key Return",
     path: "/dashboard/collective-return"
   };
 
@@ -155,8 +155,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                     </motion.li>
                   ))}
 
-                  {/* Collective Key Return - visible to Security and Faculty */}
-                  {(user?.role === "security" || user?.role === "faculty") && (
+                  {/* Volunteer Key Return - visible to Faculty */}
+                  {(user?.role === "faculty") && (
                     <motion.li
                       key={collectiveKeyReturnItem.path}
                       initial={{ opacity: 0, x: -20 }}

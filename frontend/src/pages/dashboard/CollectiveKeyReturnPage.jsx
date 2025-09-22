@@ -90,7 +90,7 @@ const CollectiveKeyReturnPage = () => {
     setIsReturning(true);
     try {
       const returnPromises = selectedKeys.map(keyId =>
-        collectiveReturnKeyAPI(keyId, returnReason || 'Collective key return')
+        collectiveReturnKeyAPI(keyId, returnReason || 'Volunteer Key Return')
       );
 
       await Promise.all(returnPromises);
@@ -170,7 +170,7 @@ const CollectiveKeyReturnPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              Collective Key Return
+              Volunteer Key Return
             </h1>
             <p className="text-gray-400">
               Return keys on behalf of other users. Available to Security and Faculty.

@@ -211,7 +211,7 @@ function App() {
 						<Route path="taken" element={<MyKeysPage />} />
 						<Route path="keylist" element={<AllKeysPage />} />
 					</Route>
-					{/* Collective Key Return - accessible to Security and Faculty */}
+					{/* Volunteer Key Return - accessible to Security and Faculty */}
 					<Route
 						path='collective-return'
 						element={
