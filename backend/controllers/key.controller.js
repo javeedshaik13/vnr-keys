@@ -264,6 +264,17 @@ export const takeKey = asyncHandler(async (req, res) => {
   // Log the take operation
   await AuditService.logKeyTaken(key, user, req);
 
+  // Create a logbook entry
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    ...key.toObject(),
+    _id: undefined,
+    recordedBy: {
+      userId: user._id,
+      role: user.role
+    }
+  });
+
   // Create notification for key taken
   try {
     const { createKeyTakenNotification } = await import('../services/notificationService.js');
@@ -339,6 +350,17 @@ export const returnKey = asyncHandler(async (req, res) => {
 
   // Log the return operation
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser);
+
+  // Create a logbook entry
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    ...key.toObject(),
+    _id: undefined,
+    recordedBy: {
+      userId: returnedBy._id,
+      role: returnedBy.role
+    }
+  });
 
   // Emit real-time update
   emitKeyReturned(key, req.userId);

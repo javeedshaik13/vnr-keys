@@ -87,7 +87,7 @@ const keySchema = new mongoose.Schema(
       default: true,
     },
   },
-  { 
+  {
     timestamps: true,
     collection: "vnrkeys" // Explicitly specify the collection name
   }

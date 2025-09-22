@@ -28,6 +28,7 @@ import apiKeyRoutes from "./routes/apiKey.route.js";
 import auditRoutes from "./routes/audit.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
+import logbookRoutes from "./routes/logbook.route.js"
 
 const app = express();
 const server = createServer(app);
@@ -130,7 +131,8 @@ app.get("/", (req, res) => {
 			dashboard: "/api/dashboard",
 			keys: "/api/keys",
 			apiKeys: "/api/api-keys",
-			audit: "/api/audit"
+			audit: "/api/audit",
+			logbook: "/api/logbook"
 		}
 	});
 });
@@ -141,7 +143,8 @@ app.use("/api/keys", keyRoutes);
 app.use("/api/api-keys", apiKeyRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/about",about);
+app.use("/api/about", about);
+app.use("/api/logbook", logbookRoutes);
 
 // For local development - handle /be prefix routes to match Google OAuth redirect URIs
 if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local') {
