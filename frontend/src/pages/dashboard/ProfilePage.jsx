@@ -66,7 +66,7 @@ const ProfilePage = () => {
 
               {/* Account Info */}
               <div className="space-y-3 text-left">
-                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-200">
+                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg ">
                   <Calendar size={16} className="text-blue-400" />
                   <div>
                     <p className="text-gray-400 text-xs">Member since</p>
@@ -75,7 +75,7 @@ const ProfilePage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-200">
+                <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg ">
                   <User size={16} className="text-blue-400" />
                   <div>
                     <p className="text-gray-400 text-xs">Last login</p>
