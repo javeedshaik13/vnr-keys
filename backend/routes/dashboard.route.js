@@ -13,7 +13,9 @@ import {
 	getSystemReports,
 	getKeyUsageAnalytics,
 	getActiveUsersAnalytics,
-	getPeakUsageAnalytics
+	getDailyActiveUsersAnalytics,
+	getPeakUsageAnalytics,
+	getRecentKeyActivity
 } from "../controllers/dashboard.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { rolePermissions } from "../middleware/roleAuth.js";
@@ -44,7 +46,9 @@ router.get("/reports", rolePermissions.adminOnly, getSystemReports);
 // Admin-only analytics endpoints
 router.get("/analytics/key-usage", rolePermissions.adminOnly, getKeyUsageAnalytics);
 router.get("/analytics/active-users", rolePermissions.adminOnly, getActiveUsersAnalytics);
+router.get("/analytics/daily-active-users", rolePermissions.adminOnly, getDailyActiveUsersAnalytics);
 router.get("/analytics/peak-usage", rolePermissions.adminOnly, getPeakUsageAnalytics);
+router.get("/analytics/recent-activity", rolePermissions.adminOnly, getRecentKeyActivity);
 
 // General user profile endpoint (accessible to all authenticated users)
 router.get("/profile", getUserProfile);

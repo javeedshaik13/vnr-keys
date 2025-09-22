@@ -32,7 +32,8 @@ const AdminDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState({
     keyUsage: null,
     activeUsers: null,
-    peakUsage: null
+    peakUsage: null,
+    recentActivity: null
   });
   const [filters, setFilters] = useState({
     timeRange: '7d',
@@ -61,17 +62,21 @@ const AdminDashboard = () => {
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
-      const [keyUsageRes, activeUsersRes, peakUsageRes] = await Promise.all([
+      const [keyUsageRes, activeUsersRes, peakUsageRes, recentActivityRes] = await Promise.all([
         axios.get(`${config.api.baseUrl}/dashboard/analytics/key-usage`, {
           params: { timeRange: filters.timeRange, department: filters.department },
           withCredentials: true
         }),
-        axios.get(`${config.api.baseUrl}/dashboard/analytics/active-users`, {
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/daily-active-users`, {
           params: { timeRange: filters.timeRange, role: filters.role, department: filters.department },
           withCredentials: true
         }),
         axios.get(`${config.api.baseUrl}/dashboard/analytics/peak-usage`, {
           params: { timeRange: filters.timeRange, department: filters.department },
+          withCredentials: true
+        }),
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/recent-activity`, {
+          params: { timeRange: filters.timeRange, department: filters.department, role: filters.role },
           withCredentials: true
         })
       ]);
@@ -79,7 +84,8 @@ const AdminDashboard = () => {
       setAnalyticsData({
         keyUsage: keyUsageRes.data.data,
         activeUsers: activeUsersRes.data.data,
-        peakUsage: peakUsageRes.data.data
+        peakUsage: peakUsageRes.data.data,
+        recentActivity: recentActivityRes.data.data
       });
     } catch (error) {
       console.error("Failed to load analytics data:", error);
@@ -157,8 +163,8 @@ const AdminDashboard = () => {
   ];
 
   const roleDistribution = [
-    { role: "Security", count: adminStats.usersByRole.operator || 0, color: "bg-blue-500" },
-    { role: "Faculty", count: adminStats.usersByRole.responder || 0, color: "bg-green-500" },
+    { role: "Security", count: adminStats.usersByRole.security || 0, color: "bg-blue-500" },
+    { role: "Faculty", count: adminStats.usersByRole.faculty || 0, color: "bg-green-500" },
     { role: "Admins", count: adminStats.usersByRole.admin || 0, color: "bg-purple-500" },
   ];
 
@@ -322,6 +328,9 @@ const AdminDashboard = () => {
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <Users className="h-5 w-5 mr-2 text-green-400" />
             Active Users
+            {analyticsData?.activeUsers?.dailyReset && (
+              <span className="ml-2 text-xs text-green-400">(Daily Reset)</span>
+            )}
           </h3>
           {analyticsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -409,7 +418,7 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
 
-        {/* Recent Users */}
+        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -418,32 +427,54 @@ const AdminDashboard = () => {
         >
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <Activity className="h-5 w-5 mr-2 text-blue-400" />
-            Recent Users
+            Recent Activity
+            <span className="ml-2 text-xs text-gray-400">
+              ({filters.timeRange === '1d' ? 'Today' : 
+                filters.timeRange === '7d' ? 'Last 7 Days' : 
+                filters.timeRange === '30d' ? 'Last 30 Days' : 'Last 90 Days'})
+            </span>
           </h3>
           <div className="space-y-3">
-            {dashboardData?.recentUsers?.slice(0, 5).map((recentUser) => (
-              <div key={recentUser.id} className="flex items-center justify-between py-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white text-sm font-semibold">
-                      {recentUser.name.charAt(0).toUpperCase()}
+            {analyticsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              analyticsData?.recentActivity?.activities?.slice(0, 5).map((activity) => (
+                <div key={activity.id} className="flex items-center justify-between py-2">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                      <Key className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-medium">
+                        {activity.keyNumber} - {activity.keyName}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {activity.action === 'taken' ? 'Taken by' : 'Returned by'} {activity.user?.name} • {activity.department}
+                        {activity.user?.role && ` • ${activity.user.role}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-500">
+                      {new Date(activity.takenAt).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-medium">{recentUser.name}</p>
-                    <p className="text-gray-400 text-xs">{recentUser.role}</p>
-                  </div>
                 </div>
-                <div className="flex items-center">
-                  {recentUser.isVerified ? (
-                    <UserCheck className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <UserX className="h-4 w-4 text-orange-500" />
-                  )}
-                </div>
-              </div>
-            )) || (
-              <p className="text-gray-400 text-center py-4">No recent users</p>
+              )) || (
+                <p className="text-gray-400 text-center py-4">
+                  No recent activity found
+                  {(filters.department !== 'all' || filters.role !== 'all') && 
+                    <span className="block text-xs mt-1">
+                      Try adjusting the filters above
+                    </span>
+                  }
+                </p>
+              )
             )}
           </div>
         </motion.div>

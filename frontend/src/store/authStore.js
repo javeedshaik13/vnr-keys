@@ -252,4 +252,40 @@ export const useAuthStore = create((set, get) => ({
 			throw error;
 		}
 	},
+
+	// Fetch dashboard data based on user role
+	fetchDashboardData: async () => {
+		const { user } = get();
+		if (!user || !user.role) {
+			throw new Error("User not authenticated or role not defined");
+		}
+
+		try {
+			let endpoint;
+			switch (user.role) {
+				case 'admin':
+					endpoint = `${config.api.baseUrl}/dashboard/admin`;
+					break;
+				case 'faculty':
+					endpoint = `${config.api.baseUrl}/dashboard/faculty`;
+					break;
+				case 'security':
+					endpoint = `${config.api.baseUrl}/dashboard/security`;
+					break;
+				default:
+					throw new Error("Invalid user role");
+			}
+
+			const response = await axios.get(endpoint, {
+				withCredentials: true
+			});
+
+			return response.data;
+		} catch (error) {
+			console.error("Error fetching dashboard data:", error);
+			const errorMessage = handleError(error);
+			set({ error: errorMessage });
+			throw error;
+		}
+	},
 }));

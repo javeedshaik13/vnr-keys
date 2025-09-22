@@ -1,7 +1,48 @@
 import { User } from "../models/user.model.js";
 import { Key } from "../models/key.model.js";
+import { Logbook } from "../models/logbook.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
 import mongoose from "mongoose";
+
+/**
+ * Helper function to get today's date range (12:00 AM to 11:59 PM)
+ */
+const getTodayDateRange = () => {
+	const now = new Date();
+	const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+	const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+	return { startOfDay, endOfDay };
+};
+
+/**
+ * Helper function to get date range based on timeRange parameter
+ */
+const getDateRange = (timeRange = '1d') => {
+	const now = new Date();
+	let startDate;
+	
+	switch (timeRange) {
+		case '1d':
+			// For 1 day, use today's date range (12 AM to 11:59 PM)
+			const { startOfDay } = getTodayDateRange();
+			startDate = startOfDay;
+			break;
+		case '7d':
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			break;
+		case '30d':
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			break;
+		case '90d':
+			startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+			break;
+		default:
+			const { startOfDay: defaultStart } = getTodayDateRange();
+			startDate = defaultStart;
+	}
+	
+	return { startDate, endDate: now };
+};
 
 /**
  * Admin Dashboard - Accessible only to admin users
@@ -676,7 +717,172 @@ export const getKeyUsageAnalytics = asyncHandler(async (req, res) => {
 });
 
 /**
- * Get active users analytics with filters
+ * Get daily active users analytics (users who took keys today) using logbook data
+ */
+export const getDailyActiveUsersAnalytics = asyncHandler(async (req, res) => {
+	const { timeRange = '1d', role = 'all', department = 'all' } = req.query;
+
+	// Get date range based on filter
+	const { startDate, endDate } = getDateRange(timeRange);
+
+	// Build match query for logbook entries
+	const matchQuery = {
+		createdAt: { $gte: startDate, $lte: endDate },
+		status: 'unavailable' // Only count when keys are taken
+	};
+
+	// Apply department filter
+	if (department !== 'all') {
+		matchQuery.department = department;
+	}
+
+	// Get active users from logbook (users who took keys in the time range)
+	const pipeline = [
+		{ $match: matchQuery },
+		{
+			$lookup: {
+				from: "users",
+				localField: "takenBy.userId",
+				foreignField: "_id",
+				as: "userDetails"
+			}
+		},
+		{
+			$unwind: "$userDetails"
+		}
+	];
+
+	// Apply role filter if specified
+	if (role !== 'all') {
+		pipeline.push({
+			$match: {
+				"userDetails.role": role
+			}
+		});
+	}
+
+	// Group by user to get unique active users
+	pipeline.push(
+		{
+			$group: {
+				_id: "$takenBy.userId",
+				user: { $first: "$userDetails" },
+				department: { $first: "$userDetails.department" },
+				role: { $first: "$userDetails.role" },
+				keysTaken: { $sum: 1 },
+				lastActivity: { $max: "$createdAt" }
+			}
+		},
+		{
+			$group: {
+				_id: null,
+				activeUsersCount: { $sum: 1 },
+				users: {
+					$push: {
+						id: "$_id",
+						name: "$user.name",
+						email: "$user.email",
+						role: "$role",
+						department: "$department",
+						keysTaken: "$keysTaken",
+						lastActivity: "$lastActivity"
+					}
+				}
+			}
+		}
+	);
+
+	const result = await Logbook.aggregate(pipeline);
+	const activeUsersData = result[0] || { activeUsersCount: 0, users: [] };
+
+	// Get users by department
+	const usersByDepartment = await Logbook.aggregate([
+		{ $match: matchQuery },
+		{
+			$lookup: {
+				from: "users",
+				localField: "takenBy.userId",
+				foreignField: "_id",
+				as: "userDetails"
+			}
+		},
+		{ $unwind: "$userDetails" },
+		...(role !== 'all' ? [{ $match: { "userDetails.role": role } }] : []),
+		{
+			$group: {
+				_id: "$userDetails.department",
+				uniqueUsers: { $addToSet: "$takenBy.userId" }
+			}
+		},
+		{
+			$project: {
+				_id: 1,
+				count: { $size: "$uniqueUsers" }
+			}
+		},
+		{ $sort: { count: -1 } }
+	]);
+
+	// Get users by role
+	const usersByRole = await Logbook.aggregate([
+		{ $match: matchQuery },
+		{
+			$lookup: {
+				from: "users",
+				localField: "takenBy.userId",
+				foreignField: "_id",
+				as: "userDetails"
+			}
+		},
+		{ $unwind: "$userDetails" },
+		...(department !== 'all' ? [{ $match: { department } }] : []),
+		{
+			$group: {
+				_id: "$userDetails.role",
+				uniqueUsers: { $addToSet: "$takenBy.userId" },
+				users: {
+					$push: {
+						id: "$takenBy.userId",
+						name: "$userDetails.name",
+						email: "$userDetails.email",
+						lastActivity: "$createdAt"
+					}
+				}
+			}
+		},
+		{
+			$project: {
+				_id: 1,
+				count: { $size: "$uniqueUsers" },
+				users: 1
+			}
+		}
+	]);
+
+	res.status(200).json({
+		success: true,
+		message: "Daily active users analytics retrieved successfully",
+		data: {
+			timeRange,
+			role,
+			department,
+			activeUsersCount: activeUsersData.activeUsersCount,
+			usersByRole: usersByRole.reduce((acc, item) => {
+				acc[item._id] = {
+					count: item.count,
+					users: item.users
+				};
+				return acc;
+			}, {}),
+			usersByDepartment,
+			dailyReset: timeRange === '1d',
+			resetTime: timeRange === '1d' ? '12:00 AM' : null
+		}
+	});
+});
+
+/**
+ * Get active users analytics with filters (Legacy - for backward compatibility)
  */
 export const getActiveUsersAnalytics = asyncHandler(async (req, res) => {
 	const { timeRange = '7d', role = 'all', department = 'all' } = req.query;
@@ -788,6 +994,112 @@ export const getActiveUsersAnalytics = asyncHandler(async (req, res) => {
 			}, {}),
 			usersByDepartment,
 			loginActivity
+		}
+	});
+});
+
+/**
+ * Get recent key activity with filters using logbook data (daily reset at 12 AM)
+ */
+export const getRecentKeyActivity = asyncHandler(async (req, res) => {
+	const { timeRange = '1d', department = 'all', role = 'all' } = req.query;
+
+	// Get date range based on filter (with proper daily reset)
+	const { startDate, endDate } = getDateRange(timeRange);
+
+	// Build match query for logbook entries
+	const matchQuery = {
+		createdAt: { $gte: startDate, $lte: endDate }
+	};
+
+	// Apply department filter
+	if (department !== 'all') {
+		matchQuery.department = department;
+	}
+
+	// Get recent key activities from logbook with filters
+	const pipeline = [
+		{
+			$match: matchQuery
+		},
+		{
+			$lookup: {
+				from: "users",
+				localField: "takenBy.userId",
+				foreignField: "_id",
+				as: "userDetails"
+			}
+		},
+		{
+			$project: {
+				keyNumber: 1,
+				keyName: 1,
+				location: 1,
+				department: 1,
+				takenAt: 1,
+				returnedAt: 1,
+				status: 1,
+				takenBy: 1,
+				createdAt: 1,
+				userDetails: { $arrayElemAt: ["$userDetails", 0] }
+			}
+		}
+	];
+
+	// Apply role filter if specified (filter by user role)
+	if (role !== 'all') {
+		pipeline.push({
+			$match: {
+				"userDetails.role": role
+			}
+		});
+	}
+
+	// Add sorting and limit
+	pipeline.push(
+		{
+			$sort: { createdAt: -1 }
+		},
+		{
+			$limit: 5
+		}
+	);
+
+	const recentActivity = await Logbook.aggregate(pipeline);
+
+	// Transform the data for frontend
+	const transformedActivity = recentActivity.map(activity => ({
+		id: activity._id,
+		keyNumber: activity.keyNumber,
+		keyName: activity.keyName,
+		location: activity.location,
+		department: activity.department,
+		action: activity.status === 'unavailable' ? 'taken' : 'returned',
+		takenAt: activity.takenAt || activity.createdAt,
+		returnedAt: activity.returnedAt,
+		recordedAt: activity.createdAt,
+		user: {
+			id: activity.takenBy?.userId,
+			name: activity.takenBy?.name || activity.userDetails?.name,
+			email: activity.takenBy?.email || activity.userDetails?.email,
+			role: activity.userDetails?.role
+		}
+	}));
+
+	res.status(200).json({
+		success: true,
+		message: "Recent key activity retrieved successfully (daily reset)",
+		data: {
+			activities: transformedActivity,
+			timeRange,
+			department,
+			role,
+			startDate: startDate.toISOString(),
+			endDate: endDate.toISOString(),
+			count: transformedActivity.length,
+			dailyReset: timeRange === '1d',
+			resetTime: timeRange === '1d' ? '12:00 AM' : null,
+			source: 'logbook'
 		}
 	});
 });
