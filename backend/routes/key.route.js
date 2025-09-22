@@ -69,7 +69,7 @@ router.use("/:keyId/*", (req, res, next) => {
 
 router.post("/:keyId/take", rolePermissions.adminOrFaculty, takeKey); // Take a key (faculty/admin)
 router.post("/:keyId/return", returnKey); // Return a key (any user can return their own key, security/admin can return any)
-router.post("/:keyId/collective-return", rolePermissions.adminOrSecurityOrFaculty, collectiveReturnKey); // Collective key return (security/faculty/admin)
+router.post("/:keyId/collective-return", rolePermissions.adminOrSecurityOrFaculty, collectiveReturnKey); // Volunteer Key Return (security/faculty/admin)
 router.post("/:keyId/toggle-frequent", toggleFrequentlyUsed); // Toggle frequently used status
 
 // GET routes with parameters - MUST come after specific routes

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom'; // Changed from Navigate to useNavigate
 
 const NotificationSlidePanel = ({ isOpen, onClose }) => {
   const {
@@ -19,13 +20,19 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
     fetchNotifications,
     markAsRead
   } = useNotificationStore();
-
+  const navigate = useNavigate(); // Changed from Navigate() to useNavigate()
+  
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
     }
   }, [isOpen, fetchNotifications]);
 
+  const handleNotificationClicks = () => {
+    navigate('/dashboard/notifications');
+    onClose(); // Optional: close the panel after navigation
+  }
+  
   const getNotificationIcon = (title) => {
     // Key-specific icon logic
     if (title.toLowerCase().includes('reminder')) {
@@ -109,7 +116,8 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                   </div>
                 ) : (
                   <div className="p-4 space-y-3 pb-6">
-                    {notifications.map((notification, index) => (
+                    {/* Show only last 5 notifications */}
+                    {notifications.slice(0, 5).map((notification, index) => (
                       <motion.div
                         key={notification._id}
                         initial={{ opacity: 0, y: 20 }}
@@ -154,6 +162,22 @@ const NotificationSlidePanel = ({ isOpen, onClose }) => {
                         </div>
                       </motion.div>
                     ))}
+
+                    {/* See More button - only show if there are more than 5 notifications */}
+                    {notifications.length > 5 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="pt-2"
+                      >
+                        <button 
+                          onClick={handleNotificationClicks}
+                          className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          See More ({notifications.length - 5} more)
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
                 )}
               </AnimatePresence>

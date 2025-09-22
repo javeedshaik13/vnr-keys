@@ -312,7 +312,7 @@ const SecurityDashboard = () => {
       setPendingReturnData(null);
       
       // Re-open scanner for next scan
-      setShowScanner(true);
+      setShowScanner(false);
     } catch (error) {
       console.error("Return key error:", error);
       // Close modal even on error
@@ -448,7 +448,7 @@ const SecurityDashboard = () => {
               </div>
 
               <div className="flex gap-3">
-                <button
+                {/* <button
                   onClick={() => {
                     setShowReturnConfirmation(false);
                     setPendingReturnData(null);
@@ -457,7 +457,7 @@ const SecurityDashboard = () => {
                   className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors"
                 >
                   Cancel
-                </button>
+                </button> */}
                 <button
                   onClick={handleConfirmReturn}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"

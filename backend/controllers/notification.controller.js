@@ -186,7 +186,7 @@ export const getNotificationStats = asyncHandler(async (req, res) => {
         _id: null,
         totalNotifications: { $sum: 1 },
         unreadNotifications: {
-          $sum: { $cond: [{ $eq: ["$isRead", false] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ["$read", false] }, 1, 0] }
         },
         notificationsByType: {
           $push: {

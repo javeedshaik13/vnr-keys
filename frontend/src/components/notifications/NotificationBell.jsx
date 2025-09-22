@@ -8,20 +8,28 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const {
     unreadCount,
-    fetchNotifications
+    fetchNotifications,
+    initializeSocket,
+    disconnectSocket
   } = useNotificationStore();
 
   useEffect(() => {
     // Fetch notifications on component mount
     fetchNotifications();
+    
+    // Initialize socket connection for real-time notifications
+    initializeSocket();
 
-    // Set up polling for new notifications every 30 seconds
+    // Set up polling for new notifications every 30 seconds (backup)
     const interval = setInterval(() => {
       fetchNotifications();
     }, 30000);
 
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    return () => {
+      clearInterval(interval);
+      disconnectSocket();
+    };
+  }, [fetchNotifications, initializeSocket, disconnectSocket]);
 
   const handleBellClick = () => {
     setIsOpen(true);

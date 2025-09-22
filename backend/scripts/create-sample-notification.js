@@ -33,10 +33,17 @@ try {
         name: facultyUser.name,
         email: facultyUser.email,
         role: facultyUser.role,
-      },
+      },  
       title: 'Key Return Reminder - 1 Key Pending',
       message: `You have 1 unreturned key: Sample Key (Sample Location). Please return it as soon as possible.`,
-      isRead: false
+      type: 'key_reminder',
+      priority: 'high',
+      read: false,
+      isActive: true,
+      metadata: {
+        keyCount: 1,
+        reminderType: 'sample'
+      }
     });
 
     await notification.save();
@@ -60,7 +67,15 @@ try {
       },
       title: 'Key Return Reminder - 1 Key Pending',
       message: `You have 1 unreturned key: ${unreturnedKey.keyNumber} (${unreturnedKey.keyName}). Please return it as soon as possible.`,
-      isRead: false
+      type: 'key_reminder',
+      priority: 'high',
+      read: false,
+      isActive: true,
+      metadata: {
+        keyCount: 1,
+        keyIds: [unreturnedKey._id],
+        reminderType: 'sample'
+      }
     });
 
     await notification.save();

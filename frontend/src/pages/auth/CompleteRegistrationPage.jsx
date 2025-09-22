@@ -79,7 +79,7 @@ const CompleteRegistrationPage = () => {
         (user.role !== "faculty" || (user.department && user.facultyId));
 
       if (isRegistrationComplete) {
-        toast.success("Welcome back! Redirecting to your dashboard...");
+        // toast.success("Welcome back! Redirecting to your dashboard...");
         const route = getRoleBasedRoute();
         navigate(route, { replace: true });
       } else {

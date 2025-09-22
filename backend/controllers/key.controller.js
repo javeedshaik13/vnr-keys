@@ -264,6 +264,25 @@ export const takeKey = asyncHandler(async (req, res) => {
   // Log the take operation
   await AuditService.logKeyTaken(key, user, req);
 
+  // Create a logbook entry
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    ...key.toObject(),
+    _id: undefined,
+    recordedBy: {
+      userId: user._id,
+      role: user.role
+    }
+  });
+
+  // Create notification for key taken
+  try {
+    const { createKeyTakenNotification } = await import('../services/notificationService.js');
+    await createKeyTakenNotification(key, user);
+  } catch (notificationError) {
+    console.error('❌ Error sending key taken notification:', notificationError);
+  }
+
   // Increment usage count for the user
   if (!user.keyUsage) {
     user.keyUsage = new Map();
@@ -312,18 +331,36 @@ export const returnKey = asyncHandler(async (req, res) => {
 
   await key.returnKey();
 
-  // Send notification if key was returned by someone other than the original taker
-  if (originalUser && returnedBy && originalUser._id.toString() !== returnedBy._id.toString()) {
-    try {
-      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
-      await createKeyReturnedNotification(key, originalUser, returnedBy);
-    } catch (notificationError) {
-      console.error('❌ Error sending key return notification:', notificationError);
+  // Create notifications
+  try {
+    const { createKeyReturnedNotification, createKeySelfReturnedNotification } = await import('../services/notificationService.js');
+    
+    if (originalUser && returnedBy) {
+      if (originalUser._id.toString() === returnedBy._id.toString()) {
+        // Key returned by original taker
+        await createKeySelfReturnedNotification(key, originalUser);
+      } else {
+        // Key returned by someone else
+        await createKeyReturnedNotification(key, originalUser, returnedBy);
+      }
     }
+  } catch (notificationError) {
+    console.error('❌ Error sending key return notification:', notificationError);
   }
 
   // Log the return operation
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser);
+
+  // Create a logbook entry
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    ...key.toObject(),
+    _id: undefined,
+    recordedBy: {
+      userId: returnedBy._id,
+      role: returnedBy.role
+    }
+  });
 
   // Emit real-time update
   emitKeyReturned(key, req.userId);
@@ -336,7 +373,7 @@ export const returnKey = asyncHandler(async (req, res) => {
 });
 
 /**
- * Collective key return - allows Security and Faculty to return any key
+ * Volunteer Key Return - allows Security and Faculty to return any key
  */
 export const collectiveReturnKey = asyncHandler(async (req, res) => {
   const { keyId } = req.params;
@@ -344,7 +381,7 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
 
   // Verify user has permission for collective returns (Security or Faculty)
   if (req.userRole !== 'admin' && req.userRole !== 'security' && req.userRole !== 'faculty') {
-    throw new ValidationError("Only Security, Faculty, or Admin users can perform collective key returns");
+    throw new ValidationError("Only Security, Faculty, or Admin users can perform Volunteer Key Returns");
   }
 
   const key = await Key.findById(keyId);
@@ -384,9 +421,9 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
     }
   }
 
-  // Log the collective return operation with additional metadata
+  // Log the Volunteer Key Return operation with additional metadata
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser, {
-    reason: reason || "Collective key return",
+    reason: reason || "Volunteer Key Return",
     isCollectiveReturn: true
   });
 
@@ -405,7 +442,7 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
         email: returnedBy.email,
         role: returnedBy.role
       },
-      reason: reason || "Collective key return"
+      reason: reason || "Volunteer Key Return"
     },
   });
 });

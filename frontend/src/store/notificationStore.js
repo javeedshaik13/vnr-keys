@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import axios from 'axios';
+import socketService from '../services/socketService.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:6203/api';
 
@@ -172,6 +173,46 @@ const useNotificationStore = create(
       getNotificationsByPriority: (priority) => {
         const { notifications } = get();
         return notifications.filter(notification => notification.priority === priority);
+      },
+
+      // Initialize socket connection for real-time notifications
+      initializeSocket: () => {
+        try {
+          socketService.connect();
+          
+          // Listen for new notifications
+          socketService.on('notification', (notificationData) => {
+            console.log('📢 New notification received:', notificationData);
+            const { addNotification } = get();
+            
+            // Add the new notification to the store
+            const notification = {
+              _id: notificationData.id,
+              title: notificationData.title,
+              message: notificationData.message,
+              createdAt: notificationData.createdAt,
+              read: notificationData.read || false,
+              type: notificationData.type || 'general',
+              priority: notificationData.priority || 'medium'
+            };
+            
+            addNotification(notification);
+          });
+
+          console.log('✅ Notification socket listeners initialized');
+        } catch (error) {
+          console.error('❌ Failed to initialize notification socket:', error);
+        }
+      },
+
+      // Disconnect socket
+      disconnectSocket: () => {
+        try {
+          socketService.off('notification');
+          console.log('🔌 Notification socket listeners removed');
+        } catch (error) {
+          console.error('❌ Error disconnecting notification socket:', error);
+        }
       },
     }),
     {
