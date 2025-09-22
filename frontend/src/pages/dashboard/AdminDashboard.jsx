@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
+import { useKeyStore } from "../../store/keyStore";
 import { useSidebar } from "../../components/layout/DashboardLayout";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { config } from "../../utils/config";
 import {
     Users,
     Shield,
@@ -12,21 +15,38 @@ import {
     Settings,
     BarChart3,
     Key,
-    User
+    User,
+    TrendingUp,
+    Clock,
+    Filter,
+    Calendar
 } from "lucide-react";
 
 const AdminDashboard = () => {
   const { user, fetchDashboardData } = useAuthStore();
+  const { keys, fetchKeys } = useKeyStore();
   const { sidebarOpen } = useSidebar();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState({
+    keyUsage: null,
+    activeUsers: null,
+    peakUsage: null
+  });
+  const [filters, setFilters] = useState({
+    timeRange: '7d',
+    department: 'all',
+    role: 'all'
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
         const data = await fetchDashboardData();
         setDashboardData(data.data);
+        await fetchKeys();
       } catch (error) {
         console.error("Failed to load admin dashboard data:", error);
       } finally {
@@ -35,7 +55,44 @@ const AdminDashboard = () => {
     };
 
     loadDashboardData();
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, fetchKeys]);
+
+  // Fetch analytics data
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const [keyUsageRes, activeUsersRes, peakUsageRes] = await Promise.all([
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/key-usage`, {
+          params: { timeRange: filters.timeRange, department: filters.department },
+          withCredentials: true
+        }),
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/active-users`, {
+          params: { timeRange: filters.timeRange, role: filters.role, department: filters.department },
+          withCredentials: true
+        }),
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/peak-usage`, {
+          params: { timeRange: filters.timeRange, department: filters.department },
+          withCredentials: true
+        })
+      ]);
+
+      setAnalyticsData({
+        keyUsage: keyUsageRes.data.data,
+        activeUsers: activeUsersRes.data.data,
+        peakUsage: peakUsageRes.data.data
+      });
+    } catch (error) {
+      console.error("Failed to load analytics data:", error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      fetchAnalytics();
+    }
+  }, [filters, loading]);
 
   // Admin action handlers
   const handleManageUsers = () => {
@@ -56,41 +113,52 @@ const AdminDashboard = () => {
 
   const adminStats = dashboardData?.stats || {
     totalUsers: 0,
-    verifiedUsers: 0,
-    unverifiedUsers: 0,
-    usersByRole: { admin: 0, operator: 0, responder: 0 },
+    totalKeys: 0,
+    activeKeys: 0,
+    inactiveKeys: 0,
+    usersByRole: { admin: 0, security: 0, faculty: 0 },
   };
+
+  // Calculate real-time key statistics
+  const totalKeys = keys.length;
+  const activeKeys = keys.filter(k => k.status === 'unavailable').length;
+  const availableKeys = keys.filter(k => k.status === 'available').length;
+  const peakUsagePercentage = analyticsData.peakUsage?.usagePercentage || 0;
 
   const statsCards = [
     {
-      icon: Users,
-      label: "Total Users",
-      value: adminStats.totalUsers,
-      change: "+12%",
+      icon: Key,
+      label: "Total Keys",
+      value: totalKeys,
+      change: `${totalKeys} keys`,
+      color: "text-white"
+    },
+    {
+      icon: Activity,
+      label: "Active Keys",
+      value: activeKeys,
+      change: `${activeKeys} in use`,
+      color: "text-green-400"
     },
     {
       icon: UserCheck,
-      label: "Verified Users",
-      value: adminStats.verifiedUsers,
-      change: "+8%",
+      label: "Available Keys", 
+      value: availableKeys,
+      change: `${availableKeys} available`,
+      color: "text-blue-400"
     },
     {
-      icon: UserX,
-      label: "Unverified Users",
-      value: adminStats.unverifiedUsers,
-      change: "-3%",
-    },
-    {
-      icon: Shield,
-      label: "Admin Users",
-      value: adminStats.usersByRole.admin || 0,
-      change: "+1",
+      icon: TrendingUp,
+      label: "Peak Usage",
+      value: `${peakUsagePercentage.toFixed(1)}%`,
+      change: `Usage rate`,
+      color: "text-purple-400"
     },
   ];
 
   const roleDistribution = [
-    { role: "Operators", count: adminStats.usersByRole.operator || 0, color: "bg-blue-500" },
-    { role: "Responders", count: adminStats.usersByRole.responder || 0, color: "bg-green-500" },
+    { role: "Security", count: adminStats.usersByRole.operator || 0, color: "bg-blue-500" },
+    { role: "Faculty", count: adminStats.usersByRole.responder || 0, color: "bg-green-500" },
     { role: "Admins", count: adminStats.usersByRole.admin || 0, color: "bg-purple-500" },
   ];
 
@@ -116,7 +184,7 @@ const AdminDashboard = () => {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-gray-400 text-sm">Welcome back, {user?.name}! (Role: Admin)</p>
+          <p className="text-gray-400 text-sm">Welcome back, {user?.name}</p>
         </div>
       </motion.div>
 
@@ -134,15 +202,185 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm font-medium">{stat.label}</p>
-                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
-                <p className="text-green-400 text-sm mt-1">{stat.change}</p>
+                <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+                <p className="text-gray-500 text-sm mt-1">{stat.change}</p>
               </div>
               <div className="p-3 rounded-lg bg-gray-700">
-                <stat.icon className="h-6 w-6 text-blue-400" />
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
             </div>
           </motion.div>
         ))}
+      </div>
+
+      {/* Analytics Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6"
+      >
+        <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+          <Filter className="h-5 w-5 mr-2 text-blue-400" />
+          Analytics Filters
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Time Range</label>
+            <select
+              value={filters.timeRange}
+              onChange={(e) => setFilters(prev => ({ ...prev, timeRange: e.target.value }))}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1d">Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Department</label>
+            <select
+              value={filters.department}
+              onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Departments</option>
+              <option value="CSE">CSE</option>
+              <option value="EEE">EEE</option>
+              <option value="AIML">AIML</option>
+              <option value="IoT">IoT</option>
+              <option value="ECE">ECE</option>
+              <option value="MECH">MECH</option>
+              <option value="CIVIL">CIVIL</option>
+              <option value="IT">IT</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="RESEARCH">RESEARCH</option>
+              <option value="COMMON">COMMON</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">User Role</label>
+            <select
+              value={filters.role}
+              onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="security">Security</option>
+              <option value="faculty">Faculty</option>
+            </select>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Peak Usage Analytics */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+        >
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2 text-purple-400" />
+            Peak Usage
+          </h3>
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-400">
+                  {analyticsData.peakUsage?.usagePercentage?.toFixed(1) || 0}%
+                </div>
+                <div className="text-sm text-gray-400">Current Usage Rate</div>
+              </div>
+              <div className="space-y-2">
+                {analyticsData.peakUsage?.peakHours?.slice(0, 3).map((peak, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">{peak.timeLabel}</span>
+                    <span className="text-purple-400 font-medium">{peak.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Active Users Analytics */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+        >
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+            <Users className="h-5 w-5 mr-2 text-green-400" />
+            Active Users
+          </h3>
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400">
+                  {analyticsData.activeUsers?.activeUsersCount || 0}
+                </div>
+                <div className="text-sm text-gray-400">Active Users</div>
+              </div>
+              <div className="space-y-2">
+                {analyticsData.activeUsers?.usersByDepartment?.slice(0, 3).map((dept, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">{dept._id}</span>
+                    <span className="text-green-400 font-medium">{dept.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Key Usage Analytics */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+        >
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+            <Key className="h-5 w-5 mr-2 text-blue-400" />
+            Key Usage
+          </h3>
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-400">
+                  {analyticsData.keyUsage?.totalUsage || 0}
+                </div>
+                <div className="text-sm text-gray-400">Total Usage</div>
+              </div>
+              <div className="space-y-2">
+                {analyticsData.keyUsage?.mostUsedKeys?.slice(0, 3).map((key, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">{key.keyNumber}</span>
+                    <span className="text-blue-400 font-medium">{key.usageCount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
       </div>
 
       {/* Content Grid */}
@@ -152,7 +390,7 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all"
         >
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
@@ -176,7 +414,7 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all"
         >
           <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
             <Activity className="h-5 w-5 mr-2 text-blue-400" />
@@ -216,7 +454,7 @@ const AdminDashboard = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
-        className="mt-8 bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+        className="mt-8 bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all"
       >
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
           <Settings className="h-5 w-5 mr-2 text-blue-400" />

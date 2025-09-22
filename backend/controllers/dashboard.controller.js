@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
 import { Key } from "../models/key.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
+import mongoose from "mongoose";
 
 /**
  * Admin Dashboard - Accessible only to admin users
@@ -554,6 +555,339 @@ export const getSystemReports = asyncHandler(async (req, res) => {
 			},
 			systemHealth,
 			generatedAt: new Date().toISOString()
+		}
+	});
+});
+
+/**
+ * Get key usage analytics with time-based filters
+ */
+export const getKeyUsageAnalytics = asyncHandler(async (req, res) => {
+	const { timeRange = '7d', department = 'all' } = req.query;
+
+	// Calculate date range
+	const now = new Date();
+	let startDate;
+	let groupBy;
+	
+	switch (timeRange) {
+		case '1d':
+			startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+			groupBy = { $dateToString: { format: "%H:00", date: "$takenAt" } };
+			break;
+		case '7d':
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$takenAt" } };
+			break;
+		case '30d':
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$takenAt" } };
+			break;
+		case '90d':
+			startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+			groupBy = { $dateToString: { format: "%Y-W%U", date: "$takenAt" } };
+			break;
+		default:
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			groupBy = { $dateToString: { format: "%Y-%m-%d", date: "$takenAt" } };
+	}
+
+	// Build match query
+	const matchQuery = {
+		takenAt: { $gte: startDate, $lte: now },
+		status: 'unavailable'
+	};
+
+	if (department !== 'all') {
+		matchQuery.department = department;
+	}
+
+	// Get key usage over time
+	const usageOverTime = await Key.aggregate([
+		{ $match: matchQuery },
+		{
+			$group: {
+				_id: groupBy,
+				count: { $sum: 1 },
+				uniqueKeys: { $addToSet: "$_id" }
+			}
+		},
+		{
+			$project: {
+				period: "$_id",
+				count: 1,
+				uniqueKeysCount: { $size: "$uniqueKeys" }
+			}
+		},
+		{ $sort: { period: 1 } }
+	]);
+
+	// Get peak usage hours (for daily view)
+	const peakUsageHours = await Key.aggregate([
+		{
+			$match: {
+				takenAt: { $gte: startDate, $lte: now },
+				...(department !== 'all' && { department })
+			}
+		},
+		{
+			$group: {
+				_id: { $hour: "$takenAt" },
+				count: { $sum: 1 }
+			}
+		},
+		{ $sort: { count: -1 } },
+		{ $limit: 5 }
+	]);
+
+	// Get most used keys
+	const mostUsedKeys = await Key.aggregate([
+		{
+			$match: {
+				takenAt: { $gte: startDate, $lte: now },
+				...(department !== 'all' && { department })
+			}
+		},
+		{
+			$group: {
+				_id: "$_id",
+				keyNumber: { $first: "$keyNumber" },
+				keyName: { $first: "$keyName" },
+				department: { $first: "$department" },
+				usageCount: { $sum: 1 }
+			}
+		},
+		{ $sort: { usageCount: -1 } },
+		{ $limit: 10 }
+	]);
+
+	res.status(200).json({
+		success: true,
+		message: "Key usage analytics retrieved successfully",
+		data: {
+			timeRange,
+			department,
+			usageOverTime,
+			peakUsageHours,
+			mostUsedKeys,
+			totalUsage: usageOverTime.reduce((sum, item) => sum + item.count, 0)
+		}
+	});
+});
+
+/**
+ * Get active users analytics with filters
+ */
+export const getActiveUsersAnalytics = asyncHandler(async (req, res) => {
+	const { timeRange = '7d', role = 'all', department = 'all' } = req.query;
+
+	// Calculate date range
+	const now = new Date();
+	let startDate;
+	
+	switch (timeRange) {
+		case '1d':
+			startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+			break;
+		case '7d':
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			break;
+		case '30d':
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			break;
+		case '90d':
+			startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+			break;
+		default:
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+	}
+
+	// Build match query for active users
+	const matchQuery = {
+		lastLogin: { $gte: startDate }
+	};
+
+	if (role !== 'all') {
+		matchQuery.role = role;
+	}
+
+	if (department !== 'all') {
+		matchQuery.department = department;
+	}
+
+	// Get active users count
+	const activeUsersCount = await User.countDocuments(matchQuery);
+
+	// Get users by role
+	const usersByRole = await User.aggregate([
+		{ $match: matchQuery },
+		{
+			$group: {
+				_id: "$role",
+				count: { $sum: 1 },
+				users: {
+					$push: {
+						id: "$_id",
+						name: "$name",
+						email: "$email",
+						lastLogin: "$lastLogin"
+					}
+				}
+			}
+		}
+	]);
+
+	// Get users by department
+	const usersByDepartment = await User.aggregate([
+		{ 
+			$match: {
+				...matchQuery,
+				department: { $exists: true, $ne: null }
+			}
+		},
+		{
+			$group: {
+				_id: "$department",
+				count: { $sum: 1 }
+			}
+		},
+		{ $sort: { count: -1 } }
+	]);
+
+	// Get login activity over time
+	const loginActivity = await User.aggregate([
+		{ $match: matchQuery },
+		{
+			$group: {
+				_id: {
+					$dateToString: { 
+						format: timeRange === '1d' ? "%H:00" : "%Y-%m-%d", 
+						date: "$lastLogin" 
+					}
+				},
+				count: { $sum: 1 }
+			}
+		},
+		{ $sort: { _id: 1 } }
+	]);
+
+	res.status(200).json({
+		success: true,
+		message: "Active users analytics retrieved successfully",
+		data: {
+			timeRange,
+			role,
+			department,
+			activeUsersCount,
+			usersByRole: usersByRole.reduce((acc, item) => {
+				acc[item._id] = {
+					count: item.count,
+					users: item.users
+				};
+				return acc;
+			}, {}),
+			usersByDepartment,
+			loginActivity
+		}
+	});
+});
+
+/**
+ * Get peak usage analytics
+ */
+export const getPeakUsageAnalytics = asyncHandler(async (req, res) => {
+	const { timeRange = '7d', department = 'all' } = req.query;
+
+	// Calculate date range
+	const now = new Date();
+	let startDate;
+	
+	switch (timeRange) {
+		case '1d':
+			startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+			break;
+		case '7d':
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+			break;
+		case '30d':
+			startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+			break;
+		case '90d':
+			startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+			break;
+		default:
+			startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+	}
+
+	// Build match query
+	const matchQuery = {
+		takenAt: { $gte: startDate, $lte: now }
+	};
+
+	if (department !== 'all') {
+		matchQuery.department = department;
+	}
+
+	// Get hourly usage pattern
+	const hourlyUsage = await Key.aggregate([
+		{ $match: matchQuery },
+		{
+			$group: {
+				_id: { $hour: "$takenAt" },
+				count: { $sum: 1 }
+			}
+		},
+		{ $sort: { _id: 1 } }
+	]);
+
+	// Get daily usage pattern
+	const dailyUsage = await Key.aggregate([
+		{ $match: matchQuery },
+		{
+			$group: {
+				_id: { $dayOfWeek: "$takenAt" },
+				count: { $sum: 1 }
+			}
+		},
+		{ $sort: { _id: 1 } }
+	]);
+
+	// Get peak usage times
+	const peakHours = hourlyUsage
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 3)
+		.map(item => ({
+			hour: item._id,
+			count: item.count,
+			timeLabel: `${item._id}:00 - ${item._id + 1}:00`
+		}));
+
+	// Get current active keys
+	const currentActiveKeys = await Key.countDocuments({
+		status: 'unavailable',
+		...(department !== 'all' && { department })
+	});
+
+	// Get total keys
+	const totalKeys = await Key.countDocuments({
+		...(department !== 'all' && { department })
+	});
+
+	// Calculate usage percentage
+	const usagePercentage = totalKeys > 0 ? (currentActiveKeys / totalKeys) * 100 : 0;
+
+	res.status(200).json({
+		success: true,
+		message: "Peak usage analytics retrieved successfully",
+		data: {
+			timeRange,
+			department,
+			currentActiveKeys,
+			totalKeys,
+			usagePercentage: Math.round(usagePercentage * 100) / 100,
+			hourlyUsage,
+			dailyUsage,
+			peakHours
 		}
 	});
 });

@@ -5,39 +5,97 @@ import {
   Users,
   Activity,
   Download,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
+  Key,
+  Calendar,
+  Filter,
+  LineChart,
+  Building
 } from 'lucide-react';
 import axios from 'axios';
+import { useKeyStore } from '../../store/keyStore';
 import { handleError, handleSuccess } from '../../utils/errorHandler';
+import { config } from '../../utils/config';
 import jsPDF from 'jspdf';
 
 const ViewReportsPage = () => {
+  const { keys, fetchKeys } = useKeyStore();
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('30d');
-
-  const API_URL = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/dashboard`
-    : import.meta.env.MODE === "development"
-      ? "http://localhost:6203/api/dashboard"
-      : "/api/dashboard";
+  const [analyticsData, setAnalyticsData] = useState({
+    keyUsage: null,
+    activeUsers: null,
+    peakUsage: null
+  });
+  const [filters, setFilters] = useState({
+    timeRange: '7d',
+    department: 'all',
+    role: 'all'
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
-    fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange]);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await fetchKeys();
+        await fetchReports();
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchKeys]);
+
+  // Fetch analytics data
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const [keyUsageRes, activeUsersRes, peakUsageRes] = await Promise.all([
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/key-usage`, {
+          params: { timeRange: filters.timeRange, department: filters.department },
+          withCredentials: true
+        }),
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/active-users`, {
+          params: { timeRange: filters.timeRange, role: filters.role, department: filters.department },
+          withCredentials: true
+        }),
+        axios.get(`${config.api.baseUrl}/dashboard/analytics/peak-usage`, {
+          params: { timeRange: filters.timeRange, department: filters.department },
+          withCredentials: true
+        })
+      ]);
+
+      setAnalyticsData({
+        keyUsage: keyUsageRes.data.data,
+        activeUsers: activeUsersRes.data.data,
+        peakUsage: peakUsageRes.data.data
+      });
+    } catch (error) {
+      console.error("Failed to load analytics data:", error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      fetchAnalytics();
+    }
+  }, [filters, loading]);
 
   const fetchReports = async () => {
     try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/reports`, {
-        params: { timeRange }
+      const response = await axios.get(`${config.api.baseUrl}/dashboard/reports`, {
+        params: { timeRange: filters.timeRange },
+        withCredentials: true
       });
       setReports(response.data.data);
     } catch (error) {
       handleError(error, 'Failed to fetch reports');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -159,6 +217,12 @@ const ViewReportsPage = () => {
     );
   }
 
+  // Calculate real-time statistics
+  const totalKeys = keys.length;
+  const activeKeys = keys.filter(k => k.status === 'unavailable').length;
+  const availableKeys = keys.filter(k => k.status === 'available').length;
+  const peakUsagePercentage = analyticsData.peakUsage?.usagePercentage || 0;
+
   return (
     <div className="min-h-screen bg-gray-900 p-6">
       <motion.div
@@ -170,20 +234,11 @@ const ViewReportsPage = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
             <BarChart3 className="h-8 w-8 text-purple-400 mr-4" />
-            <h1 className="text-3xl font-bold text-white">System Reports</h1>
+            <h1 className="text-3xl font-bold text-white">Analytics & Reports</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-            >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-            </select>
             <button
-              onClick={fetchReports}
+              onClick={() => fetchAnalytics()}
               className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
             >
               <RefreshCw className="h-5 w-5 text-gray-300" />
@@ -198,72 +253,399 @@ const ViewReportsPage = () => {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="bg-gray-800 rounded-xl p-6">
-          <OverviewReport reports={reports} />
+        {/* Analytics Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6"
+        >
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+            <Filter className="h-5 w-5 mr-2 text-purple-400" />
+            Analytics Filters
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Time Range</label>
+              <select
+                value={filters.timeRange}
+                onChange={(e) => setFilters(prev => ({ ...prev, timeRange: e.target.value }))}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="1d">Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Department</label>
+              <select
+                value={filters.department}
+                onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Departments</option>
+                <option value="CSE">CSE</option>
+                <option value="EEE">EEE</option>
+                <option value="AIML">AIML</option>
+                <option value="IoT">IoT</option>
+                <option value="ECE">ECE</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="IT">IT</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="RESEARCH">RESEARCH</option>
+                <option value="COMMON">COMMON</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">User Role</label>
+              <select
+                value={filters.role}
+                onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="security">Security</option>
+                <option value="faculty">Faculty</option>
+              </select>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Statistics Cards */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Total Keys"
+            value={totalKeys}
+            change={null}
+            changeLabel={`${totalKeys} keys total`}
+            icon={Key}
+            color="blue"
+          />
+          <StatCard
+            title="Active Keys"
+            value={activeKeys}
+            change={null}
+            changeLabel={`${activeKeys} in use`}
+            icon={Activity}
+            color="green"
+          />
+          <StatCard
+            title="Available Keys"
+            value={availableKeys}
+            change={null}
+            changeLabel={`${availableKeys} available`}
+            icon={Users}
+            color="purple"
+          />
+          <StatCard
+            title="Peak Usage"
+            value={`${peakUsagePercentage.toFixed(1)}%`}
+            change={null}
+            changeLabel="Usage rate"
+            icon={TrendingUp}
+            color="orange"
+          />
+        </div> */}
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Peak Usage Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-purple-400" />
+              Peak Usage Analytics
+            </h3>
+            {analyticsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <SimpleLineChart 
+                data={analyticsData.peakUsage?.hourlyUsage || []}
+                color="rgb(168, 85, 247)"
+                label="Usage Count"
+                height={200}
+              />
+            )}
+          </motion.div>
+
+          {/* Active Users Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-gray-800/50 rounded-xl p-6 border border-gray-700"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+              <Users className="h-5 w-5 mr-2 text-green-400" />
+              Active Users Trend
+            </h3>
+            {analyticsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <SimpleLineChart 
+                data={analyticsData.activeUsers?.loginActivity || []}
+                color="rgb(34, 197, 94)"
+                label="Active Users"
+                height={200}
+              />
+            )}
+          </motion.div>
+
+          {/* Key Usage Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 lg:col-span-2"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+              <Key className="h-5 w-5 mr-2 text-blue-400" />
+              Key Usage Over Time
+            </h3>
+            {analyticsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <SimpleLineChart 
+                data={analyticsData.keyUsage?.usageOverTime || []}
+                color="rgb(59, 130, 246)"
+                label="Keys Used"
+                height={250}
+              />
+            )}
+          </motion.div>
+        </div>
+
+        {/* Detailed Reports */}
+        <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+          <OverviewReport 
+            reports={reports} 
+            analyticsData={analyticsData}
+            keys={keys}
+          />
         </div>
       </motion.div>
     </div>
   );
 };
 
+// Simple Line Chart Component
+const SimpleLineChart = ({ data, color, label, height = 200 }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-48 text-gray-400">
+        <div className="text-center">
+          <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p>No data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  const maxValue = Math.max(...data.map(d => d.count || 0));
+  const minValue = Math.min(...data.map(d => d.count || 0));
+  const range = maxValue - minValue || 1;
+
+  const points = data.map((item, index) => {
+    const x = (index / (data.length - 1)) * 100;
+    const y = 100 - (((item.count || 0) - minValue) / range) * 80;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="relative">
+      <div className="flex justify-between text-xs text-gray-400 mb-2">
+        <span>{label}</span>
+        <span>Max: {maxValue}</span>
+      </div>
+      
+      <svg
+        width="100%"
+        height={height}
+        viewBox="0 0 100 100"
+        className="border border-gray-600 rounded bg-gray-900/50"
+      >
+        {/* Grid lines */}
+        <defs>
+          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#374151" strokeWidth="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100" height="100" fill="url(#grid)" />
+        
+        {/* Data line */}
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          points={points}
+          className="drop-shadow-sm"
+        />
+        
+        {/* Data points */}
+        {data.map((item, index) => {
+          const x = (index / (data.length - 1)) * 100;
+          const y = 100 - (((item.count || 0) - minValue) / range) * 80;
+          return (
+            <circle
+              key={index}
+              cx={x}
+              cy={y}
+              r="2"
+              fill={color}
+              className="drop-shadow-sm"
+            >
+              <title>{`${item._id || item.period}: ${item.count}`}</title>
+            </circle>
+          );
+        })}
+      </svg>
+      
+      {/* X-axis labels */}
+      <div className="flex justify-between text-xs text-gray-400 mt-2">
+        {data.slice(0, 5).map((item, index) => (
+          <span key={index} className="truncate">
+            {item._id || item.period || `Point ${index + 1}`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Overview Report Component
-const OverviewReport = ({ reports }) => (
+const OverviewReport = ({ reports, analyticsData, keys }) => (
   <div className="space-y-6">
-    <h3 className="text-xl font-semibold text-white">System Overview</h3>
+    <h3 className="text-xl font-semibold text-white mb-6">Detailed Analytics Report</h3>
     
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard
-        title="Total Users"
-        value={reports?.userAnalytics?.totalUsers || 0}
-        change={reports?.userAnalytics?.newUsers || 0}
-        changeLabel="new this period"
-        icon={Users}
-        color="blue"
-      />
-      <StatCard
-        title="Active Users"
-        value={reports?.userAnalytics?.activeUsers || 0}
-        change={null}
-        changeLabel="100% of total"
-        icon={Activity}
-        color="green"
-      />
-      <StatCard
-        title="API Keys"
-        value={0}
-        change={null}
-        changeLabel="0 active"
-        icon={Activity}
-        color="purple"
-      />
-      <StatCard
-        title="Peak Usage"
-        value={0}
-        change={null}
-        changeLabel=""
-        icon={BarChart3}
-        color="orange"
-      />
+    {/* Most Used Keys */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-gray-700/50 rounded-lg p-6">
+        <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <Key className="w-5 h-5 mr-2 text-blue-400" />
+          Most Used Keys
+        </h4>
+        <div className="space-y-3">
+          {analyticsData?.keyUsage?.mostUsedKeys?.slice(0, 5).map((key, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+              <div>
+                <div className="font-medium text-white">{key.keyNumber}</div>
+                <div className="text-sm text-gray-400">{key.keyName}</div>
+                <div className="text-xs text-gray-500">{key.department}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-blue-400">{key.usageCount}</div>
+                <div className="text-xs text-gray-400">uses</div>
+              </div>
+            </div>
+          )) || (
+            <div className="text-center text-gray-400 py-8">
+              <Key className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No usage data available</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Peak Usage Hours */}
+      <div className="bg-gray-700/50 rounded-lg p-6">
+        <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <TrendingUp className="w-5 h-5 mr-2 text-purple-400" />
+          Peak Usage Hours
+        </h4>
+        <div className="space-y-3">
+          {analyticsData?.peakUsage?.peakHours?.map((peak, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+              <div>
+                <div className="font-medium text-white">{peak.timeLabel}</div>
+                <div className="text-sm text-gray-400">Peak Hour #{index + 1}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-purple-400">{peak.count}</div>
+                <div className="text-xs text-gray-400">keys used</div>
+              </div>
+            </div>
+          )) || (
+            <div className="text-center text-gray-400 py-8">
+              <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No peak usage data available</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
 
-    {/* Registration Trend Chart */}
-    <div className="bg-gray-700 rounded-lg p-6">
-      <h4 className="text-lg font-semibold text-white mb-4">User Registration Trend</h4>
-      <div className="h-64 flex items-end justify-between space-x-2">
-        {reports?.userAnalytics?.registrationTrend?.map((day, index) => (
-          <div key={index} className="flex flex-col items-center flex-1">
-            <div
-              className="bg-blue-500 rounded-t w-full transition-all duration-300 hover:bg-blue-400"
-              style={{
-                height: `${Math.max((day.count / Math.max(...reports.userAnalytics.registrationTrend.map(d => d.count))) * 200, 4)}px`
-              }}
-            ></div>
-            <span className="text-xs text-gray-400 mt-2 transform rotate-45">
-              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </span>
+    {/* Department Usage */}
+    <div className="bg-gray-700/50 rounded-lg p-6">
+      <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+        <Building className="w-5 h-5 mr-2 text-green-400" />
+        Usage by Department
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {analyticsData?.activeUsers?.usersByDepartment?.map((dept, index) => (
+          <div key={index} className="bg-gray-800/50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-white">{dept._id}</div>
+                <div className="text-sm text-gray-400">Department</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold text-green-400">{dept.count}</div>
+                <div className="text-xs text-gray-400">active users</div>
+              </div>
+            </div>
           </div>
-        ))}
+        )) || (
+          <div className="col-span-full text-center text-gray-400 py-8">
+            <Building className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>No department data available</p>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* System Statistics */}
+    <div className="bg-gray-700/50 rounded-lg p-6">
+      <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+        <BarChart3 className="w-5 h-5 mr-2 text-orange-400" />
+        System Statistics
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-white">{keys?.length || 0}</div>
+          <div className="text-sm text-gray-400">Total Keys</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-400">
+            {keys?.filter(k => k.status === 'unavailable').length || 0}
+          </div>
+          <div className="text-sm text-gray-400">Keys in Use</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-400">
+            {keys?.filter(k => k.status === 'available').length || 0}
+          </div>
+          <div className="text-sm text-gray-400">Available Keys</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-purple-400">
+            {analyticsData?.peakUsage?.usagePercentage?.toFixed(1) || 0}%
+          </div>
+          <div className="text-sm text-gray-400">Usage Rate</div>
+        </div>
       </div>
     </div>
   </div>
