@@ -121,13 +121,15 @@ export const getCorsOrigins = () => {
       'http://127.0.0.1:3204',
       'http://127.0.0.1:3205',
       'http://127.0.0.1:5173',
-      'https://vnr-keys.vercel.app/'
+      'https://vnr-keys.vercel.app',
+      'https://vnr-keys-1.onrender.com'
     ],
     dev: [
       'http://localhost:3203', // For local development against dev backend
       'http://localhost:3204',
       'http://localhost:5173',
-      'https://vnr-keys.vercel.app/'
+      'https://vnr-keys.vercel.app',
+      'https://vnr-keys-1.onrender.com'
     ],
     pro: []
   };

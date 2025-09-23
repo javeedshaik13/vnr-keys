@@ -33,6 +33,7 @@ import { useKeyStore } from "./store/keyStore";
 import { useEffect } from "react";
 import RoleProtectedRoute from "./components/auth/RoleProtectedRoute";
 import RouteObserver from "./components/RouteObserver";
+import { useNotificationStore } from "./store/notificationStore";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -82,24 +83,33 @@ const RoleBasedRedirect = () => {
 
 function App() {
 	const { isCheckingAuth, checkAuth, isAuthenticated } = useAuthStore();
-	const { initializeSocket, disconnectSocket } = useKeyStore();
+	const { initializeSocket: initializeKeySocket, disconnectSocket: disconnectKeySocket } = useKeyStore();
+	const { initializeSocket: initializeNotificationSocket, disconnectSocket: disconnectNotificationSocket } = useNotificationStore();
 
 	useEffect(() => {
 		checkAuth();
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []); // Only run once on mount
 
-	// Initialize socket connection when user is authenticated
+	// Initialize socket connections when user is authenticated
 	useEffect(() => {
 		if (isAuthenticated) {
-			initializeSocket();
+			// Initialize both sockets
+			initializeKeySocket();
+			initializeNotificationSocket();
+			
+			// Fetch notifications immediately when authenticated
+			useNotificationStore.getState().fetchNotifications();
 		} else {
-			disconnectSocket();
+			// Disconnect both sockets
+			disconnectKeySocket();
+			disconnectNotificationSocket();
 		}
 
 		// Cleanup on unmount
 		return () => {
-			disconnectSocket();
+			disconnectKeySocket();
+			disconnectNotificationSocket();
 		};
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isAuthenticated]); // Only depend on isAuthenticated

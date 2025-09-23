@@ -9,8 +9,8 @@
  */
 
 import mongoose from 'mongoose';
-import { User } from '../models/user.model.js';
-import { Key } from '../models/key.model.js';
+import User from '../models/user.model.js';
+import Key from '../models/key.model.js';
 import { Notification } from '../models/notification.model.js';
 import {
   createAndSendNotification,

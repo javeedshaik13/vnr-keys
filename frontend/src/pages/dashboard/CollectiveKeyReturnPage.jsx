@@ -8,8 +8,10 @@ import {
   User, 
   Clock, 
   MapPin,
-  RefreshCw
+  RefreshCw,
+  QrCode
 } from "lucide-react";
+import VolunteerReturnQRModal from "../../components/keys/VolunteerReturnQRModal";
 import { useAuthStore } from "../../store/authStore";
 import { useKeyStore } from "../../store/keyStore";
 import { useSidebar } from "../../components/layout/DashboardLayout";
@@ -18,9 +20,7 @@ import { useSidebar } from "../../components/layout/DashboardLayout";
 const CollectiveKeyReturnPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedKeys, setSelectedKeys] = useState([]);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [returnReason, setReturnReason] = useState("");
-  const [isReturning, setIsReturning] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [takenKeys, setTakenKeys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,6 +28,7 @@ const CollectiveKeyReturnPage = () => {
 
   const { sidebarOpen } = useSidebar();
   const { collectiveReturnKeyAPI, getAllTakenKeysAPI } = useKeyStore();
+  const { user } = useAuthStore();
 
   const fetchAllTakenKeys = useCallback(async () => {
     if (!getAllTakenKeysAPI) {
@@ -83,30 +84,12 @@ const CollectiveKeyReturnPage = () => {
 
   const handleReturnKeys = () => {
     if (selectedKeys.length === 0) return;
-    setShowConfirmModal(true);
+    setShowQRModal(true);
   };
 
-  const confirmReturn = async () => {
-    setIsReturning(true);
-    try {
-      const returnPromises = selectedKeys.map(keyId =>
-        collectiveReturnKeyAPI(keyId, returnReason || 'Volunteer Key Return')
-      );
-
-      await Promise.all(returnPromises);
-
-      // Refresh the taken keys list
-      await fetchAllTakenKeys();
-
-      // Reset state
-      setSelectedKeys([]);
-      setReturnReason("");
-      setShowConfirmModal(false);
-    } catch (error) {
-      console.error('Error returning keys:', error);
-    } finally {
-      setIsReturning(false);
-    }
+  const handleQRExpired = () => {
+    // You may want to show a notification or message here
+    console.log('QR code expired');
   };
 
   const formatDate = (dateString) => {
@@ -248,9 +231,6 @@ const CollectiveKeyReturnPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-white">Currently Taken Keys</h2>
-              <p className="text-gray-400 mt-1 text-sm sm:text-base">
-                {filteredKeys.length} of {takenKeys.length} keys shown
-              </p>
             </div>
             {selectedKeys.length > 0 && (
               <div className="mt-3 sm:mt-0">
@@ -384,66 +364,17 @@ const CollectiveKeyReturnPage = () => {
         )}
       </motion.div>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-orange-400" />
-              <h3 className="text-lg font-semibold text-white">Confirm Collective Return</h3>
-            </div>
-
-            <p className="text-gray-300 mb-4">
-              You are about to return {selectedKeys.length} key{selectedKeys.length > 1 ? 's' : ''}
-              on behalf of other users. This action will be logged for audit purposes.
-            </p>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Reason for collective return (optional)
-              </label>
-              <textarea
-                value={returnReason}
-                onChange={(e) => setReturnReason(e.target.value)}
-                placeholder="e.g., End of day collection, Emergency return, etc."
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-500"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                disabled={isReturning}
-                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmReturn}
-                disabled={isReturning}
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-              >
-                {isReturning ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Returning...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Confirm Return</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      {/* QR Code Modal */}
+      <VolunteerReturnQRModal
+        isOpen={showQRModal}
+        onClose={() => {
+          setShowQRModal(false);
+          setSelectedKeys([]);
+        }}
+        selectedKeys={selectedKeys}
+        user={user}
+        onQRExpired={handleQRExpired}
+      />
     </div>
   );
 };

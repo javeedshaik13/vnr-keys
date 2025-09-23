@@ -29,6 +29,7 @@ const notificationSchema = new mongoose.Schema(
       trim: true,
       maxlength: 200,
     },
+
     message: {
       type: String,
       required: true,
@@ -38,7 +39,15 @@ const notificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["key_reminder", "key_returned", "security_alert", "system", "general"],
+      enum: [
+        "key_taken",
+        "key_returned",
+        "KEY_RETURN",
+        "key_reminder",
+        "security_alert",
+        "system",
+        "general",
+      ],
       default: "general",
     },
 
@@ -52,6 +61,7 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
     readAt: {
       type: Date,
       default: null,
@@ -62,63 +72,57 @@ const notificationSchema = new mongoose.Schema(
       default: true,
     },
 
-    // Auto-delete after 7 days (extended from 1 day)
+    // Auto-delete after 7 days
     expiresAt: {
       type: Date,
-      default: function() {
+      default: function () {
         return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-      }
+      },
     },
 
-    // Additional metadata
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
-
   },
-  { 
+  {
     timestamps: true,
-    collection: "notifications"
+    collection: "notifications",
   }
 );
 
-// Indexes for better performance
+// Indexes
 notificationSchema.index({ "recipient.userId": 1, createdAt: -1 });
 notificationSchema.index({ "recipient.role": 1 });
 notificationSchema.index({ read: 1 });
-notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-deletion
+notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-
-
-// Method to mark notification as read
-notificationSchema.methods.markAsRead = function() {
+// Instance methods
+notificationSchema.methods.markAsRead = function () {
   this.read = true;
   this.readAt = new Date();
   return this.save();
 };
 
-// Method to mark notification as unread
-notificationSchema.methods.markAsUnread = function() {
+notificationSchema.methods.markAsUnread = function () {
   this.read = false;
   this.readAt = null;
   return this.save();
 };
 
-// Static method to find unread notifications for a user
-notificationSchema.statics.findUnreadForUser = function(userId) {
+// Static methods
+notificationSchema.statics.findUnreadForUser = function (userId) {
   return this.find({
     "recipient.userId": userId,
     read: false,
-    isActive: true
+    isActive: true,
   }).sort({ createdAt: -1 });
 };
 
-// Static method to find all notifications for a user
-notificationSchema.statics.findForUser = function(userId, options = {}) {
+notificationSchema.statics.findForUser = function (userId, options = {}) {
   const query = {
     "recipient.userId": userId,
-    isActive: true
+    isActive: true,
   };
 
   if (options.read !== undefined) {
@@ -130,34 +134,26 @@ notificationSchema.statics.findForUser = function(userId, options = {}) {
     .limit(options.limit || 50);
 };
 
-// Static method to count unread notifications for a user
-notificationSchema.statics.countUnreadForUser = function(userId) {
+notificationSchema.statics.countUnreadForUser = function (userId) {
   return this.countDocuments({
     "recipient.userId": userId,
     read: false,
-    isActive: true
+    isActive: true,
   });
 };
 
-// Static method to clean up expired notifications
-notificationSchema.statics.cleanupExpired = function() {
+notificationSchema.statics.cleanupExpired = function () {
   return this.deleteMany({
-    $or: [
-      { expiresAt: { $lt: new Date() } },
-      { isActive: false }
-    ]
+    $or: [{ expiresAt: { $lt: new Date() } }, { isActive: false }],
   });
 };
 
-// Static method to deactivate notification instead of deleting
-notificationSchema.statics.deactivateNotification = function(notificationId) {
+notificationSchema.statics.deactivateNotification = function (notificationId) {
   return this.findByIdAndUpdate(
     notificationId,
     { isActive: false },
     { new: true }
   );
 };
-
-
 
 export const Notification = mongoose.model("Notification", notificationSchema);

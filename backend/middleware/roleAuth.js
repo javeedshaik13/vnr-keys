@@ -1,4 +1,4 @@
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 
 /**
  * Middleware to require specific roles for access

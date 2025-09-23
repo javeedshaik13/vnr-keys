@@ -2,7 +2,7 @@ import { create } from "zustand";
 import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
 import socketService from "../services/socketService.js";
-import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/qrService.js";
+import { generateKeyReturnQRData, generateKeyRequestQRData, generateBatchReturnQRData } from "../services/qrService.js";
 import { config } from "../utils/config.js";
 import { useAuthStore } from "./authStore.js";
 

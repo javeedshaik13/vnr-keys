@@ -18,7 +18,7 @@ const FrequentlyUsedSection = ({
 	onRequestKey,
 	usageCounts = {},
 }) => {
-	const filtered = applyAvailabilityFilter(keys, availabilityFilter);
+	const filtered = applyAvailabilityFilter(keys, availabilityFilter).slice(0, 5); // ✅ limit to 5
 
 	return (
 		<div className="mb-8">

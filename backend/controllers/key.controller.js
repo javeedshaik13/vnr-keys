@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { Key } from "../models/key.model.js";
-import { User } from "../models/user.model.js";
+import Key from "../models/key.model.js";
+import User from "../models/user.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
 import {
   ValidationError,
@@ -331,17 +331,21 @@ export const returnKey = asyncHandler(async (req, res) => {
 
   await key.returnKey();
 
-  // Create notifications
+  // Create notifications based on who is returning the key
   try {
-    const { createKeyReturnedNotification, createKeySelfReturnedNotification } = await import('../services/notificationService.js');
+    const { createKeySelfReturnedNotification, createKeyPendingReturnNotification } = await import('../services/notificationService.js');
     
     if (originalUser && returnedBy) {
       if (originalUser._id.toString() === returnedBy._id.toString()) {
         // Key returned by original taker
         await createKeySelfReturnedNotification(key, originalUser);
       } else {
-        // Key returned by someone else
-        await createKeyReturnedNotification(key, originalUser, returnedBy);
+        // If key is being returned by someone else and it's after hours, send a pending notification
+        const now = new Date();
+        const keyTakenTime = new Date(key.takenAt);
+        if (keyTakenTime.getDate() === now.getDate() && now.getHours() >= 17) {
+          await createKeyPendingReturnNotification(key, originalUser);
+        }
       }
     }
   } catch (notificationError) {
@@ -411,14 +415,25 @@ export const collectiveReturnKey = asyncHandler(async (req, res) => {
 
   await key.returnKey();
 
-  // Send notification if key was returned by someone other than the original taker
-  if (originalUser && returnedBy && originalUser._id.toString() !== returnedBy._id.toString()) {
-    try {
-      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
-      await createKeyReturnedNotification(key, originalUser, returnedBy);
-    } catch (notificationError) {
-      console.error('❌ Error sending key return notification:', notificationError);
+  // Send appropriate notification based on who is returning the key
+  try {
+    const { createKeySelfReturnedNotification, createKeyPendingReturnNotification } = await import('../services/notificationService.js');
+
+    if (originalUser && returnedBy) {
+      if (originalUser._id.toString() === returnedBy._id.toString()) {
+        // Original faculty volunteering to return their own key
+        await createKeySelfReturnedNotification(key, originalUser);
+      } else {
+        // Send pending notification if key is being returned after hours
+        const now = new Date();
+        const keyTakenTime = new Date(key.takenAt);
+        if (keyTakenTime.getDate() === now.getDate() && now.getHours() >= 17) {
+          await createKeyPendingReturnNotification(key, originalUser);
+        }
+      }
     }
+  } catch (notificationError) {
+    console.error('❌ Error sending key return notification:', notificationError);
   }
 
   // Log the Volunteer Key Return operation with additional metadata
@@ -672,15 +687,41 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
   // Return the key
   await key.returnKey();
 
-  // Send notification if key was returned by someone other than the original taker
-  if (originalUser && originalUser._id.toString() !== req.userId) {
-    try {
-      const returnedBy = await User.findById(req.userId);
-      const { createKeyReturnedNotification } = await import('../services/notificationService.js');
-      await createKeyReturnedNotification(key, originalUser, returnedBy);
-    } catch (notificationError) {
-      console.error('❌ Error sending key return notification:', notificationError);
+  // Send notification based on who is returning the key
+  try {
+    console.log('🔵 Processing return notification...');
+    const returnedBy = await User.findById(req.userId);
+    console.log('🔵 Return processed by:', returnedBy.name);
+
+    const { createKeySelfReturnedNotification, createKeyReturnedNotification, createKeyPendingReturnNotification } = 
+      await import('../services/notificationService.js');
+
+    if (originalUser) {
+      console.log('🔵 Processing notification for original user:', originalUser.name);
+      
+      if (originalUser._id.toString() === returnedBy._id.toString()) {
+        // Original faculty returning their own key
+        console.log('🔵 Self-return detected, creating self-return notification');
+        await createKeySelfReturnedNotification(key, originalUser);
+        console.log('✅ Self-return notification created');
+      } else {
+        // Security or another user returning the key
+        console.log('🔵 Return by other user detected, creating return notification');
+        await createKeyReturnedNotification(key, originalUser, returnedBy);
+        console.log('✅ Return notification created');
+
+        // Also send pending notification if key was overdue
+        const now = new Date();
+        const keyTakenTime = new Date(key.takenAt);
+        if (keyTakenTime.getDate() === now.getDate() && now.getHours() >= 17) {
+          console.log('🔵 After-hours return detected, creating pending notification');
+          await createKeyPendingReturnNotification(key, originalUser);
+          console.log('✅ Pending notification created');
+        }
+      }
     }
+  } catch (notificationError) {
+    console.error('❌ Error sending key return notification:', notificationError);
   }
 
   // Emit real-time update for QR scan return
@@ -757,6 +798,15 @@ export const qrScanRequest = asyncHandler(async (req, res) => {
 
   // Take the key for the requesting user
   await key.takeKey(requestingUser);
+
+  // Create notification for key taken
+  try {
+    const { createKeyTakenNotification } = await import('../services/notificationService.js');
+    await createKeyTakenNotification(key, requestingUser);
+    console.log('✅ Key taken notification created for user:', requestingUser.name);
+  } catch (notificationError) {
+    console.error('❌ Error sending key taken notification:', notificationError);
+  }
 
   // Increment usage count for the requesting user
   if (!requestingUser.keyUsage) {

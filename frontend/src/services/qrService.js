@@ -5,6 +5,32 @@ import { config } from '../utils/config.js';
 const API_URL = config.api.keysUrl;
 
 /**
+ * Process QR code scan for batch key return
+ * @param {Object|string} qrData - The QR code data (object or JSON string)
+ * @returns {Promise<Object>} The API response
+ */
+export const processBatchQRScanReturn = async (qrData) => {
+  try {
+    console.log('Processing batch QR scan return:', qrData);
+
+    // Extract the inner qrData if nested
+    const qrDataToSend = qrData.qrData || qrData;
+
+    const response = await axios.post(`${API_URL}/qr/return`, {
+      qrData: qrDataToSend
+    }, {
+      withCredentials: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Batch QR scan return error:', error);
+    const errorMessage = handleError(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * Process QR code scan for key return
  * @param {Object|string} qrData - The QR code data (object or JSON string)
  * @returns {Promise<Object>} The API response
@@ -130,8 +156,16 @@ export const validateQRData = (qrData) => {
     // return result;
   }
 
+  // Check for batch return QR code
+  if (qrData.type === 'KEY_RETURN' && Array.isArray(qrData.keyIds)) {
+    console.log('✅ QR Validation: Valid KEY_RETURN QR code');
+    result.isValid = true;
+    result.type = 'KEY_RETURN';
+    return result;
+  }
+
   // Check for key return QR code
-  if (qrData.returnId && qrData.keyId && qrData.userId) {
+  if ((qrData.type === 'key-return' || qrData.type === 'KEY_RETURN') && qrData.keyId) {
     console.log('✅ QR Validation: Valid key-return QR code');
     result.isValid = true;
     result.type = 'key-return';
@@ -220,6 +254,33 @@ export const generateKeyReturnQRData = (keyId, userId) => {
  * @param {string} qrString - The QR code string
  * @returns {Object} Parsed QR data
  */
+/**
+ * Generate QR data for batch key return
+ * @param {string[]} keyIds - Array of key IDs
+ * @param {string} userId - The user ID
+ * @returns {Object} QR data object
+ */
+export const generateBatchReturnQRData = (keyIds, userId) => {
+  if (!Array.isArray(keyIds) || keyIds.length === 0) {
+    throw new Error('At least one key ID is required for batch return QR generation');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for QR generation');
+  }
+
+  const keyIdsStr = keyIds.map(id => String(id));
+  const userIdStr = String(userId);
+
+  return {
+    type: 'KEY_RETURN',
+    keyIds: keyIdsStr,
+    userId: userIdStr,
+    timestamp: new Date().toISOString(),
+    returnId: `batch-ret-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  };
+};
+
 export const parseQRString = (qrString) => {
   try {
     return JSON.parse(qrString);

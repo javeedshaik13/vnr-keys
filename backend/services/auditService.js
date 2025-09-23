@@ -51,14 +51,11 @@ class AuditService {
     const metadata = {
       ...this.extractRequestMetadata(req),
       ...additionalMetadata,
+      isBatchReturn: additionalMetadata.isBatch || false
     };
 
-    const action = originalUser && originalUser._id.toString() !== returnedBy._id.toString() 
-      ? "key_collective_return" 
-      : "key_returned";
-
     return await AuditLog.logKeyOperation(
-      action,
+      "key_returned",
       key,
       returnedBy,
       originalUser,

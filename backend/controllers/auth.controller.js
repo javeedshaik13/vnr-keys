@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import { sendWelcomeEmail } from "../nodemailer/emails.js";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 import {
 	validateEmail,
 	validateName,

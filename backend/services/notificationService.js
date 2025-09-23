@@ -1,6 +1,6 @@
 import { Notification } from "../models/notification.model.js";
-import { User } from "../models/user.model.js";
-import { Key } from "../models/key.model.js";
+import User from "../models/user.model.js";
+import Key from "../models/key.model.js";
 import { sendNotificationEmail } from "../nodemailer/emails.js";
 
 /**
@@ -15,13 +15,22 @@ import { sendNotificationEmail } from "../nodemailer/emails.js";
  */
 export const createNotification = async (notificationData) => {
   try {
+    console.log('🔵 Creating notification with data:', JSON.stringify(notificationData, null, 2));
+    
     const notification = new Notification(notificationData);
+    console.log('🔵 Notification model created, saving to database...');
+    
     await notification.save();
-
+    console.log('✅ Notification saved to database successfully');
     console.log(`📢 Notification created: ${notification.title} for user ${notification.recipient.name}`);
+    
     return notification;
   } catch (error) {
     console.error("❌ Error creating notification:", error);
+    console.error("Error details:", error.message);
+    if (error.errors) {
+      console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
+    }
     throw error;
   }
 };
@@ -85,6 +94,13 @@ export const sendEmailNotification = async (notification) => {
  */
 export const createKeyTakenNotification = async (key, faculty) => {
   try {
+    console.log('🔵 createKeyTakenNotification called with:', {
+      keyId: key._id,
+      keyName: key.keyName,
+      facultyId: faculty._id,
+      facultyName: faculty.name
+    });
+
     const notificationData = {
       recipient: {
         userId: faculty._id,
@@ -94,7 +110,7 @@ export const createKeyTakenNotification = async (key, faculty) => {
       },
       title: 'Key Taken',
       message: `You have taken the key for ${key.keyName}`,
-      type: 'key_taken',
+      type: 'general', // Changed from 'key_taken' to match enum in schema
       priority: 'low',
       metadata: {
         keyId: key._id,
@@ -103,9 +119,15 @@ export const createKeyTakenNotification = async (key, faculty) => {
       }
     };
 
-    return await createAndSendNotification(notificationData, { email: false });
+    console.log('🔵 Notification data prepared:', JSON.stringify(notificationData, null, 2));
+
+    const notification = await createAndSendNotification(notificationData, { email: false });
+    console.log('✅ Key taken notification created and sent successfully');
+    return notification;
   } catch (error) {
     console.error("❌ Error creating key taken notification:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 };
@@ -115,8 +137,75 @@ export const createKeyTakenNotification = async (key, faculty) => {
  * @param {Object} key - The returned key
  * @param {Object} faculty - The faculty who returned the key
  */
+/**
+ * Create notification when a key is returned by someone else
+ * @param {Object} key - The returned key
+ * @param {Object} originalUser - The user who originally took the key
+ * @param {Object} returnedBy - The user who returned the key
+ */
+export const createKeyReturnedNotification = async (key, originalUser, returnedBy) => {
+  try {
+    console.log('🔵 Creating key returned notification:', {
+      keyId: key._id,
+      keyName: key.keyName,
+      originalUserId: originalUser._id,
+      originalUserName: originalUser.name,
+      returnedById: returnedBy._id,
+      returnedByName: returnedBy.name
+    });
+
+    const notificationData = {
+      recipient: {
+        userId: originalUser._id,
+        name: originalUser.name,
+        email: originalUser.email,
+        role: originalUser.role,
+      },
+      title: 'Key Returned',
+      message: `Your key ${key.keyName} was returned by ${returnedBy.name}`,
+      type: 'general',  // Using 'general' type as per schema
+      priority: 'low',
+      metadata: {
+        keyId: key._id,
+        keyNumber: key.keyNumber,
+        keyName: key.keyName,
+        returnTime: new Date().toISOString(),
+        returnType: 'returned-by-other',
+        returnedBy: {
+          id: returnedBy._id,
+          name: returnedBy.name,
+          role: returnedBy.role
+        }
+      }
+    };
+
+    console.log('🔵 Sending notification with data:', JSON.stringify(notificationData, null, 2));
+
+    const notification = await createAndSendNotification(notificationData, {
+      email: false,
+      realTime: true
+    });
+
+    console.log('✅ Key return notification sent:', notification._id);
+    return notification;
+  } catch (error) {
+    console.error("❌ Error creating key returned notification:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
+    throw error;
+  }
+};
+
 export const createKeySelfReturnedNotification = async (key, faculty) => {
   try {
+    console.log('🔵 createKeySelfReturnedNotification called with:', {
+      keyId: key._id,
+      keyName: key.keyName,
+      facultyId: faculty._id,
+      facultyName: faculty.name,
+      facultyRole: faculty.role
+    });
+
     const notificationData = {
       recipient: {
         userId: faculty._id,
@@ -126,18 +215,30 @@ export const createKeySelfReturnedNotification = async (key, faculty) => {
       },
       title: 'Key Returned',
       message: `You have returned key successfully ${key.keyName}`,
-      type: 'key_self_returned',
+      type: 'key_returned',
       priority: 'low',
       metadata: {
         keyId: key._id,
         keyNumber: key.keyNumber,
         keyName: key.keyName,
+        timestamp: new Date().toISOString(),
+        actionType: 'self-return'
       }
     };
 
-    return await createAndSendNotification(notificationData, { email: false });
+    console.log('🔵 Preparing to create notification with data:', JSON.stringify(notificationData, null, 2));
+
+    const notification = await createAndSendNotification(notificationData, { 
+      email: false,
+      realTime: true // Ensure real-time notification is sent
+    });
+
+    console.log('✅ Key return notification created with ID:', notification._id);
+    return notification;
   } catch (error) {
     console.error("❌ Error creating key self-returned notification:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 };
@@ -182,22 +283,32 @@ export const createKeyPendingReturnNotification = async (key, faculty) => {
  */
 export const createAndSendNotification = async (notificationData, options = {}) => {
   try {
+    console.log('🔵 createAndSendNotification called with options:', options);
+    
     // Create the notification
+    console.log('🔵 Creating notification in database...');
     const notification = await createNotification(notificationData);
+    console.log('✅ Notification created in database with ID:', notification._id);
     
     // Send real-time notification
     if (options.realTime !== false) {
+      console.log('🔵 Sending real-time notification...');
       await sendRealTimeNotification(notification);
+      console.log('✅ Real-time notification sent');
     }
     
     // Send email notification only if explicitly enabled
     if (options.email === true) {
+      console.log('🔵 Sending email notification...');
       await sendEmailNotification(notification);
+      console.log('✅ Email notification sent');
     }
     
     return notification;
   } catch (error) {
-    console.error("❌ Error creating and sending notification:", error);
+    console.error("❌ Error in createAndSendNotification:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     throw error;
   }
 };
@@ -292,40 +403,7 @@ export const createSecurityAlertNotification = async (facultyUser, unreturnedKey
   }
 };
 
-/**
- * Create notification when a key assigned to faculty is returned by someone else
- * @param {Object} key - The returned key
- * @param {Object} originalFaculty - The faculty who originally took the key
- * @param {Object} returnedBy - The user who returned the key
- */
-export const createKeyReturnedNotification = async (key, originalFaculty, returnedBy) => {
-  try {
-    const notificationData = {
-      recipient: {
-        userId: originalFaculty._id,
-        name: originalFaculty.name,
-        email: originalFaculty.email,
-        role: originalFaculty.role,
-      },
-      title: `Key Returned`,
-      message: `Key ${key.keyNumber} (${key.keyName}) that was assigned to you has been returned by ${returnedBy.name}.`,
-      type: 'key_returned',
-      priority: 'low',
-      metadata: {
-        keyId: key._id,
-        keyNumber: key.keyNumber,
-        keyName: key.keyName,
-        returnedById: returnedBy._id,
-        returnedByName: returnedBy.name
-      }
-    };
 
-    return await createAndSendNotification(notificationData, { email: false });
-  } catch (error) {
-    console.error("❌ Error creating key returned notification:", error);
-    throw error;
-  }
-};
 
 /**
  * Check for unreturned keys and send 5PM reminders

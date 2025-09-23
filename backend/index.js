@@ -29,6 +29,7 @@ import auditRoutes from "./routes/audit.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
 import logbookRoutes from "./routes/logbook.route.js"
+import qrRoutes from "./routes/qr.route.js"
 
 const app = express();
 const server = createServer(app);
@@ -145,6 +146,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/about", about);
 app.use("/api/logbook", logbookRoutes);
+app.use("/api/qr", qrRoutes);
 
 // For local development - handle /be prefix routes to match Google OAuth redirect URIs
 if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local') {
