@@ -264,11 +264,26 @@ export const takeKey = asyncHandler(async (req, res) => {
   // Log the take operation
   await AuditService.logKeyTaken(key, user, req);
 
-  // Create a logbook entry
+  // Create a detailed logbook entry for key taken
   const Logbook = mongoose.model('Logbook');
   await Logbook.create({
-    ...key.toObject(),
-    _id: undefined,
+    keyNumber: key.keyNumber,
+    keyName: key.keyName,
+    location: key.location,
+    status: 'unavailable',
+    category: key.category,
+    department: key.department,
+    block: key.block,
+    description: key.description,
+    takenBy: {
+      userId: user._id,
+      name: user.name,
+      email: user.email
+    },
+    takenAt: new Date(),
+    returnedAt: null,
+    frequentlyUsed: key.frequentlyUsed,
+    isActive: true,
     recordedBy: {
       userId: user._id,
       role: user.role
@@ -355,11 +370,26 @@ export const returnKey = asyncHandler(async (req, res) => {
   // Log the return operation
   await AuditService.logKeyReturned(key, returnedBy, req, originalUser);
 
-  // Create a logbook entry
+  // Create a detailed logbook entry for key return
   const Logbook = mongoose.model('Logbook');
   await Logbook.create({
-    ...key.toObject(),
-    _id: undefined,
+    keyNumber: key.keyNumber,
+    keyName: key.keyName,
+    location: key.location,
+    status: 'available',
+    category: key.category,
+    department: key.department,
+    block: key.block,
+    description: key.description,
+    takenBy: originalUser ? {
+      userId: originalUser._id,
+      name: originalUser.name,
+      email: originalUser.email
+    } : null,
+    takenAt: key.takenAt,
+    returnedAt: new Date(),
+    frequentlyUsed: key.frequentlyUsed,
+    isActive: true,
     recordedBy: {
       userId: returnedBy._id,
       role: returnedBy.role
@@ -687,6 +717,32 @@ export const qrScanReturn = asyncHandler(async (req, res) => {
   // Return the key
   await key.returnKey();
 
+  // Create a detailed logbook entry for QR-based key return
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    keyNumber: key.keyNumber,
+    keyName: key.keyName,
+    location: key.location,
+    status: 'available',
+    category: key.category,
+    department: key.department,
+    block: key.block,
+    description: key.description,
+    takenBy: {
+      userId: originalUser._id,
+      name: originalUser.name,
+      email: originalUser.email
+    },
+    takenAt: key.takenAt,
+    returnedAt: new Date(),
+    frequentlyUsed: key.frequentlyUsed,
+    isActive: true,
+    recordedBy: {
+      userId: req.userId,
+      role: req.userRole
+    }
+  });
+
   // Send notification based on who is returning the key
   try {
     console.log('🔵 Processing return notification...');
@@ -798,6 +854,32 @@ export const qrScanRequest = asyncHandler(async (req, res) => {
 
   // Take the key for the requesting user
   await key.takeKey(requestingUser);
+
+  // Create a detailed logbook entry for QR-based key request
+  const Logbook = mongoose.model('Logbook');
+  await Logbook.create({
+    keyNumber: key.keyNumber,
+    keyName: key.keyName,
+    location: key.location,
+    status: 'unavailable',
+    category: key.category,
+    department: key.department,
+    block: key.block,
+    description: key.description,
+    takenBy: {
+      userId: requestingUser._id,
+      name: requestingUser.name,
+      email: requestingUser.email
+    },
+    takenAt: new Date(),
+    returnedAt: null,
+    frequentlyUsed: key.frequentlyUsed,
+    isActive: true,
+    recordedBy: {
+      userId: req.userId,
+      role: req.userRole
+    }
+  });
 
   // Create notification for key taken
   try {
