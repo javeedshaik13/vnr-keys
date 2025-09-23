@@ -53,7 +53,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const adminMenuItems = [
     { icon: Users, label: "Manage Users", path: "/dashboard/admin/users" },
     { icon: KeyRound, label: "Manage Keys", path: "/dashboard/admin/keys" },
-    { icon: Shield, label: "Security Settings", path: "/dashboard/admin/security" },
+    // { icon: Shield, label: "Security Settings", path: "/dashboard/admin/security" },
     { icon: BarChart3, label: "View Reports", path: "/dashboard/admin/reports" },
   ];
 

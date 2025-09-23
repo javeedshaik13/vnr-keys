@@ -42,34 +42,15 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmetConfig);
 app.use(requestLogger);
-
 app.use(sanitizeRequest);
 
-// CORS configuration
+// 🔧 Hardcoded CORS configuration
 const corsOptions = {
-	origin: function (origin, callback) {
-		// Only log CORS details in development mode
-		if (process.env.NODE_ENV === 'development') {
-			console.log('CORS check - Origin:', origin);
-		}
-
-		// Allow requests with no origin (like mobile apps or curl requests)
-		if (!origin) return callback(null, true);
-
-		// Get allowed origins from config
-		const allowedOrigins = config.cors.origins;
-
-		if (allowedOrigins.includes(origin)) {
-			if (process.env.NODE_ENV === 'development') {
-				console.log('CORS: ALLOWED for', origin);
-			}
-			callback(null, true);
-		} else {
-			console.warn('CORS: BLOCKED for', origin);
-			callback(new Error('Not allowed by CORS'));
-		}
-	},
-	credentials: true, // This is crucial for cookies to work cross-origin
+	origin: [
+		"http://localhost:5173",        // Local frontend (dev)
+		"https://vnr-keys.vercel.app"   // Production frontend
+	],
+	credentials: true, // Allow cookies / credentials
 	optionsSuccessStatus: 200,
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 	allowedHeaders: [
@@ -81,7 +62,7 @@ const corsOptions = {
 		'Access-Control-Request-Method',
 		'Access-Control-Request-Headers'
 	],
-	exposedHeaders: ['Set-Cookie'], // Expose Set-Cookie header
+	exposedHeaders: ['Set-Cookie'], // Expose cookies
 };
 app.use(cors(corsOptions));
 
@@ -114,7 +95,10 @@ app.get("/api/health", (req, res) => {
 		env: process.env.NODE_ENV,
 		cors: {
 			origin: req.headers.origin,
-			allowedOrigins: config.cors.origins
+			allowedOrigins: [
+				"http://localhost:5173",
+				"https://vnr-keys.vercel.app"
+			]
 		}
 	});
 });
@@ -172,7 +156,10 @@ if (process.env.NODE_ENV === "production") {
 // Configure Socket.IO with CORS
 const io = new Server(server, {
 	cors: {
-		origin: config.cors.origins,
+		origin: [
+			"http://localhost:5173",
+			"https://vnr-keys.vercel.app"
+		],
 		methods: ["GET", "POST"],
 		credentials: true
 	}
@@ -227,7 +214,7 @@ server.listen(PORT, async () => {
 	console.log("🔌 Socket.IO server ready for real-time updates");
 
 	if (config.server.nodeEnv === 'development' || config.environment === 'local') {
-		console.log(`📱 Frontend URL: ${config.urls.client}`);
-		console.log(`🔗 API Health: ${config.urls.backend}/api/health`);
+		console.log(`📱 Frontend URL: https://vnr-keys.vercel.app`);
+		console.log(`🔗 API Health: https://vnr-keys-1.onrender.com/api/health`);
 	}
 });

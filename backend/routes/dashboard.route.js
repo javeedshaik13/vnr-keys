@@ -10,7 +10,10 @@ import {
 	toggleUserVerification,
 	getSecuritySettings,
 	updateSecuritySettings,
-	getSystemReports
+	getSystemReports,
+	getKeyUsageAnalytics,
+	getActiveUsersAnalytics,
+	getPeakUsageAnalytics
 } from "../controllers/dashboard.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { rolePermissions } from "../middleware/roleAuth.js";
@@ -37,6 +40,11 @@ router.put("/security-settings", rolePermissions.adminOnly, updateSecuritySettin
 
 // Admin-only reports endpoints
 router.get("/reports", rolePermissions.adminOnly, getSystemReports);
+
+// Admin-only analytics endpoints
+router.get("/analytics/key-usage", rolePermissions.adminOnly, getKeyUsageAnalytics);
+router.get("/analytics/active-users", rolePermissions.adminOnly, getActiveUsersAnalytics);
+router.get("/analytics/peak-usage", rolePermissions.adminOnly, getPeakUsageAnalytics);
 
 // General user profile endpoint (accessible to all authenticated users)
 router.get("/profile", getUserProfile);

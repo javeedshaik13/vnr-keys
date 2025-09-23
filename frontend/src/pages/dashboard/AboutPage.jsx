@@ -72,7 +72,7 @@ const AboutPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-4xl font-extrabold text-white mb-4 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]">
+        <h1 className="text-4xl font-extrabold text-white mb-4 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
           {data.project.title}
         </h1>
         <p className="text-blue-200 text-lg max-w-3xl mx-auto">
@@ -93,7 +93,7 @@ const AboutPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
               whileHover={{ scale: 1.03 }}
-              className="relative bg-[#0d1628] border border-blue-400 rounded-2xl shadow-[0_0_12px_rgba(59,130,246,0.4)] hover:shadow-[0_0_20px_rgba(59,130,246,0.7)] transition-all p-4 sm:p-6 text-center"
+              className="relative bg-[#0d1628] border border-blue-400 rounded-2xl hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all p-4 sm:p-6 text-center"
             >
               {/* Avatar */}
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4">
