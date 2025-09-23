@@ -300,7 +300,7 @@ export const useKeyStore = create((set, get) => ({
             : k
         );
         message = `Key ${key.keyNumber} (${key.keyName}) assigned successfully`;
-      } else if (qrData.type === "KEY_RETURN") {
+      } else if (qrData.type === "batch-return") {
         if (key.status !== "unavailable") {
           throw new Error("Key is not currently taken");
         }

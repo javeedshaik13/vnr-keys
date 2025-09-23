@@ -47,7 +47,7 @@ app.use(sanitizeRequest);
 // 🔧 Hardcoded CORS configuration
 const corsOptions = {
 	origin: [
-		"http://localhost:5173",        // Local frontend (dev)
+		"http://localhost:3203",        // Local frontend (dev)
 		"https://vnr-keys.vercel.app"   // Production frontend
 	],
 	credentials: true, // Allow cookies / credentials
@@ -96,7 +96,7 @@ app.get("/api/health", (req, res) => {
 		cors: {
 			origin: req.headers.origin,
 			allowedOrigins: [
-				"http://localhost:5173",
+				"http://localhost:3203",
 				"https://vnr-keys.vercel.app"
 			]
 		}

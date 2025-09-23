@@ -141,13 +141,13 @@ const SecurityDashboard = () => {
       console.log('✅ SecurityDashboard: QR validation passed, type:', validation.type);
 
       // Handle batch return QR codes
-      if (validation.type === 'KEY_RETURN') {
+      if (validation.type === 'batch-return') {
         try {
           const result = await processBatchQRScanReturn(parsedData);
           setScanResult({
             success: true,
             message: result.message,
-            type: 'KEY_RETURN'
+            type: 'batch-return'
           });
           setShowScanResult(true);
           setShowScanner(false);

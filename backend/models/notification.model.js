@@ -42,7 +42,7 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         "key_taken",
         "key_returned",
-        "KEY_RETURN",
+        "batch-return",
         "key_reminder",
         "security_alert",
         "system",

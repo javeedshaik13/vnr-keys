@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { QrCode, X } from "lucide-react";
 import QRCode from "react-qr-code";
+import { generateBatchReturnQRData } from "../../services/qrService.js";
 
 const VolunteerReturnQRModal = ({
   isOpen,
@@ -17,19 +18,12 @@ const VolunteerReturnQRModal = ({
   // Generate QR data when modal opens
   useEffect(() => {
     if (isOpen && selectedKeys.length > 0) {
-      // Generate QR code data that matches the scanning endpoint's expectations
-      const newQRData = {
-        qrData: {
-          type: "KEY_RETURN",
-          keyIds: selectedKeys,
-          timestamp: new Date().toISOString()
-        }
-      };
+      const newQRData = generateBatchReturnQRData(selectedKeys, user.id);
       setQrData(newQRData);
       setTimer(300); // Reset timer
       setQrExpired(false);
     }
-  }, [isOpen, selectedKeys]);
+  }, [isOpen, selectedKeys, user.id]);
 
   // Timer countdown
   useEffect(() => {
@@ -60,78 +54,73 @@ const VolunteerReturnQRModal = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-gray-900 rounded-xl p-6 max-w-sm w-full relative"
+        className="bg-white rounded-xl p-6 max-w-sm w-full"
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="text-center mb-4">
-          <QrCode className="w-12 h-12 text-blue-500 mx-auto mb-2" />
-          <h3 className="text-xl font-bold text-white">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-900 m-auto">
             Return {selectedKeys.length} Key{selectedKeys.length > 1 ? "s" : ""}
           </h3>
-          <p className="text-gray-400 text-sm mt-1">
-            Show this QR code to security for scanning
-          </p>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
         </div>
 
-        {/* QR Code Display */}
-        {qrData && !qrExpired && (
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
-            <div className="flex justify-center">
+        <div className="text-center">
+          {/* QR Code Display */}
+          {qrData && !qrExpired && (
+            <div className="flex justify-center mb-4">
               <QRCode
                 value={JSON.stringify(qrData)}
                 size={200}
-                bgColor="#1f2937"
-                fgColor="#ffffff"
               />
             </div>
-          </div>
-        )}
-
-        {/* Timer Display */}
-        <div className="text-center">
-          {qrExpired ? (
-            <p className="text-red-500 font-medium">QR Code Expired</p>
-          ) : (
-            <p className="text-blue-400 font-medium">
-              Time remaining: {minutes}:{seconds.toString().padStart(2, "0")}
-            </p>
           )}
+
+          {/* Instructions */}
+          <p className="text-gray-600 text-center mb-2">
+            Show this QR code to security to return the keys
+          </p>
+
+          {/* Timer Display */}
+          <p className={`text-center mb-4 text-sm font-bold ${qrExpired ? 'text-red-600' : 'text-gray-900'}`}>
+            {qrExpired 
+              ? 'QR expired' 
+              : `Expires in ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`}
+          </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-4 flex gap-2">
-          {qrExpired ? (
+        {qrExpired ? (
+          <div className="flex gap-3">
             <button
               onClick={() => {
                 setTimer(300);
                 setQrExpired(false);
-                // Regenerate QR with new timestamp
-                const newQRData = {
-                  ...qrData,
-                  timestamp: new Date().toISOString()
-                };
+                const newQRData = generateBatchReturnQRData(selectedKeys, user.id);
                 setQrData(newQRData);
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
-              Generate New QR Code
+              Regenerate
             </button>
-          ) : (
             <button
               onClick={onClose}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200 py-2 px-4 rounded-lg font-medium transition-colors"
             >
               Close
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button
+            onClick={onClose}
+            className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+          >
+            Close
+          </button>
+        )}
       </motion.div>
     </div>
   );
