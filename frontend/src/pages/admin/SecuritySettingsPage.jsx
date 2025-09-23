@@ -19,7 +19,7 @@ const SecuritySettingsPage = () => {
 
   const API_URL = import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/dashboard`
-    : import.meta.env.MODE === "development"
+    : import.meta.env.MODE === "dev"
       ? "http://localhost:6203/api/dashboard"
       : "/api/dashboard";
 

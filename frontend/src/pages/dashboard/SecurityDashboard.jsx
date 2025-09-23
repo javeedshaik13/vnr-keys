@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { QrCode, Key, KeyRound, CheckCircle, XCircle } from "lucide-react";
+import { QrCode, Key, KeyRound, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { useKeyStore } from "../../store/keyStore";
 import { useAuthStore } from "../../store/authStore";
 import BottomNavigation from "../../components/ui/BottomNavigation";
 import KeyCard from "../../components/keys/KeyCard";
 import QRScanner from "../../components/keys/QRScanner";
-import { processQRScanRequest, validateQRData, parseQRString } from "../../services/qrService";
+import { processQRScanRequest, processBatchQRScanReturn, validateQRData, parseQRString } from "../../services/qrService";
 import { config } from "../../utils/config";
 import { handleSuccess } from "../../utils/errorHandler";
 
@@ -139,6 +139,24 @@ const SecurityDashboard = () => {
       }
       
       console.log('✅ SecurityDashboard: QR validation passed, type:', validation.type);
+
+      // Handle batch return QR codes
+      if (validation.type === 'batch-return') {
+        try {
+          const result = await processBatchQRScanReturn(parsedData);
+          setScanResult({
+            success: true,
+            message: result.message,
+            type: 'batch-return'
+          });
+          setShowScanResult(true);
+          setShowScanner(false);
+          return;
+        } catch (error) {
+          console.error("Error processing batch return:", error);
+          throw error;
+        }
+      }
 
       // Handle different QR code types
       if (validation.type === 'key-return') {

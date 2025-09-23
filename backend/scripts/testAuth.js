@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { User } from "../models/user.model.js";
-import { Key } from "../models/key.model.js";
+import User from "../models/user.model.js";
+import Key from "../models/key.model.js";
 
 dotenv.config();
 

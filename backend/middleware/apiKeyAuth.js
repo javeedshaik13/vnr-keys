@@ -1,5 +1,5 @@
 import { ApiKey } from "../models/apiKey.model.js";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 
 /**
  * Middleware to check API key access permissions

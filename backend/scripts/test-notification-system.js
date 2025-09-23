@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { MONGO_URI } from '../config/env.js';
-import { User } from '../models/user.model.js';
+import User from '../models/user.model.js';
 import { createAndSendNotification } from '../services/notificationService.js';
 
 // Connect to MongoDB

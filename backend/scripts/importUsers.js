@@ -23,7 +23,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 import { validateEmail, sanitizeEmail } from "../utils/validation.js";
 
 dotenv.config();

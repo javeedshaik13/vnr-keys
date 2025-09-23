@@ -5,6 +5,36 @@ import { config } from '../utils/config.js';
 const API_URL = config.api.keysUrl;
 
 /**
+ * Process QR code scan for batch key return
+ * @param {Object|string} qrData - The QR code data (object or JSON string)
+ * @returns {Promise<Object>} The API response
+ */
+export const processBatchQRScanReturn = async (qrData) => {
+  try {
+    console.log('Processing batch QR scan return:', qrData);
+
+    // Get the token from cookie or localStorage
+    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    
+    // Send the QR data to the dedicated batch return endpoint
+    const response = await axios.post(`${config.api.baseUrl}/qr/batch-return`, {
+      qrData: qrData
+    }, {
+      withCredentials: true,
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : undefined
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Batch QR scan return error:', error);
+    const errorMessage = handleError(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * Process QR code scan for key return
  * @param {Object|string} qrData - The QR code data (object or JSON string)
  * @returns {Promise<Object>} The API response
@@ -130,8 +160,16 @@ export const validateQRData = (qrData) => {
     // return result;
   }
 
+  // Check for batch return QR code
+  if (qrData.type === 'batch-return' && Array.isArray(qrData.keyIds)) {
+    console.log('✅ QR Validation: Valid batch-return QR code');
+    result.isValid = true;
+    result.type = 'batch-return';
+    return result;
+  }
+
   // Check for key return QR code
-  if (qrData.returnId && qrData.keyId && qrData.userId) {
+  if ((qrData.type === 'key-return' || qrData.type === 'batch-return') && qrData.keyId) {
     console.log('✅ QR Validation: Valid key-return QR code');
     result.isValid = true;
     result.type = 'key-return';
@@ -150,7 +188,7 @@ export const validateQRData = (qrData) => {
   if (qrData.type && qrData.keyId && qrData.userId) {
     console.log('✅ QR Validation: Valid legacy QR code format');
     result.isValid = true;
-    result.type = qrData.type === 'KEY_RETURN' ? 'key-return' : 'key-request';
+    result.type = qrData.type === 'batch-return' ? 'key-return' : 'key-request';
     return result;
   }
 
@@ -220,6 +258,66 @@ export const generateKeyReturnQRData = (keyId, userId) => {
  * @param {string} qrString - The QR code string
  * @returns {Object} Parsed QR data
  */
+/**
+ * Generate QR data for batch key return
+ * @param {string[]} keyIds - Array of key IDs
+ * @param {string} userId - The user ID
+ * @returns {Object} QR data object
+ */
+export const generateBatchReturnQRData = (keyIds, userId) => {
+  if (!Array.isArray(keyIds) || keyIds.length === 0) {
+    throw new Error('At least one key ID is required for batch return QR generation');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for QR generation');
+  }
+
+  // Ensure key IDs are valid MongoDB ObjectID strings
+  const keyIdsStr = keyIds.map((id, index) => {
+    try {
+      // Handle different types of key ID inputs
+      
+      // If id is an object with id property (from the store/API)
+      if (id && typeof id === 'object') {
+        if (id.id && /^[0-9a-fA-F]{24}$/.test(id.id)) {
+          return id.id;
+        }
+        if (id._id && /^[0-9a-fA-F]{24}$/.test(id._id)) {
+          return id._id;
+        }
+      }
+      
+      // If id is already a valid MongoDB ObjectId string
+      if (typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id)) {
+        return id;
+      }
+      
+      // If id is a string containing an ObjectId
+      if (typeof id === 'string') {
+        const embeddedIdMatch = id.match(/([0-9a-fA-F]{24})/);
+        if (embeddedIdMatch) {
+          return embeddedIdMatch[1];
+        }
+      }
+      
+      throw new Error('No valid MongoDB ObjectId found');
+    } catch (err) {
+      console.error(`Failed to process key ID at index ${index}:`, id);
+      throw new Error(`Invalid key ID format at index ${index}: ${JSON.stringify(id)}`);
+    }
+  });
+  const userIdStr = String(userId);
+
+  return {
+    type: 'batch-return',
+    keyIds: keyIdsStr,
+    userId: userIdStr,
+    timestamp: new Date().toISOString(),
+    returnId: `batch-ret-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  };
+};
+
 export const parseQRString = (qrString) => {
   try {
     return JSON.parse(qrString);

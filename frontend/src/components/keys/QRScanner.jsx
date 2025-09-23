@@ -11,6 +11,52 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
   const scannerRef = useRef(null);
   const streamRef = useRef(null);
 
+  // ✅ QR Data Validator
+  function validateQRData(data) {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid QR data: not an object");
+  }
+
+  const allowedTypes = ["key-request", "key-return", "batch-return"];
+
+  if (!data.type || !allowedTypes.includes(data.type)) {
+    throw new Error(`Invalid or missing 'type'. Allowed types: ${allowedTypes.join(", ")}`);
+  }
+
+  switch (data.type) {
+    case "key-request":
+      if (!data.keyId || !data.userId || !data.timestamp || !data.requestId) {
+        throw new Error("Invalid key-request format: missing required fields (keyId, userId, timestamp, requestId)");
+      }
+      break;
+
+    case "key-return":
+      if (!data.keyId || !data.userId || !data.timestamp || !data.returnId) {
+        throw new Error("Invalid key-return format: missing required fields (keyId, userId, timestamp, returnId)");
+      }
+      break;
+
+    case "batch-return":
+      if (
+        !Array.isArray(data.keyIds) ||
+        data.keyIds.length === 0 ||
+        !data.userId ||
+        !data.timestamp ||
+        !data.returnId
+      ) {
+        throw new Error("Invalid batch-return format: must include keyIds[], userId, timestamp, returnId");
+      }
+      break;
+
+    default:
+      throw new Error(`Unsupported QR type: ${data.type}`);
+  }
+
+  return data; // ✅ valid QR data
+  }
+
+
+
   useEffect(() => {
     if (isOpen && videoRef.current && !isInitializing) {
       startScanner();
@@ -19,90 +65,81 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
     return () => {
       stopScanner();
     };
-    // We intentionally don't include startScanner to avoid re-creating the scanner instance
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isInitializing]);
 
   const startScanner = async () => {
     if (isInitializing) return;
-    
+
     try {
       setIsInitializing(true);
       setError(null);
       setIsScanning(false);
 
-      // Ensure video element exists and is in DOM
       if (!videoRef.current || !videoRef.current.isConnected) {
         throw new Error("Video element not ready");
       }
 
-      // Check if camera is available
       const hasCamera = await QrScanner.hasCamera();
       if (!hasCamera) {
         throw new Error("No camera found on this device");
       }
 
-      // Stop any existing scanner first
       if (scannerRef.current) {
         await scannerRef.current.stop();
         scannerRef.current.destroy();
         scannerRef.current = null;
       }
 
-      // Create scanner instance
       scannerRef.current = new QrScanner(
         videoRef.current,
         (result) => {
           try {
-            console.log('🔍 QR Scanner: Raw scan result:', result.data);
-            
-            // Try to parse as JSON first
+            console.log("🔍 QR Scanner: Raw scan result:", result.data);
+
             let qrData;
             try {
               qrData = JSON.parse(result.data);
+              validateQRData(qrData); // ✅ validate here
             } catch (jsonError) {
-              // If JSON parsing fails, try to handle as plain text
-              console.log('⚠️ QR Scanner: JSON parsing failed, treating as plain text');
-              qrData = result.data;
+              throw new Error("Invalid QR code: " + jsonError.message);
             }
-            
-            console.log('✅ QR Scanner: Parsed QR data:', qrData);
+
+            console.log("✅ QR Scanner: Valid QR data:", qrData);
             onScan(qrData);
             stopScanner();
           } catch (parseError) {
-            console.error('❌ QR Scanner: Parse error:', parseError);
-            setError("Invalid QR code format: " + parseError.message);
+            console.error("❌ QR Scanner: Validation error:", parseError);
+            setError(parseError.message);
           }
         },
         {
           highlightScanRegion: true,
           highlightCodeOutline: true,
-          preferredCamera: "environment", // Use back camera on mobile
-          maxScansPerSecond: 5, // Limit scan rate to avoid overwhelming
+          preferredCamera: "environment",
+          maxScansPerSecond: 5,
         }
       );
 
-      // Wait a bit before starting to ensure DOM is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await scannerRef.current.start();
       setIsScanning(true);
-      console.log('✅ QR Scanner: Camera started successfully');
+      console.log("✅ QR Scanner: Camera started successfully");
     } catch (err) {
       console.error("❌ QR Scanner error:", err);
-      
-      // Provide more specific error messages
+
       let errorMessage = "Failed to start camera";
-      if (err.name === 'NotAllowedError') {
-        errorMessage = "Camera access denied. Please allow camera permissions and try again.";
-      } else if (err.name === 'NotFoundError') {
+      if (err.name === "NotAllowedError") {
+        errorMessage =
+          "Camera access denied. Please allow camera permissions and try again.";
+      } else if (err.name === "NotFoundError") {
         errorMessage = "No camera found on this device.";
-      } else if (err.name === 'NotReadableError') {
+      } else if (err.name === "NotReadableError") {
         errorMessage = "Camera is already in use by another application.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       setIsScanning(false);
     } finally {
@@ -117,22 +154,20 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
         scannerRef.current.destroy();
         scannerRef.current = null;
       }
-      
-      // Stop any media streams directly
+
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
-      
-      // Clear video source
+
       if (videoRef.current) {
         videoRef.current.srcObject = null;
         videoRef.current.load();
       }
     } catch (error) {
-      console.error('Error stopping scanner:', error);
+      console.error("Error stopping scanner:", error);
     }
-    
+
     setIsScanning(false);
     setIsInitializing(false);
   };
@@ -163,7 +198,9 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-              <h3 className="text-white text-xl font-semibold mb-2">Scanner Error</h3>
+              <h3 className="text-white text-xl font-semibold mb-2">
+                Scanner Error
+              </h3>
               <p className="text-gray-300 mb-6">{error}</p>
               <div className="space-y-3">
                 <button
@@ -190,25 +227,23 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
               muted
               autoPlay
               onLoadedMetadata={() => {
-                console.log('✅ Video metadata loaded');
+                console.log("✅ Video metadata loaded");
               }}
               onError={(e) => {
-                console.error('❌ Video error:', e);
-                setError('Video playback error occurred');
+                console.error("❌ Video error:", e);
+                setError("Video playback error occurred");
               }}
             />
 
             {/* Scanning Overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
-                {/* Scanning Frame */}
                 <div className="w-64 h-64 border-2 border-white rounded-lg relative">
                   <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
                   <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
                   <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
                   <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
 
-                  {/* Scanning Line Animation */}
                   {isScanning && (
                     <motion.div
                       className="absolute left-0 right-0 h-0.5 bg-green-400"
@@ -224,7 +259,6 @@ const QRScanner = ({ onScan, onClose, isOpen }) => {
                   )}
                 </div>
 
-                {/* Instructions */}
                 <p className="text-white text-center mt-6 text-lg">
                   Position the QR code within the frame
                 </p>

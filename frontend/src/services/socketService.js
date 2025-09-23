@@ -50,8 +50,23 @@ class SocketService {
       this.isConnected = true;
       this.reconnectAttempts = 0;
 
-      // Join the keys updates room
-      this.socket.emit('join-user-room', this.getCurrentUserId());
+      const userId = this.getCurrentUserId();
+      const role = this.getCurrentUserRole();
+
+      // Join user-specific room for personal notifications
+      if (userId) {
+        console.log('👤 Joining user room:', userId);
+        this.socket.emit('join-user-room', userId);
+      }
+
+      // Join role-based room for notifications
+      if (role) {
+        console.log('👥 Joining role room:', role);
+        this.socket.emit('join-role-room', role);
+      }
+
+      // Join keys updates room
+      this.socket.emit('join-keys-room');
       
       // Join role-based room for notifications
       const userRole = this.getCurrentUserRole();
@@ -87,6 +102,17 @@ class SocketService {
     this.socket.on('user-key-updated', (data) => {
       console.log('👤 User key update received:', data);
       this.emit('userKeyUpdated', data);
+    });
+
+    // Notification events
+    this.socket.on('notification', (data) => {
+      console.log('🔔 Notification received:', data);
+      this.emit('notification', data);
+    });
+
+    this.socket.on('notification-count-update', (data) => {
+      console.log('🔢 Notification count update received:', data);
+      this.emit('notification-count-update', data);
     });
   }
 

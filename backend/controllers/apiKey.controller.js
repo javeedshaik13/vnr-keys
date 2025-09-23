@@ -1,5 +1,5 @@
 import { ApiKey } from "../models/apiKey.model.js";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 import crypto from "crypto";
 
 // Helper function to generate API key

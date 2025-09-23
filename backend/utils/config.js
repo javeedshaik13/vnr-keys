@@ -130,7 +130,6 @@ export const getCorsOrigins = () => {
       'http://localhost:5173',
       'https://vnr-keys.vercel.app',
       'https://vnr-keys-1.onrender.com'
-      
     ],
     pro: []
   };

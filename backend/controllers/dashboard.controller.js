@@ -1,5 +1,5 @@
-import { User } from "../models/user.model.js";
-import { Key } from "../models/key.model.js";
+import User from "../models/user.model.js";
+import Key from "../models/key.model.js";
 import { asyncHandler } from "../utils/errorHandler.js";
 import mongoose from "mongoose";
 

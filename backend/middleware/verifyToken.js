@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 
 export const verifyToken = async (req, res, next) => {
 	// Try to get token from cookies first, then from Authorization header

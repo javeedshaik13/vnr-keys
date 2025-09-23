@@ -173,4 +173,5 @@ keySchema.statics.findAvailableForUser = function(user) {
   return this.find(query);
 };
 
-export const Key = mongoose.model("Key", keySchema);
+const Key = mongoose.model("Key", keySchema);
+export default Key;

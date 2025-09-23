@@ -8,6 +8,7 @@ const auditLogSchema = new mongoose.Schema(
       enum: [
         "key_taken",
         "key_returned", 
+        "bacth-return",
         "key_collective_return",
         "key_created",
         "key_updated",

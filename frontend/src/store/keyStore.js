@@ -2,7 +2,7 @@ import { create } from "zustand";
 import axios from "axios";
 import { handleError, handleSuccess } from "../utils/errorHandler.js";
 import socketService from "../services/socketService.js";
-import { generateKeyReturnQRData, generateKeyRequestQRData } from "../services/qrService.js";
+import { generateKeyReturnQRData, generateKeyRequestQRData, generateBatchReturnQRData } from "../services/qrService.js";
 import { config } from "../utils/config.js";
 import { useAuthStore } from "./authStore.js";
 
@@ -300,7 +300,7 @@ export const useKeyStore = create((set, get) => ({
             : k
         );
         message = `Key ${key.keyNumber} (${key.keyName}) assigned successfully`;
-      } else if (qrData.type === "KEY_RETURN") {
+      } else if (qrData.type === "batch-return") {
         if (key.status !== "unavailable") {
           throw new Error("Key is not currently taken");
         }

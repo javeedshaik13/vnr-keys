@@ -29,6 +29,7 @@ import auditRoutes from "./routes/audit.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import about from "./routes/about.js"
 import logbookRoutes from "./routes/logbook.route.js"
+import qrRoutes from "./routes/qr.route.js"
 
 const app = express();
 const server = createServer(app);
@@ -46,7 +47,7 @@ app.use(sanitizeRequest);
 // 🔧 Hardcoded CORS configuration
 const corsOptions = {
 	origin: [
-		"http://localhost:5173",        // Local frontend (dev)
+		"http://localhost:3203",        // Local frontend (dev)
 		"https://vnr-keys.vercel.app"   // Production frontend
 	],
 	credentials: true, // Allow cookies / credentials
@@ -95,7 +96,7 @@ app.get("/api/health", (req, res) => {
 		cors: {
 			origin: req.headers.origin,
 			allowedOrigins: [
-				"http://localhost:5173",
+				"http://localhost:3203",
 				"https://vnr-keys.vercel.app"
 			]
 		}
@@ -129,6 +130,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/about", about);
 app.use("/api/logbook", logbookRoutes);
+app.use("/api/qr", qrRoutes);
 
 // For local development - handle /be prefix routes to match Google OAuth redirect URIs
 if (process.env.NODE_ENV === 'development' || process.env.ENVIRONMENT === 'local') {

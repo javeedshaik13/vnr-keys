@@ -25,7 +25,7 @@ const ManageUsersPage = () => {
   const API_URL = import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/dashboard`
     : import.meta.env.MODE === "development"
-      ? "http://localhost:6203/api/dashboard"
+      ? "https://dev-keys.vjstartup.com/be/api/dashboard"
       : "/api/dashboard";
 
   useEffect(() => {
