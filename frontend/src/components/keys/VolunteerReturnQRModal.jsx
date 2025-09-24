@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, X } from "lucide-react";
+import { X } from "lucide-react";
 import QRCode from "react-qr-code";
 import { generateBatchReturnQRData } from "../../services/qrService.js";
 
