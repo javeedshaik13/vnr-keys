@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
@@ -7,10 +7,6 @@ import {
   Trash2, 
   MoreVertical,
   Shield,
-  Building,
-  Copy,
-  Eye,
-  EyeOff,
   X
 } from 'lucide-react';
 import { useKeyStore } from '../../store/keyStore';
